@@ -1,0 +1,45 @@
+# Compila y pasa TODAS las pruebas en Windows, y genera el instalador y la version portable.
+name: Windows
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Pruebas en Windows
+        run: .\mvnw.cmd -B test
+
+      - name: WiX Toolset (para el instalador .exe)
+        run: |
+          choco install wixtoolset --version 3.14.1 -y --no-progress
+          echo "C:\Program Files (x86)\WiX Toolset v3.14\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        continue-on-error: true
+
+      - name: Instalador
+        run: powershell -ExecutionPolicy Bypass -File empaquetado\instalador-windows.ps1 -SinPruebas
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nwav-editor-pdf-windows
+          path: |
+            target/instalador/*.exe
+            target/instalador/*.zip
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: informes-de-pruebas
+          path: target/surefire-reports/

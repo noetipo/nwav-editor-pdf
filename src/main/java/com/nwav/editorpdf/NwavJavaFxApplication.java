@@ -75,6 +75,14 @@ public class NwavJavaFxApplication extends Application {
         NwavMainController nwavMain = nwavCargador.getController();
         nwavVentana.titleProperty().bind(nwavMain.nwavTituloVentana());
         nwavVentana.setScene(nwavEscena);
+        // Icono de la ventana y de la barra de tareas (Windows elige el tamano adecuado).
+        for (int nwavLado : new int[]{16, 32, 64, 128, 256}) {
+            try (java.io.InputStream nwavPng = getClass().getResourceAsStream("/img/nwav-icono-" + nwavLado + ".png")) {
+                if (nwavPng != null) {
+                    nwavVentana.getIcons().add(new javafx.scene.image.Image(nwavPng));
+                }
+            }
+        }
         // Cerrar la ventana con cambios sin guardar pregunta antes (por defecto, "Guardar como").
         nwavVentana.setOnCloseRequest(nwavEvento -> {
             if (nwavContexto.getBean(NwavVisorController.class).nwavSinGuardarProperty().get()) {

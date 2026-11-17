@@ -181,6 +181,8 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>com.nwav.editorpdf.NwavLauncher</mainClass>
+                    <!-- El jar principal queda "fino" (para empaquetar con lib/); el ejecutable unico va aparte -->
+                    <classifier>completo</classifier>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>

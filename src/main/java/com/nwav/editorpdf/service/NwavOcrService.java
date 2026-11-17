@@ -58,7 +58,10 @@ public class NwavOcrService {
             "/System/Library/Fonts/Supplemental/Arial Unicode.ttf", "/Library/Fonts/Arial Unicode.ttf",
             "C:\\Windows\\Fonts\\arialuni.ttf", "C:\\Windows\\Fonts\\arial.ttf",
             "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/dejavu/DejaVuSans.ttf",
-            "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf");
+            "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+            // Windows instalado en otra unidad
+            System.getenv("WINDIR") == null ? "" : System.getenv("WINDIR") + "\\Fonts\\arial.ttf",
+            System.getenv("WINDIR") == null ? "" : System.getenv("WINDIR") + "\\Fonts\\segoeui.ttf");
 
     private final NwavDependenciasService nwavDependencias;
     private final NwavPdfDocumentoService nwavDocumentos;

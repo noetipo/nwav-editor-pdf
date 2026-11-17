@@ -1,0 +1,22 @@
+NWAV Editor PDF - version portable para Windows (64 bits)
+==========================================================
+
+Como abrirla
+  1. Descomprime el ZIP en una carpeta tuya (por ejemplo, Documentos o el Escritorio).
+     No la abras directamente desde dentro del ZIP.
+  2. Haz doble clic en "NWAV Editor PDF.cmd".
+     Puedes crear un acceso directo: clic derecho > Enviar a > Escritorio.
+  Si no abre, usa "NWAV Editor PDF (diagnostico).cmd" para ver el error.
+
+No hace falta instalar Java: va incluido en la carpeta "runtime".
+
+Tus datos (recientes, historial, preferencias, firmas) se guardan en:
+  %LOCALAPPDATA%\NWAV Editor PDF
+Los PDF nunca se guardan ahi: solo sus rutas.
+
+Herramientas opcionales
+  - OCR (reconocer texto en escaneos): funciona sin instalar nada en Windows.
+    Si diera error, instala el "Microsoft Visual C++ Redistributable" (x64).
+  - Office a PDF: instala LibreOffice (gratuito, libreoffice.org). Se detecta solo.
+
+Para desinstalar: borra la carpeta y, si quieres, %LOCALAPPDATA%\NWAV Editor PDF.

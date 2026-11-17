@@ -52,6 +52,18 @@ public class NwavDependenciasService {
             "C:\\Program Files\\LibreOffice\\program\\soffice.exe",
             "C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe");
 
+    /** La ruta dentro de las carpetas de programas de Windows (%ProgramFiles%, etc.). */
+    public static List<String> nwavEnCarpetasDeProgramas(String nwavRelativa) {
+        List<String> nwavRutas = new ArrayList<>();
+        for (String nwavVariable : List.of("ProgramFiles", "ProgramW6432", "ProgramFiles(x86)", "LOCALAPPDATA")) {
+            String nwavBase = System.getenv(nwavVariable);
+            if (nwavBase != null && !nwavBase.isBlank()) {
+                nwavRutas.add(nwavBase + (nwavVariable.equals("LOCALAPPDATA") ? "\\Programs\\" : "\\") + nwavRelativa);
+            }
+        }
+        return nwavRutas;
+    }
+
     private final NwavConfiguracionService nwavConfiguracion;
     private final Path nwavCarpetaIdiomas;
     private volatile NwavEstado nwavTesseract;
@@ -227,6 +239,8 @@ public class NwavDependenciasService {
         List<String> nwavCandidatos = new ArrayList<>();
         nwavConfiguracion.nwavObtener(NWAV_CLAVE_RUTA_LIBREOFFICE).ifPresent(nwavCandidatos::add);
         nwavCandidatos.addAll(NWAV_RUTAS_LIBREOFFICE);
+        // Windows instalado en otra unidad o carpeta de programas.
+        nwavCandidatos.addAll(nwavEnCarpetasDeProgramas("LibreOffice\\program\\soffice.exe"));
         return nwavCandidatos.stream().map(Path::of).filter(Files::isRegularFile).filter(Files::isExecutable).findFirst();
     }
 
