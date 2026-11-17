@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nwav.editorpdf.controller.NwavVisorController"
+            styleClass="nwav-visor">
+
+    <fx:define>
+        <ToggleGroup fx:id="nwavGrupoAjuste"/>
+    </fx:define>
+
+    <!-- ============ BARRA DE HERRAMIENTAS ============ -->
+    <top>
+        <HBox styleClass="nwav-barra-visor" spacing="6.0" alignment="CENTER_LEFT">
+            <Button text="Abrir" onAction="#nwavOnAbrir" styleClass="accent">
+                <graphic><FontIcon iconLiteral="fth-folder"/></graphic>
+                <tooltip><Tooltip text="Abrir un PDF (Ctrl/⌘ + O)"/></tooltip>
+            </Button>
+            <Button fx:id="nwavBtnCerrar" onAction="#nwavOnCerrar" styleClass="button-icon, flat">
+                <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+                <tooltip><Tooltip text="Cerrar documento"/></tooltip>
+            </Button>
+
+            <Separator orientation="VERTICAL"/>
+            <ToggleButton fx:id="nwavTglMiniaturas" styleClass="button-icon, flat">
+                <graphic><FontIcon iconLiteral="fth-sidebar"/></graphic>
+                <tooltip><Tooltip text="Mostrar u ocultar miniaturas"/></tooltip>
+            </ToggleButton>
+
+            <Separator orientation="VERTICAL"/>
+            <Button fx:id="nwavBtnAnterior" onAction="#nwavOnPaginaAnterior" styleClass="button-icon, flat">
+                <graphic><FontIcon iconLiteral="fth-chevron-up"/></graphic>
+                <tooltip><Tooltip text="Página anterior"/></tooltip>
+            </Button>
+            <TextField fx:id="nwavTxtPagina" styleClass="nwav-campo-pagina" prefColumnCount="3"/>
+            <Label fx:id="nwavLblTotalPaginas" text="/ 0" styleClass="nwav-texto-tenue"/>
+            <Button fx:id="nwavBtnSiguiente" onAction="#nwavOnPaginaSiguiente" styleClass="button-icon, flat">
+                <graphic><FontIcon iconLiteral="fth-chevron-down"/></graphic>
+                <tooltip><Tooltip text="Página siguiente"/></tooltip>
+            </Button>
+
+            <Separator orientation="VERTICAL"/>
+            <Button fx:id="nwavBtnAlejar" onAction="#nwavOnAlejar" styleClass="button-icon, flat">
+                <graphic><FontIcon iconLiteral="fth-zoom-out"/></graphic>
+                <tooltip><Tooltip text="Alejar (Ctrl/⌘ + −)"/></tooltip>
+            </Button>
+            <ComboBox fx:id="nwavCmbZoom" editable="true" prefWidth="104.0" styleClass="nwav-combo-zoom"/>
+            <Button fx:id="nwavBtnAcercar" onAction="#nwavOnAcercar" styleClass="button-icon, flat">
+                <graphic><FontIcon iconLiteral="fth-zoom-in"/></graphic>
+                <tooltip><Tooltip text="Acercar (Ctrl/⌘ + +)"/></tooltip>
+            </Button>
+            <ToggleButton fx:id="nwavTglAjustarAncho" text="Ancho" toggleGroup="$nwavGrupoAjuste"
+                          styleClass="flat">
+                <graphic><FontIcon iconLiteral="fth-maximize-2"/></graphic>
+                <tooltip><Tooltip text="Ajustar al ancho"/></tooltip>
+            </ToggleButton>
+            <ToggleButton fx:id="nwavTglAjustarPagina" text="Página" toggleGroup="$nwavGrupoAjuste"
+                          styleClass="flat">
+                <graphic><FontIcon iconLiteral="fth-file"/></graphic>
+                <tooltip><Tooltip text="Ajustar a la página"/></tooltip>
+            </ToggleButton>
+
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="nwavLblArchivo" styleClass="nwav-nombre-archivo" textOverrun="CENTER_ELLIPSIS"/>
+        </HBox>
+    </top>
+
+    <!-- ============ MINIATURAS ============ -->
+    <left>
+        <VBox fx:id="nwavPanelMiniaturas" styleClass="nwav-panel-miniaturas" prefWidth="170.0" minWidth="170.0">
+            <Label text="PÁGINAS" styleClass="nwav-panel-titulo"/>
+            <ListView fx:id="nwavListaMiniaturas" VBox.vgrow="ALWAYS" styleClass="nwav-lista-miniaturas"/>
+        </VBox>
+    </left>
+
+    <!-- ============ DOCUMENTO ============ -->
+    <center>
+        <StackPane styleClass="nwav-zona-documento">
+            <ScrollPane fx:id="nwavScroll" styleClass="nwav-scroll-documento" pannable="false">
+                <VBox fx:id="nwavContenedorPaginas" alignment="TOP_CENTER" fillWidth="false"/>
+            </ScrollPane>
+
+            <VBox fx:id="nwavPanelVacio" styleClass="nwav-vacio" alignment="CENTER" spacing="10.0"
+                  maxWidth="440.0" maxHeight="-Infinity">
+                <StackPane styleClass="nwav-vacio-circulo">
+                    <FontIcon iconLiteral="fth-file-plus"/>
+                </StackPane>
+                <Label text="Abre un documento PDF" styleClass="nwav-vacio-titulo"/>
+                <Label text="Arrastra un archivo a esta ventana, usa Archivo › Abrir o el botón de abajo. Los PDF protegidos te pedirán su contraseña."
+                       styleClass="nwav-vacio-detalle" wrapText="true" textAlignment="CENTER"/>
+                <HBox spacing="10.0" alignment="CENTER" styleClass="nwav-vacio-acciones">
+                    <Button text="Abrir PDF…" onAction="#nwavOnAbrir" styleClass="accent, nwav-boton-principal">
+                        <graphic><FontIcon iconLiteral="fth-folder"/></graphic>
+                    </Button>
+                    <Button text="Ver recientes" onAction="#nwavOnVerRecientes"
+                            styleClass="button-outlined, nwav-boton-principal">
+                        <graphic><FontIcon iconLiteral="fth-clock"/></graphic>
+                    </Button>
+                </HBox>
+            </VBox>
+        </StackPane>
+    </center>
+</BorderPane>

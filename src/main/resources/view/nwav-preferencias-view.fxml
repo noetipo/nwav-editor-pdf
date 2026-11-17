@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<ScrollPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nwav.editorpdf.controller.NwavPreferenciasController"
+            fitToWidth="true" styleClass="nwav-pagina-scroll">
+
+    <VBox styleClass="nwav-pagina" maxWidth="760.0">
+
+        <HBox styleClass="nwav-pagina-cabecera">
+            <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                <Label text="Preferencias" styleClass="nwav-pagina-titulo"/>
+                <Label text="Se guardan en la base de datos local del editor." styleClass="nwav-pagina-subtitulo"/>
+            </VBox>
+            <Button text="Guardar cambios" onAction="#nwavOnGuardar" styleClass="accent, nwav-boton-principal"
+                    defaultButton="true">
+                <graphic><FontIcon iconLiteral="fth-save"/></graphic>
+            </Button>
+        </HBox>
+
+        <!-- Apariencia -->
+        <VBox styleClass="nwav-tarjeta">
+            <Label text="Apariencia" styleClass="nwav-tarjeta-titulo"/>
+            <GridPane styleClass="nwav-rejilla-form" hgap="16.0" vgap="12.0">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="200.0"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="Tema" styleClass="nwav-campo-label"/>
+                <ComboBox fx:id="nwavCmbTema" prefWidth="220.0" GridPane.columnIndex="1"/>
+            </GridPane>
+        </VBox>
+
+        <!-- Visor -->
+        <VBox styleClass="nwav-tarjeta">
+            <Label text="Visor" styleClass="nwav-tarjeta-titulo"/>
+            <GridPane styleClass="nwav-rejilla-form" hgap="16.0" vgap="12.0">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="200.0"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="Zoom por defecto" styleClass="nwav-campo-label"/>
+                <ComboBox fx:id="nwavCmbZoomDefecto" prefWidth="220.0" GridPane.columnIndex="1"/>
+                <Label text="Al reabrir un archivo" styleClass="nwav-campo-label" GridPane.rowIndex="1"/>
+                <CheckBox fx:id="nwavChkRestaurar" text="Volver a la última página y zoom"
+                          GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            </GridPane>
+        </VBox>
+
+        <!-- Archivos -->
+        <VBox styleClass="nwav-tarjeta">
+            <Label text="Archivos" styleClass="nwav-tarjeta-titulo"/>
+            <GridPane styleClass="nwav-rejilla-form" hgap="16.0" vgap="12.0">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="200.0"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="Carpeta por defecto" styleClass="nwav-campo-label"/>
+                <HBox spacing="8.0" GridPane.columnIndex="1">
+                    <TextField fx:id="nwavTxtCarpeta" editable="false" promptText="La última carpeta usada"
+                               HBox.hgrow="ALWAYS"/>
+                    <Button text="Elegir…" onAction="#nwavOnElegirCarpeta" styleClass="button-outlined">
+                        <graphic><FontIcon iconLiteral="fth-folder"/></graphic>
+                    </Button>
+                    <Button onAction="#nwavOnQuitarCarpeta" styleClass="button-icon, flat">
+                        <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+                        <tooltip><Tooltip text="Usar la última carpeta abierta"/></tooltip>
+                    </Button>
+                </HBox>
+                <Label text="Máximo de archivos recientes" styleClass="nwav-campo-label" GridPane.rowIndex="1"/>
+                <Spinner fx:id="nwavSpnMaximoRecientes" editable="true" prefWidth="120.0"
+                         GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            </GridPane>
+        </VBox>
+
+        <!-- Datos -->
+        <VBox styleClass="nwav-tarjeta">
+            <Label text="Datos de la aplicación" styleClass="nwav-tarjeta-titulo"/>
+            <Label text="Los PDF nunca se copian a la base de datos: solo se guardan rutas y preferencias."
+                   styleClass="nwav-texto-tenue" wrapText="true"/>
+            <HBox spacing="8.0" alignment="CENTER_LEFT">
+                <FontIcon iconLiteral="fth-database" styleClass="nwav-icono-tenue"/>
+                <Label fx:id="nwavLblRutaBase" styleClass="nwav-texto-ruta" wrapText="true"/>
+            </HBox>
+        </VBox>
+    </VBox>
+</ScrollPane>

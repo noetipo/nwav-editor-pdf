@@ -1,58 +1,94 @@
 package com.nwav.editorpdf;
 
-
-
+import atlantafx.base.theme.PrimerDark;
 import atlantafx.base.theme.PrimerLight;
-import com.nwav.editorpdf.ui.Exportador;
+import com.nwav.editorpdf.controller.NwavMainController;
+import com.nwav.editorpdf.controller.NwavVisorController;
+import com.nwav.editorpdf.exception.NwavTraductorErrores;
+import com.nwav.editorpdf.service.NwavConfiguracionService;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Objects;
 
 public class NwavJavaFxApplication extends Application {
 
-    private ConfigurableApplicationContext context;
+    private ConfigurableApplicationContext nwavContexto;
+    private Throwable nwavErrorArranque;
 
     @Override
     public void init() {
-        this.context = new SpringApplicationBuilder(NwavEditorPdfApplication.class)
-                .web(WebApplicationType.NONE)
-                .run();
+        try {
+            this.nwavContexto = new SpringApplicationBuilder(NwavEditorPdfApplication.class)
+                    .web(WebApplicationType.NONE)
+                    .run(getParameters().getRaw().toArray(String[]::new));
+        } catch (RuntimeException nwavError) {
+            // Se informa en start(), cuando ya se pueden mostrar ventanas.
+            nwavErrorArranque = nwavError;
+        }
     }
 
     @Override
-    public void start(Stage stage) throws Exception {
-        // Tema visual: hay PrimerDark, NordLight, NordDark, Dracula, etc.
-        Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
-        // Permite abrir los PDF y Excel generados con la aplicacion del sistema.
-        context.getBean(Exportador.class).setHostServices(getHostServices());
+    public void start(Stage nwavVentana) throws Exception {
+        if (nwavErrorArranque != null) {
+            Alert nwavAlerta = new Alert(Alert.AlertType.ERROR);
+            nwavAlerta.setTitle(NwavMainController.NWAV_TITULO_APP);
+            nwavAlerta.setHeaderText("No se pudo iniciar la aplicación");
+            nwavAlerta.setContentText(NwavTraductorErrores.nwavMensaje(nwavErrorArranque));
+            nwavAlerta.showAndWait();
+            Platform.exit();
+            return;
+        }
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/main-view.fxml"));
+        boolean nwavOscuro = nwavContexto.getBean(NwavConfiguracionService.class).nwavTemaOscuro();
+        Application.setUserAgentStylesheet(nwavOscuro
+                ? new PrimerDark().getUserAgentStylesheet()
+                : new PrimerLight().getUserAgentStylesheet());
 
+        FXMLLoader nwavCargador = new FXMLLoader(getClass().getResource("/view/nwav-main-view.fxml"));
         // LINEA CLAVE: Spring entrega los controladores ya inyectados
-        loader.setControllerFactory(context::getBean);
+        nwavCargador.setControllerFactory(nwavContexto::getBean);
 
-        Scene scene = new Scene(loader.load());
-        scene.getStylesheets().add(
-                Objects.requireNonNull(getClass().getResource("/css/app.css")).toExternalForm());
+        Scene nwavEscena = new Scene(nwavCargador.load());
+        nwavEscena.getStylesheets().add(
+                Objects.requireNonNull(getClass().getResource("/css/nwav-app.css")).toExternalForm());
 
-        stage.setTitle("NWAV Editor PDF");
-        stage.setScene(scene);
-        stage.setMinWidth(1100);
-        stage.setMinHeight(700);
-        stage.show();
+        NwavMainController nwavMain = nwavCargador.getController();
+        nwavVentana.titleProperty().bind(nwavMain.nwavTituloVentana());
+        nwavVentana.setScene(nwavEscena);
+        nwavVentana.setMinWidth(980);
+        nwavVentana.setMinHeight(640);
+        nwavVentana.show();
+
+        // Permite abrir un PDF pasado como argumento (p. ej. "Abrir con").
+        getParameters().getUnnamed().stream()
+                .filter(nwavArgumento -> nwavArgumento.toLowerCase(Locale.ROOT).endsWith(".pdf"))
+                .map(Path::of)
+                .filter(Files::isRegularFile)
+                .findFirst()
+                .ifPresent(nwavMain::nwavAbrirArchivo);
     }
 
     @Override
     public void stop() {
-        context.close();
-        Platform.exit();
+        if (nwavContexto == null) {
+            return;
+        }
+        try {
+            nwavContexto.getBean(NwavVisorController.class).nwavCerrarAlSalir();
+        } finally {
+            nwavContexto.close();
+            Platform.exit();
+        }
     }
 }
-

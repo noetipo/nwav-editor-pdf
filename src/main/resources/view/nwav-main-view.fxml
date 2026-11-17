@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import atlantafx.base.controls.ModalPane?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<StackPane xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:id="nwavRaiz"
+           fx:controller="com.nwav.editorpdf.controller.NwavMainController"
+           styleClass="nwav-app"
+           prefWidth="1280.0" prefHeight="820.0">
+
+    <fx:define>
+        <ToggleGroup fx:id="nwavMenu"/>
+    </fx:define>
+
+    <BorderPane>
+        <!-- ============ MENU LATERAL ============ -->
+        <left>
+            <VBox fx:id="nwavSidebar" styleClass="nwav-sidebar" prefWidth="232.0" minWidth="232.0">
+
+                <HBox styleClass="nwav-marca" spacing="12.0">
+                    <StackPane styleClass="nwav-marca-logo">
+                        <FontIcon iconLiteral="fth-file-text"/>
+                    </StackPane>
+                    <VBox fx:id="nwavMarcaTextos" spacing="1.0">
+                        <Label text="NWAV Editor" styleClass="nwav-marca-titulo"/>
+                        <Label text="Editor de PDF" styleClass="nwav-marca-subtitulo"/>
+                    </VBox>
+                </HBox>
+
+                <StackPane alignment="TOP_LEFT">
+                    <Region fx:id="nwavIndicador" styleClass="nwav-nav-indicador"
+                            prefHeight="42.0" maxHeight="-Infinity"/>
+                    <VBox spacing="3.0">
+                        <Label text="DOCUMENTO" styleClass="nwav-nav-seccion"/>
+                        <ToggleButton fx:id="nwavNavVisor" text="Visor" toggleGroup="$nwavMenu"
+                                      styleClass="nwav-nav-item" maxWidth="Infinity">
+                            <graphic><FontIcon iconLiteral="fth-book-open"/></graphic>
+                        </ToggleButton>
+                        <ToggleButton fx:id="nwavNavRecientes" text="Recientes" toggleGroup="$nwavMenu"
+                                      styleClass="nwav-nav-item" maxWidth="Infinity">
+                            <graphic><FontIcon iconLiteral="fth-clock"/></graphic>
+                        </ToggleButton>
+
+                        <Label text="AJUSTES" styleClass="nwav-nav-seccion"/>
+                        <ToggleButton fx:id="nwavNavPreferencias" text="Preferencias" toggleGroup="$nwavMenu"
+                                      styleClass="nwav-nav-item" maxWidth="Infinity">
+                            <graphic><FontIcon iconLiteral="fth-settings"/></graphic>
+                        </ToggleButton>
+                    </VBox>
+                </StackPane>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <Separator styleClass="nwav-nav-separador"/>
+                <Button fx:id="nwavBtnTema" text="Modo oscuro" onAction="#nwavOnCambiarTema"
+                        styleClass="nwav-nav-item" maxWidth="Infinity">
+                    <graphic><FontIcon iconLiteral="fth-moon"/></graphic>
+                </Button>
+                <Button fx:id="nwavBtnContraer" text="Contraer menú" onAction="#nwavOnContraerMenu"
+                        styleClass="nwav-nav-item" maxWidth="Infinity">
+                    <graphic><FontIcon iconLiteral="fth-chevrons-left"/></graphic>
+                </Button>
+            </VBox>
+        </left>
+
+        <center>
+            <BorderPane>
+                <!-- ============ MENUS ============ -->
+                <top>
+                    <MenuBar useSystemMenuBar="true" styleClass="nwav-barra-menus">
+                        <Menu text="Archivo">
+                            <MenuItem text="Abrir…" onAction="#nwavOnAbrir" accelerator="Shortcut+O"/>
+                            <Menu fx:id="nwavMnuRecientes" text="Abrir reciente"/>
+                            <SeparatorMenuItem/>
+                            <MenuItem fx:id="nwavMnuCerrar" text="Cerrar documento"
+                                      onAction="#nwavOnCerrarDocumento" accelerator="Shortcut+W"/>
+                            <SeparatorMenuItem/>
+                            <MenuItem text="Salir" onAction="#nwavOnSalir" accelerator="Shortcut+Q"/>
+                        </Menu>
+                        <Menu fx:id="nwavMnuVer" text="Ver">
+                            <MenuItem text="Acercar" onAction="#nwavOnAcercar" accelerator="Shortcut+Plus"/>
+                            <MenuItem text="Alejar" onAction="#nwavOnAlejar" accelerator="Shortcut+Minus"/>
+                            <MenuItem text="Tamaño real (100 %)" onAction="#nwavOnTamanoReal"
+                                      accelerator="Shortcut+0"/>
+                            <MenuItem text="Ajustar al ancho" onAction="#nwavOnAjustarAncho"
+                                      accelerator="Shortcut+1"/>
+                            <MenuItem text="Ajustar a la página" onAction="#nwavOnAjustarPagina"
+                                      accelerator="Shortcut+2"/>
+                            <SeparatorMenuItem/>
+                            <MenuItem text="Primera página" onAction="#nwavOnPrimeraPagina"
+                                      accelerator="Shortcut+Up"/>
+                            <MenuItem text="Página anterior" onAction="#nwavOnPaginaAnterior"
+                                      accelerator="Shortcut+Left"/>
+                            <MenuItem text="Página siguiente" onAction="#nwavOnPaginaSiguiente"
+                                      accelerator="Shortcut+Right"/>
+                            <MenuItem text="Última página" onAction="#nwavOnUltimaPagina"
+                                      accelerator="Shortcut+Down"/>
+                            <SeparatorMenuItem/>
+                            <CheckMenuItem fx:id="nwavMnuMiniaturas" text="Panel de miniaturas"
+                                           accelerator="Shortcut+T"/>
+                        </Menu>
+                    </MenuBar>
+                </top>
+
+                <!-- ============ CONTENIDO ============ -->
+                <center>
+                    <StackPane fx:id="nwavContenido" styleClass="nwav-contenido"/>
+                </center>
+
+                <!-- ============ BARRA DE ESTADO ============ -->
+                <bottom>
+                    <HBox styleClass="nwav-barra-estado" spacing="12.0" alignment="CENTER_LEFT">
+                        <Label fx:id="nwavLblEstadoDocumento" styleClass="nwav-estado-texto"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <HBox fx:id="nwavZonaProgreso" spacing="8.0" alignment="CENTER_RIGHT">
+                            <Label fx:id="nwavLblProgreso" styleClass="nwav-estado-texto"/>
+                            <ProgressBar fx:id="nwavBarraProgreso" prefWidth="150.0" styleClass="nwav-barra-fina"/>
+                        </HBox>
+                    </HBox>
+                </bottom>
+            </BorderPane>
+        </center>
+    </BorderPane>
+
+    <!-- Aviso al arrastrar un PDF sobre la ventana -->
+    <StackPane fx:id="nwavCapaArrastre" styleClass="nwav-capa-arrastre" mouseTransparent="true">
+        <VBox styleClass="nwav-capa-arrastre-caja" alignment="CENTER" spacing="10.0"
+              maxWidth="-Infinity" maxHeight="-Infinity">
+            <FontIcon iconLiteral="fth-download"/>
+            <Label text="Suelta el PDF para abrirlo" styleClass="nwav-capa-arrastre-texto"/>
+        </VBox>
+    </StackPane>
+
+    <!-- Capas flotantes: panel lateral, dialogos y notificaciones -->
+    <ModalPane fx:id="nwavModalPanel"/>
+    <ModalPane fx:id="nwavModalDialogo"/>
+    <VBox fx:id="nwavZonaNotificaciones" styleClass="nwav-zona-notificaciones" spacing="10.0"
+          pickOnBounds="false" alignment="BOTTOM_RIGHT" viewOrder="-100"
+          StackPane.alignment="BOTTOM_RIGHT" maxWidth="-Infinity" maxHeight="-Infinity"/>
+</StackPane>

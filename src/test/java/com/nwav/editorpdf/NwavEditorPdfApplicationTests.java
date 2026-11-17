@@ -1,13 +1,20 @@
 package com.nwav.editorpdf;
 
+import com.nwav.editorpdf.controller.NwavVisorController;
+import com.nwav.editorpdf.soporte.NwavPruebaConBaseDatos;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
-@SpringBootTest
-class NwavEditorPdfApplicationTests {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class NwavEditorPdfApplicationTests extends NwavPruebaConBaseDatos {
+
+    @Autowired
+    private ApplicationContext nwavContexto;
 
     @Test
-    void contextLoads() {
+    void nwavElContextoArrancaConLosControladores() {
+        assertThat(nwavContexto.getBean(NwavVisorController.class)).isNotNull();
     }
-
 }
