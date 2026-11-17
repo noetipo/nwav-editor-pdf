@@ -1,0 +1,32 @@
+# Al subir una etiqueta vX.Y.Z: construye la version portable para Windows y crea la release.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  windows-portable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: ZIP portable para Windows (con pruebas)
+        run: empaquetado/construir-windows.sh
+
+      - name: Crear la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" target/NWAV-Editor-PDF-*-windows-x64.zip \
+            --title "NWAV Editor PDF $GITHUB_REF_NAME" \
+            --notes-file empaquetado/notas-release.md
