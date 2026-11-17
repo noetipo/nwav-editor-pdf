@@ -13,7 +13,7 @@
 
     <groupId>com.nwav</groupId>
     <artifactId>nwav-editor-pdf</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <name>nwav-editor-pdf</name>
     <description>Editor de PDF de escritorio (Spring Boot + JavaFX + SQLite)</description>
 
