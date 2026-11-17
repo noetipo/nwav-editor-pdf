@@ -54,7 +54,7 @@ public class NwavArchivoPdfService {
             nwavValidarEscritura(nwavFinal);
             synchronized (nwavDocumento) {
                 nwavDocumento.nwavVerificarAbierto();
-                nwavMantenerProteccion(nwavDocumento);
+                nwavAplicarProteccion(nwavDocumento);
                 nwavTemporal = nwavTemporalJunto(nwavFinal);
                 nwavDocumento.nwavPdDocument().save(nwavTemporal.toFile());
             }
@@ -74,11 +74,14 @@ public class NwavArchivoPdfService {
                 }
             }
             nwavTemporal = null;
-            String nwavContrasena = nwavDocumento.nwavContrasena();
+            String nwavContrasena = nwavContrasenaTrasGuardar(nwavDocumento);
             nwavDocumento.close();
             NwavDocumentoPdf nwavGuardado = nwavDocumentos.nwavAbrir(nwavFinal, nwavContrasena);
+            NwavCambioProteccion nwavCambio = nwavDocumento.getNwavProteccionPendiente();
             nwavHistorial.nwavRegistrarExito(NwavTipoOperacion.NWAV_GUARDAR, nwavDocumento.getNwavRuta(), nwavFinal,
-                    nwavSobrescribe ? "Se sobrescribió el archivo original" : "Guardado como archivo nuevo");
+                    (nwavSobrescribe ? "Se sobrescribió el archivo original" : "Guardado como archivo nuevo")
+                            + (nwavCambio == null ? "" : nwavCambio.nwavQuitar() ? "; protección quitada"
+                            : "; protegido con contraseña"));
             return nwavGuardado;
         } catch (IOException | RuntimeException nwavError) {
             nwavBorrarSilencioso(nwavTemporal);
@@ -86,6 +89,29 @@ public class NwavArchivoPdfService {
                     nwavFinal, nwavError);
             throw NwavTraductorErrores.nwavTraducir(nwavError, String.valueOf(nwavFinal.getFileName()));
         }
+    }
+
+    /** Aplica el cambio de proteccion pendiente o, si no hay, mantiene la que tenia. */
+    private static void nwavAplicarProteccion(NwavDocumentoPdf nwavDocumento) throws IOException {
+        NwavCambioProteccion nwavCambio = nwavDocumento.getNwavProteccionPendiente();
+        PDDocument nwavPd = nwavDocumento.nwavPdDocument();
+        if (nwavCambio == null) {
+            nwavMantenerProteccion(nwavDocumento);
+        } else if (nwavCambio.nwavQuitar()) {
+            nwavPd.setAllSecurityToBeRemoved(true);
+        } else {
+            nwavPd.setAllSecurityToBeRemoved(false);
+            nwavPd.protect(NwavSeguridadService.nwavPolitica(nwavCambio.nwavOpciones()));
+        }
+    }
+
+    /** Contrasena con la que se reabre el archivo recien guardado. */
+    private static String nwavContrasenaTrasGuardar(NwavDocumentoPdf nwavDocumento) {
+        NwavCambioProteccion nwavCambio = nwavDocumento.getNwavProteccionPendiente();
+        if (nwavCambio == null) {
+            return nwavDocumento.nwavContrasena();
+        }
+        return nwavCambio.nwavQuitar() ? null : nwavCambio.nwavOpciones().nwavUsuario();
     }
 
     /**

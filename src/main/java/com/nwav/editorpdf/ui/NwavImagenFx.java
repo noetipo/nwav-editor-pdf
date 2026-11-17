@@ -15,6 +15,23 @@ public final class NwavImagenFx {
     private NwavImagenFx() {
     }
 
+    /** Imagen JavaFX (p. ej. un lienzo de dibujo) a bytes PNG, conservando la transparencia. */
+    public static byte[] nwavAPng(Image nwavImagen) {
+        int nwavAncho = (int) nwavImagen.getWidth();
+        int nwavAlto = (int) nwavImagen.getHeight();
+        int[] nwavPixeles = new int[nwavAncho * nwavAlto];
+        nwavImagen.getPixelReader().getPixels(0, 0, nwavAncho, nwavAlto, PixelFormat.getIntArgbInstance(),
+                nwavPixeles, 0, nwavAncho);
+        BufferedImage nwavDestino = new BufferedImage(nwavAncho, nwavAlto, BufferedImage.TYPE_INT_ARGB);
+        nwavDestino.setRGB(0, 0, nwavAncho, nwavAlto, nwavPixeles, 0, nwavAncho);
+        try (java.io.ByteArrayOutputStream nwavSalida = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(nwavDestino, "png", nwavSalida);
+            return nwavSalida.toByteArray();
+        } catch (java.io.IOException nwavError) {
+            throw new java.io.UncheckedIOException(nwavError);
+        }
+    }
+
     public static Image nwavConvertir(BufferedImage nwavOrigen) {
         int nwavAncho = nwavOrigen.getWidth();
         int nwavAlto = nwavOrigen.getHeight();

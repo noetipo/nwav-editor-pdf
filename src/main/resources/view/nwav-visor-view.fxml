@@ -73,6 +73,39 @@
                 </items>
             </MenuButton>
 
+            <MenuButton fx:id="nwavMbtHerramientas" text="Herramientas" styleClass="flat">
+                <graphic><FontIcon iconLiteral="fth-tool"/></graphic>
+                <items>
+                    <MenuItem text="Buscar texto…" onAction="#nwavOnBuscar">
+                        <graphic><FontIcon iconLiteral="fth-search"/></graphic>
+                    </MenuItem>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Rellenar formulario…" onAction="#nwavOnFormulario">
+                        <graphic><FontIcon iconLiteral="fth-check-square"/></graphic>
+                    </MenuItem>
+                    <MenuItem text="Firmar…" onAction="#nwavOnFirma">
+                        <graphic><FontIcon iconLiteral="fth-feather"/></graphic>
+                    </MenuItem>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Marca de agua…" onAction="#nwavOnMarcaAgua">
+                        <graphic><FontIcon iconLiteral="fth-droplet"/></graphic>
+                    </MenuItem>
+                    <MenuItem text="Numerar páginas…" onAction="#nwavOnNumerar">
+                        <graphic><FontIcon iconLiteral="fth-hash"/></graphic>
+                    </MenuItem>
+                    <MenuItem text="Encabezado y pie…" onAction="#nwavOnEncabezado">
+                        <graphic><FontIcon iconLiteral="fth-align-center"/></graphic>
+                    </MenuItem>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Protección con contraseña…" onAction="#nwavOnProteccion">
+                        <graphic><FontIcon iconLiteral="fth-lock"/></graphic>
+                    </MenuItem>
+                    <MenuItem text="Propiedades del documento…" onAction="#nwavOnMetadatos">
+                        <graphic><FontIcon iconLiteral="fth-info"/></graphic>
+                    </MenuItem>
+                </items>
+            </MenuButton>
+
             <Separator orientation="VERTICAL"/>
             <ToggleButton fx:id="nwavTglMiniaturas" styleClass="button-icon, flat">
                 <graphic><FontIcon iconLiteral="fth-sidebar"/></graphic>
@@ -114,6 +147,30 @@
 
             <Region HBox.hgrow="ALWAYS"/>
             <Label fx:id="nwavLblArchivo" styleClass="nwav-nombre-archivo" textOverrun="CENTER_ELLIPSIS" minWidth="0"/>
+        </HBox>
+
+        <!-- Busqueda (Fase 4) -->
+        <HBox fx:id="nwavBarraBusqueda" styleClass="nwav-barra-busqueda" spacing="6.0" alignment="CENTER_LEFT">
+            <FontIcon iconLiteral="fth-search" styleClass="nwav-icono-tenue"/>
+            <TextField fx:id="nwavTxtBuscar" promptText="Buscar en el documento (Intro)" prefWidth="300.0"/>
+            <ToggleButton fx:id="nwavTglMayusculas" text="Aa" styleClass="flat">
+                <tooltip><Tooltip text="Distinguir mayúsculas y minúsculas"/></tooltip>
+            </ToggleButton>
+            <Button fx:id="nwavBtnResultadoAnterior" onAction="#nwavOnResultadoAnterior" styleClass="button-icon, flat">
+                <graphic><FontIcon iconLiteral="fth-chevron-up"/></graphic>
+                <tooltip><Tooltip text="Resultado anterior"/></tooltip>
+            </Button>
+            <Button fx:id="nwavBtnResultadoSiguiente" onAction="#nwavOnResultadoSiguiente" styleClass="button-icon, flat">
+                <graphic><FontIcon iconLiteral="fth-chevron-down"/></graphic>
+                <tooltip><Tooltip text="Resultado siguiente (Intro)"/></tooltip>
+            </Button>
+            <Label fx:id="nwavLblResultados" styleClass="nwav-texto-tenue"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="No distingue tildes" styleClass="nwav-panel-ayuda"/>
+            <Button onAction="#nwavOnCerrarBusqueda" styleClass="button-icon, flat">
+                <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+                <tooltip><Tooltip text="Cerrar la búsqueda (Esc)"/></tooltip>
+            </Button>
         </HBox>
 
         <!-- Herramientas de edicion de contenido (Fase 3); los botones se crean en el controlador -->

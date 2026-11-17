@@ -63,6 +63,10 @@ public class NwavEditorInteractivo {
         void nwavFijarNota(int nwavPagina, NwavPunto nwavPunto, String nwavTexto, NwavColorRgb nwavColor,
                            Runnable nwavSiAplica, Runnable nwavSiFalla);
 
+        /** Imagen ya en memoria (p. ej. una firma guardada). */
+        void nwavFijarImagenBytes(int nwavPagina, byte[] nwavPng, NwavRectangulo nwavZona,
+                                  Runnable nwavSiAplica, Runnable nwavSiFalla);
+
         void nwavMarcar(int nwavPagina, NwavTipoMarca nwavTipo, NwavRectangulo nwavZona, NwavColorRgb nwavColor);
 
         void nwavDibujar(int nwavPagina, List<NwavPunto> nwavTrazo, NwavColorRgb nwavColor, double nwavGrosor);
@@ -275,7 +279,7 @@ public class NwavEditorInteractivo {
             }
             case NWAV_NOTA -> nwavPendiente = new NwavNotaPendiente(nwavCapa, nwavPagina, nwavAPuntos(nwavFin));
             case NWAV_IMAGEN -> nwavDestino.nwavElegirImagen().ifPresent(nwavRuta ->
-                    nwavPendiente = new NwavImagenPendiente(nwavCapa, nwavPagina, nwavRuta, nwavAPuntos(nwavFin)));
+                    nwavPendiente = new NwavImagenPendiente(nwavCapa, nwavPagina, nwavRuta, null, nwavAPuntos(nwavFin)));
             default -> {
                 // navegar: nada
             }
@@ -300,6 +304,18 @@ public class NwavEditorInteractivo {
     private NwavPunto nwavAPuntos(Point2D nwavPixel) {
         double nwavPorPunto = nwavEscala.getAsDouble();
         return new NwavPunto(nwavPixel.getX() / nwavPorPunto, nwavPixel.getY() / nwavPorPunto);
+    }
+
+    /**
+     * Coloca en el centro de la pagina una imagen en memoria (una firma) como elemento
+     * pendiente: se puede mover y redimensionar antes de fijarla.
+     */
+    public void nwavColocarImagen(Pane nwavCapa, int nwavPagina, byte[] nwavPng) {
+        nwavCancelarPendiente();
+        double nwavPorPunto = nwavEscala.getAsDouble();
+        NwavPunto nwavCentro = new NwavPunto(nwavCapa.getWidth() / nwavPorPunto / 2,
+                nwavCapa.getHeight() / nwavPorPunto / 2);
+        nwavPendiente = new NwavImagenPendiente(nwavCapa, nwavPagina, null, nwavPng, nwavCentro);
     }
 
     // ============================================================ pendientes
@@ -466,6 +482,7 @@ public class NwavEditorInteractivo {
     private final class NwavImagenPendiente extends NwavPendiente {
 
         private final Path nwavRuta;
+        private final byte[] nwavBytes;
         private final ImageView nwavVista = new ImageView();
         private final StackPane nwavMarco = new StackPane();
         private final Region nwavAsa = new Region();
@@ -475,10 +492,14 @@ public class NwavEditorInteractivo {
         private double nwavAncho;
         private Point2D nwavAgarre;
 
-        NwavImagenPendiente(Pane nwavCapa, int nwavPagina, Path nwavRuta, NwavPunto nwavCentro) {
+        /** Desde un archivo ({@code nwavRuta}) o desde memoria ({@code nwavBytes}). */
+        NwavImagenPendiente(Pane nwavCapa, int nwavPagina, Path nwavRuta, byte[] nwavBytes, NwavPunto nwavCentro) {
             super(nwavCapa, nwavPagina);
             this.nwavRuta = nwavRuta;
-            Image nwavImagen = new Image(nwavRuta.toUri().toString());
+            this.nwavBytes = nwavBytes;
+            Image nwavImagen = nwavBytes != null
+                    ? new Image(new java.io.ByteArrayInputStream(nwavBytes))
+                    : new Image(nwavRuta.toUri().toString());
             double nwavAnchoNatural = nwavImagen.getWidth() > 0 ? nwavImagen.getWidth() * 0.75 : 200;
             double nwavAltoNatural = nwavImagen.getHeight() > 0 ? nwavImagen.getHeight() * 0.75 : 150;
             nwavProporcion = nwavAltoNatural / nwavAnchoNatural;
@@ -543,8 +564,12 @@ public class NwavEditorInteractivo {
 
         @Override
         void nwavFijar(Runnable nwavSiAplica, Runnable nwavSiFalla) {
-            nwavDestino.nwavFijarImagen(nwavPagina, nwavRuta,
-                    new NwavRectangulo(nwavX, nwavY, nwavAncho, nwavAncho * nwavProporcion), nwavSiAplica, nwavSiFalla);
+            NwavRectangulo nwavZona = new NwavRectangulo(nwavX, nwavY, nwavAncho, nwavAncho * nwavProporcion);
+            if (nwavBytes != null) {
+                nwavDestino.nwavFijarImagenBytes(nwavPagina, nwavBytes, nwavZona, nwavSiAplica, nwavSiFalla);
+            } else {
+                nwavDestino.nwavFijarImagen(nwavPagina, nwavRuta, nwavZona, nwavSiAplica, nwavSiFalla);
+            }
         }
     }
 

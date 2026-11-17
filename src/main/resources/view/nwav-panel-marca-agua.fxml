@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nwav.editorpdf.controller.NwavPanelMarcaAguaController"
+      styleClass="nwav-panel" prefWidth="460.0" maxWidth="460.0" maxHeight="Infinity">
+
+    <HBox styleClass="nwav-panel-cabecera" spacing="12.0" alignment="CENTER_LEFT">
+        <StackPane styleClass="nwav-panel-icono">
+            <FontIcon iconLiteral="fth-droplet"/>
+        </StackPane>
+        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+            <Label text="Marca de agua" styleClass="nwav-panel-titulo-grande"/>
+            <Label text="Texto o imagen semitransparente en el centro de cada página." styleClass="nwav-panel-subtitulo" wrapText="true"/>
+        </VBox>
+        <Button onAction="#nwavOnCerrar" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+        </Button>
+    </HBox>
+
+    <fx:define>
+        <ToggleGroup fx:id="nwavGrupoTipo"/>
+    </fx:define>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="nwav-panel-scroll">
+        <VBox styleClass="nwav-panel-cuerpo" spacing="12.0">
+            <Label text="Plantillas guardadas" styleClass="nwav-campo-label"/>
+            <HBox spacing="8.0">
+                <ComboBox fx:id="nwavCmbPlantillas" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="nwavBtnEliminarPlantilla" onAction="#nwavOnEliminarPlantilla" styleClass="button-icon, flat">
+                    <graphic><FontIcon iconLiteral="fth-trash-2"/></graphic>
+                    <tooltip><Tooltip text="Eliminar la plantilla elegida"/></tooltip>
+                </Button>
+            </HBox>
+            <HBox styleClass="nwav-selector-segmentos">
+                <ToggleButton fx:id="nwavTglTexto" text="Texto" toggleGroup="$nwavGrupoTipo" selected="true"
+                              styleClass="left-pill" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <ToggleButton fx:id="nwavTglImagen" text="Imagen" toggleGroup="$nwavGrupoTipo"
+                              styleClass="right-pill" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <VBox fx:id="nwavSeccionTexto" spacing="8.0">
+                <TextField fx:id="nwavTxtTexto" promptText="Ej.: CONFIDENCIAL"/>
+                <HBox spacing="8.0">
+                    <ComboBox fx:id="nwavCmbFuente" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Spinner fx:id="nwavSpnTamano" editable="true" prefWidth="86.0"/>
+                    <ColorPicker fx:id="nwavSelectorColor"/>
+                </HBox>
+            </VBox>
+            <VBox fx:id="nwavSeccionImagen" spacing="8.0">
+                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                    <Button text="Elegir imagen…" onAction="#nwavOnElegirImagen" styleClass="button-outlined">
+                        <graphic><FontIcon iconLiteral="fth-image"/></graphic>
+                    </Button>
+                    <Label fx:id="nwavLblImagen" text="Ninguna imagen elegida" styleClass="nwav-texto-tenue"
+                           minWidth="0" textOverrun="CENTER_ELLIPSIS"/>
+                </HBox>
+                <ImageView fx:id="nwavVistaImagen" fitHeight="70.0" fitWidth="200.0" preserveRatio="true"/>
+                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                    <Label text="Tamaño" styleClass="nwav-texto-tenue" minWidth="70.0"/>
+                    <Slider fx:id="nwavSldEscala" min="0.05" max="1" value="0.4" HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="nwavLblEscala" minWidth="110.0"/>
+                </HBox>
+            </VBox>
+            <HBox spacing="8.0" alignment="CENTER_LEFT">
+                <Label text="Opacidad" styleClass="nwav-texto-tenue" minWidth="70.0"/>
+                <Slider fx:id="nwavSldOpacidad" min="0.05" max="1" value="0.25" HBox.hgrow="ALWAYS"/>
+                <Label fx:id="nwavLblOpacidad" minWidth="50.0"/>
+            </HBox>
+            <HBox spacing="8.0" alignment="CENTER_LEFT">
+                <Label text="Giro" styleClass="nwav-texto-tenue" minWidth="70.0"/>
+                <Slider fx:id="nwavSldRotacion" min="-90" max="90" value="45" majorTickUnit="45" showTickMarks="true"
+                        HBox.hgrow="ALWAYS"/>
+                <Label fx:id="nwavLblRotacion" minWidth="50.0"/>
+            </HBox>
+            <Label text="Páginas" styleClass="nwav-campo-label"/>
+            <TextField fx:id="nwavTxtPaginas" promptText="Todas (o p. ej. 1-3, 5)"/>
+            <Separator/>
+            <Label text="Guardar esta configuración como plantilla" styleClass="nwav-campo-label"/>
+            <HBox spacing="8.0">
+                <TextField fx:id="nwavTxtNombrePlantilla" promptText="Nombre de la plantilla" HBox.hgrow="ALWAYS"/>
+                <Button text="Guardar" onAction="#nwavOnGuardarPlantilla" styleClass="button-outlined">
+                    <graphic><FontIcon iconLiteral="fth-save"/></graphic>
+                </Button>
+            </HBox>
+        </VBox>
+    </ScrollPane>
+
+    <HBox styleClass="nwav-panel-pie" spacing="10.0" alignment="CENTER_RIGHT">
+        <Button text="Cancelar" onAction="#nwavOnCerrar" styleClass="button-outlined" cancelButton="true"/>
+        <Button  text="Aplicar" onAction="#nwavOnAplicar" styleClass="accent">
+            <graphic><FontIcon iconLiteral="fth-droplet"/></graphic>
+        </Button>
+    </HBox>
+</VBox>

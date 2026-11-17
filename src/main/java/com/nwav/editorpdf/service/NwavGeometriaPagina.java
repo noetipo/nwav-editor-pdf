@@ -77,6 +77,23 @@ final class NwavGeometriaPagina {
         return new PDRectangle(nwavMinX, nwavMinY, Math.abs(nwavA[0] - nwavB[0]), Math.abs(nwavA[1] - nwavB[1]));
     }
 
+    /** Rectangulo en espacio PDF convertido a coordenadas visuales (Y hacia abajo). */
+    NwavRectangulo nwavRectanguloVisual(PDRectangle nwavPdf) {
+        try {
+            java.awt.geom.AffineTransform nwavInversa = nwavMatrizVisual().createAffineTransform().createInverse();
+            java.awt.geom.Point2D nwavA = nwavInversa.transform(
+                    new java.awt.geom.Point2D.Float(nwavPdf.getLowerLeftX(), nwavPdf.getLowerLeftY()), null);
+            java.awt.geom.Point2D nwavB = nwavInversa.transform(
+                    new java.awt.geom.Point2D.Float(nwavPdf.getUpperRightX(), nwavPdf.getUpperRightY()), null);
+            double nwavX = Math.min(nwavA.getX(), nwavB.getX());
+            double nwavYArriba = Math.max(nwavA.getY(), nwavB.getY());
+            return new NwavRectangulo(nwavX, nwavAltoVisual() - nwavYArriba, Math.abs(nwavA.getX() - nwavB.getX()),
+                    Math.abs(nwavA.getY() - nwavB.getY()));
+        } catch (java.awt.geom.NoninvertibleTransformException nwavError) {
+            return null;
+        }
+    }
+
     /**
      * Cuatro esquinas de un rectangulo visual como QuadPoints de PDF, en el orden que usan
      * los lectores: arriba-izquierda, arriba-derecha, abajo-izquierda, abajo-derecha (visual).

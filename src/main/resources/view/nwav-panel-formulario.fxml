@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nwav.editorpdf.controller.NwavPanelFormularioController"
+      styleClass="nwav-panel" prefWidth="460.0" maxWidth="460.0" maxHeight="Infinity">
+
+    <HBox styleClass="nwav-panel-cabecera" spacing="12.0" alignment="CENTER_LEFT">
+        <StackPane styleClass="nwav-panel-icono">
+            <FontIcon iconLiteral="fth-check-square"/>
+        </StackPane>
+        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+            <Label text="Rellenar formulario" styleClass="nwav-panel-titulo-grande"/>
+            <Label text="Edita los campos del formulario. Los cambios se pueden deshacer y se guardan con «Guardar como»." styleClass="nwav-panel-subtitulo" wrapText="true"/>
+        </VBox>
+        <Button onAction="#nwavOnCerrar" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+        </Button>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="nwav-panel-scroll">
+        <VBox styleClass="nwav-panel-cuerpo" spacing="14.0">
+            <Label fx:id="nwavLblResumen" styleClass="nwav-texto-tenue" wrapText="true"/>
+            <VBox fx:id="nwavListaCampos" spacing="10.0"/>
+        </VBox>
+    </ScrollPane>
+
+    <HBox styleClass="nwav-panel-pie" spacing="10.0" alignment="CENTER_RIGHT">
+        <Button text="Cancelar" onAction="#nwavOnCerrar" styleClass="button-outlined" cancelButton="true"/>
+        <Button fx:id="nwavBtnAplicar" text="Aplicar" onAction="#nwavOnAplicar" styleClass="accent">
+            <graphic><FontIcon iconLiteral="fth-check"/></graphic>
+        </Button>
+    </HBox>
+</VBox>

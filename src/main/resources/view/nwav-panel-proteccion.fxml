@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nwav.editorpdf.controller.NwavPanelProteccionController"
+      styleClass="nwav-panel" prefWidth="460.0" maxWidth="460.0" maxHeight="Infinity">
+
+    <HBox styleClass="nwav-panel-cabecera" spacing="12.0" alignment="CENTER_LEFT">
+        <StackPane styleClass="nwav-panel-icono">
+            <FontIcon iconLiteral="fth-lock"/>
+        </StackPane>
+        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+            <Label text="Protección con contraseña" styleClass="nwav-panel-titulo-grande"/>
+            <Label text="Se aplica al guardar con «Guardar como» y se puede deshacer antes." styleClass="nwav-panel-subtitulo" wrapText="true"/>
+        </VBox>
+        <Button onAction="#nwavOnCerrar" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+        </Button>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="nwav-panel-scroll">
+        <VBox styleClass="nwav-panel-cuerpo" spacing="12.0">
+            <Label fx:id="nwavLblEstado" styleClass="nwav-texto-tenue" wrapText="true"/>
+            <Label text="Proteger" styleClass="nwav-tarjeta-titulo"/>
+            <Label text="Contraseña para abrir" styleClass="nwav-campo-label"/>
+            <PasswordField fx:id="nwavPwdUsuario" promptText="Mínimo 4 caracteres"/>
+            <PasswordField fx:id="nwavPwdUsuarioRepetir" promptText="Repetir"/>
+            <Label text="Contraseña de permisos (opcional)" styleClass="nwav-campo-label"/>
+            <PasswordField fx:id="nwavPwdPropietario" promptText="Para restringir lo que se puede hacer"/>
+            <PasswordField fx:id="nwavPwdPropietarioRepetir" promptText="Repetir"/>
+            <VBox fx:id="nwavSeccionPermisos" spacing="6.0">
+                <Label text="Quien abra el PDF podrá:" styleClass="nwav-texto-tenue"/>
+                <CheckBox fx:id="nwavChkImprimir" text="Imprimir"/>
+                <CheckBox fx:id="nwavChkCopiar" text="Copiar texto e imágenes"/>
+                <CheckBox fx:id="nwavChkModificar" text="Modificar el documento"/>
+                <CheckBox fx:id="nwavChkAnotar" text="Añadir comentarios"/>
+                <CheckBox fx:id="nwavChkFormularios" text="Rellenar formularios"/>
+            </VBox>
+            <Label text="Sin contraseña de permisos, quien conozca la de apertura podrá hacerlo todo."
+                   styleClass="nwav-panel-ayuda" wrapText="true"/>
+            <Label fx:id="nwavLblErrorProteger" styleClass="nwav-campo-error" wrapText="true"/>
+            <Button text="Proteger al guardar" onAction="#nwavOnProteger" styleClass="accent">
+                <graphic><FontIcon iconLiteral="fth-lock"/></graphic>
+            </Button>
+
+            <VBox fx:id="nwavSeccionQuitar" spacing="10.0">
+                <Separator/>
+                <Label text="Quitar protección" styleClass="nwav-tarjeta-titulo"/>
+                <VBox fx:id="nwavSeccionPropietarioQuitar" spacing="6.0">
+                    <Label text="Abriste el PDF con la contraseña de apertura. Para quitar la protección escribe la de permisos (propietario)."
+                           styleClass="nwav-panel-ayuda" wrapText="true"/>
+                    <PasswordField fx:id="nwavPwdQuitar" promptText="Contraseña de permisos"/>
+                </VBox>
+                <Button fx:id="nwavBtnQuitar" text="Quitar protección al guardar" onAction="#nwavOnQuitar"
+                        styleClass="button-outlined, danger">
+                    <graphic><FontIcon iconLiteral="fth-unlock"/></graphic>
+                </Button>
+            </VBox>
+        </VBox>
+    </ScrollPane>
+
+    <HBox styleClass="nwav-panel-pie" spacing="10.0" alignment="CENTER_RIGHT">
+        <Button text="Cerrar" onAction="#nwavOnCerrar" styleClass="button-outlined" cancelButton="true"/>
+    </HBox>
+</VBox>

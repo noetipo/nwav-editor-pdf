@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nwav.editorpdf.controller.NwavPanelMetadatosController"
+      styleClass="nwav-panel" prefWidth="460.0" maxWidth="460.0" maxHeight="Infinity">
+
+    <HBox styleClass="nwav-panel-cabecera" spacing="12.0" alignment="CENTER_LEFT">
+        <StackPane styleClass="nwav-panel-icono">
+            <FontIcon iconLiteral="fth-info"/>
+        </StackPane>
+        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+            <Label text="Propiedades del documento" styleClass="nwav-panel-titulo-grande"/>
+            <Label text="Título, autor y otros datos guardados dentro del PDF." styleClass="nwav-panel-subtitulo" wrapText="true"/>
+        </VBox>
+        <Button onAction="#nwavOnCerrar" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+        </Button>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="nwav-panel-scroll">
+        <VBox styleClass="nwav-panel-cuerpo" spacing="12.0">
+            <Label text="Título" styleClass="nwav-campo-label"/>
+            <TextField fx:id="nwavTxtTitulo"/>
+            <Label text="Autor" styleClass="nwav-campo-label"/>
+            <TextField fx:id="nwavTxtAutor"/>
+            <Label text="Asunto" styleClass="nwav-campo-label"/>
+            <TextField fx:id="nwavTxtAsunto"/>
+            <Label text="Palabras clave" styleClass="nwav-campo-label"/>
+            <TextField fx:id="nwavTxtPalabrasClave" promptText="Separadas por comas"/>
+            <Separator/>
+            <GridPane hgap="12.0" vgap="8.0">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="110.0"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="Aplicación" styleClass="nwav-texto-tenue"/>
+                <Label fx:id="nwavLblCreador" wrapText="true" GridPane.columnIndex="1"/>
+                <Label text="Productor" styleClass="nwav-texto-tenue" GridPane.rowIndex="1"/>
+                <Label fx:id="nwavLblProductor" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <Label text="Creado" styleClass="nwav-texto-tenue" GridPane.rowIndex="2"/>
+                <Label fx:id="nwavLblCreacion" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                <Label text="Modificado" styleClass="nwav-texto-tenue" GridPane.rowIndex="3"/>
+                <Label fx:id="nwavLblModificacion" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                <Label text="Archivo" styleClass="nwav-texto-tenue" GridPane.rowIndex="4"/>
+                <Label fx:id="nwavLblArchivo" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                <Label text="Seguridad" styleClass="nwav-texto-tenue" GridPane.rowIndex="5"/>
+                <Label fx:id="nwavLblSeguridad" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+            </GridPane>
+        </VBox>
+    </ScrollPane>
+
+    <HBox styleClass="nwav-panel-pie" spacing="10.0" alignment="CENTER_RIGHT">
+        <Button text="Cancelar" onAction="#nwavOnCerrar" styleClass="button-outlined" cancelButton="true"/>
+        <Button fx:id="nwavBtnGuardar" text="Aplicar cambios" onAction="#nwavOnGuardar" styleClass="accent">
+            <graphic><FontIcon iconLiteral="fth-check"/></graphic>
+        </Button>
+    </HBox>
+</VBox>

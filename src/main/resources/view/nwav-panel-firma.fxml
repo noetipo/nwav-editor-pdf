@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nwav.editorpdf.controller.NwavPanelFirmaController"
+      styleClass="nwav-panel" prefWidth="460.0" maxWidth="460.0" maxHeight="Infinity">
+
+    <HBox styleClass="nwav-panel-cabecera" spacing="12.0" alignment="CENTER_LEFT">
+        <StackPane styleClass="nwav-panel-icono">
+            <FontIcon iconLiteral="fth-feather"/>
+        </StackPane>
+        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+            <Label text="Firmar" styleClass="nwav-panel-titulo-grande"/>
+            <Label text="Firma visual (imagen). No es una firma digital con certificado." styleClass="nwav-panel-subtitulo" wrapText="true"/>
+        </VBox>
+        <Button onAction="#nwavOnCerrar" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+        </Button>
+    </HBox>
+
+    <fx:define>
+        <ToggleGroup fx:id="nwavGrupoNueva"/>
+    </fx:define>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="nwav-panel-scroll">
+        <VBox styleClass="nwav-panel-cuerpo" spacing="12.0">
+            <Label text="Firmas guardadas" styleClass="nwav-campo-label"/>
+            <ListView fx:id="nwavListaFirmas" prefHeight="190.0" styleClass="nwav-lista-panel"/>
+            <HBox spacing="8.0">
+                <Button fx:id="nwavBtnColocar" text="Colocar en la página" onAction="#nwavOnColocar" styleClass="accent">
+                    <graphic><FontIcon iconLiteral="fth-edit-2"/></graphic>
+                </Button>
+                <Button fx:id="nwavBtnEliminar" onAction="#nwavOnEliminar" styleClass="button-icon, flat">
+                    <graphic><FontIcon iconLiteral="fth-trash-2"/></graphic>
+                    <tooltip><Tooltip text="Eliminar la firma guardada"/></tooltip>
+                </Button>
+            </HBox>
+            <Separator/>
+            <Label text="Nueva firma" styleClass="nwav-tarjeta-titulo"/>
+            <HBox styleClass="nwav-selector-segmentos">
+                <ToggleButton fx:id="nwavTglDibujar" text="Dibujar" toggleGroup="$nwavGrupoNueva" selected="true"
+                              styleClass="left-pill" maxWidth="Infinity" HBox.hgrow="ALWAYS">
+                    <graphic><FontIcon iconLiteral="fth-pen-tool"/></graphic>
+                </ToggleButton>
+                <ToggleButton fx:id="nwavTglCargar" text="Cargar imagen" toggleGroup="$nwavGrupoNueva"
+                              styleClass="right-pill" maxWidth="Infinity" HBox.hgrow="ALWAYS">
+                    <graphic><FontIcon iconLiteral="fth-upload"/></graphic>
+                </ToggleButton>
+            </HBox>
+            <VBox fx:id="nwavSeccionDibujar" spacing="6.0">
+                <StackPane styleClass="nwav-marco-lienzo" maxWidth="-Infinity">
+                    <Canvas fx:id="nwavLienzo" width="380.0" height="150.0"/>
+                </StackPane>
+                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                    <Label text="Firma con el ratón o el trackpad." styleClass="nwav-panel-ayuda" HBox.hgrow="ALWAYS"
+                           maxWidth="Infinity"/>
+                    <Button text="Limpiar" onAction="#nwavOnLimpiarLienzo" styleClass="flat, small"/>
+                </HBox>
+            </VBox>
+            <VBox fx:id="nwavSeccionCargar" spacing="8.0">
+                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                    <Button text="Elegir imagen…" onAction="#nwavOnElegirImagen" styleClass="button-outlined">
+                        <graphic><FontIcon iconLiteral="fth-image"/></graphic>
+                    </Button>
+                    <Label fx:id="nwavLblCargada" text="Ninguna imagen elegida" styleClass="nwav-texto-tenue"
+                           minWidth="0" textOverrun="CENTER_ELLIPSIS"/>
+                </HBox>
+                <ImageView fx:id="nwavVistaCargada" fitHeight="80.0" fitWidth="300.0" preserveRatio="true"/>
+                <CheckBox fx:id="nwavChkQuitarFondo" text="Quitar el fondo blanco (para firmas escaneadas)" selected="true"/>
+            </VBox>
+            <HBox spacing="8.0">
+                <TextField fx:id="nwavTxtNombre" promptText="Nombre (p. ej. «Firma completa»)" HBox.hgrow="ALWAYS"/>
+                <Button text="Guardar firma" onAction="#nwavOnGuardarFirma" styleClass="button-outlined">
+                    <graphic><FontIcon iconLiteral="fth-save"/></graphic>
+                </Button>
+            </HBox>
+        </VBox>
+    </ScrollPane>
+
+    <HBox styleClass="nwav-panel-pie" spacing="10.0" alignment="CENTER_RIGHT">
+        <Button text="Cerrar" onAction="#nwavOnCerrar" styleClass="button-outlined" cancelButton="true"/>
+    </HBox>
+</VBox>

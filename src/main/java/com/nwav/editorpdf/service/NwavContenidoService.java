@@ -34,15 +34,12 @@ import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationText;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationTextMarkup;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationUnderline;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary;
-import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.pdfbox.text.TextPosition;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -162,75 +159,18 @@ public class NwavContenidoService {
      */
     public List<NwavRectangulo> nwavLineasDeTexto(NwavDocumentoPdf nwavDocumento, int nwavPagina,
                                                   NwavRectangulo nwavZona) {
-        List<TextPosition> nwavPosiciones;
+        List<NwavTextoPagina.NwavGlifo> nwavLetras;
         synchronized (nwavDocumento) {
             nwavDocumento.nwavVerificarAbierto();
-            nwavPosiciones = nwavPosicionesDeTexto(nwavDocumento.nwavPdDocument(), nwavPagina);
+            nwavLetras = NwavTextoPagina.nwavLetras(nwavDocumento.nwavPdDocument(), nwavPagina);
         }
-        record NwavGlifo(double nwavX, double nwavArriba, double nwavDerecha, double nwavAbajo, double nwavBase,
-                         double nwavTamano) {
-        }
-        List<NwavGlifo> nwavDentro = new ArrayList<>();
-        for (TextPosition nwavPosicion : nwavPosiciones) {
-            if (nwavPosicion.getUnicode() == null || nwavPosicion.getUnicode().isBlank()) {
-                continue;
-            }
-            double nwavTamano = Math.max(nwavPosicion.getFontSizeInPt(), nwavPosicion.getHeight());
-            double nwavBase = nwavPosicion.getY();
-            NwavGlifo nwavGlifo = new NwavGlifo(nwavPosicion.getX(), nwavBase - nwavTamano * 0.8,
-                    nwavPosicion.getX() + nwavPosicion.getWidth(), nwavBase + nwavTamano * 0.22, nwavBase, nwavTamano);
-            double nwavCentroX = (nwavGlifo.nwavX() + nwavGlifo.nwavDerecha()) / 2;
-            boolean nwavCruza = nwavCentroX >= nwavZona.nwavX() && nwavCentroX <= nwavZona.nwavDerecha()
-                    && nwavGlifo.nwavArriba() < nwavZona.nwavAbajo() && nwavGlifo.nwavAbajo() > nwavZona.nwavY();
-            if (nwavCruza) {
-                nwavDentro.add(nwavGlifo);
-            }
-        }
-        nwavDentro.sort(Comparator.comparingDouble(NwavGlifo::nwavBase).thenComparingDouble(NwavGlifo::nwavX));
-        List<NwavRectangulo> nwavLineas = new ArrayList<>();
-        List<NwavGlifo> nwavLinea = new ArrayList<>();
-        for (NwavGlifo nwavGlifo : nwavDentro) {
-            if (!nwavLinea.isEmpty()
-                    && Math.abs(nwavGlifo.nwavBase() - nwavLinea.get(0).nwavBase()) > nwavLinea.get(0).nwavTamano() * 0.5) {
-                nwavLineas.add(nwavCaja(nwavLinea.stream().mapToDouble(NwavGlifo::nwavX).min().orElse(0),
-                        nwavLinea.stream().mapToDouble(NwavGlifo::nwavArriba).min().orElse(0),
-                        nwavLinea.stream().mapToDouble(NwavGlifo::nwavDerecha).max().orElse(0),
-                        nwavLinea.stream().mapToDouble(NwavGlifo::nwavAbajo).max().orElse(0)));
-                nwavLinea.clear();
-            }
-            nwavLinea.add(nwavGlifo);
-        }
-        if (!nwavLinea.isEmpty()) {
-            nwavLineas.add(nwavCaja(nwavLinea.stream().mapToDouble(NwavGlifo::nwavX).min().orElse(0),
-                    nwavLinea.stream().mapToDouble(NwavGlifo::nwavArriba).min().orElse(0),
-                    nwavLinea.stream().mapToDouble(NwavGlifo::nwavDerecha).max().orElse(0),
-                    nwavLinea.stream().mapToDouble(NwavGlifo::nwavAbajo).max().orElse(0)));
-        }
-        return nwavLineas;
-    }
-
-    private static NwavRectangulo nwavCaja(double nwavX1, double nwavY1, double nwavX2, double nwavY2) {
-        return new NwavRectangulo(nwavX1, nwavY1, nwavX2 - nwavX1, nwavY2 - nwavY1);
-    }
-
-    private static List<TextPosition> nwavPosicionesDeTexto(PDDocument nwavPd, int nwavPagina) {
-        List<TextPosition> nwavPosiciones = new ArrayList<>();
-        try {
-            PDFTextStripper nwavExtractor = new PDFTextStripper() {
-                @Override
-                protected void writeString(String nwavTexto, List<TextPosition> nwavLetras) {
-                    nwavPosiciones.addAll(nwavLetras);
-                }
-            };
-            nwavExtractor.setSortByPosition(true);
-            nwavExtractor.setStartPage(nwavPagina + 1);
-            nwavExtractor.setEndPage(nwavPagina + 1);
-            nwavExtractor.getText(nwavPd);
-        } catch (IOException | RuntimeException nwavError) {
-            // Sin permiso de extraccion o texto ilegible: se usara la zona dibujada.
-            nwavLog.debug("No se pudo leer el texto de la pagina {}", nwavPagina + 1, nwavError);
-        }
-        return nwavPosiciones;
+        List<NwavTextoPagina.NwavGlifo> nwavDentro = nwavLetras.stream()
+                .filter(nwavGlifo -> nwavGlifo != null && !nwavGlifo.nwavTexto().isBlank())
+                .filter(nwavGlifo -> nwavGlifo.nwavCentroX() >= nwavZona.nwavX()
+                        && nwavGlifo.nwavCentroX() <= nwavZona.nwavDerecha()
+                        && nwavGlifo.nwavArriba() < nwavZona.nwavAbajo() && nwavGlifo.nwavAbajo() > nwavZona.nwavY())
+                .toList();
+        return NwavTextoPagina.nwavAgruparEnLineas(nwavDentro);
     }
 
     // ============================================================ contenido fijo
@@ -258,12 +198,39 @@ public class NwavContenidoService {
         });
     }
 
+    /** Firma u otra imagen ya en memoria (PNG/JPG), p. ej. de la base de datos. */
+    public NwavComando nwavComandoImagenBytes(NwavDocumentoPdf nwavDocumento, int nwavPagina, byte[] nwavImagen,
+                                              NwavRectangulo nwavZona, NwavTipoOperacion nwavTipo,
+                                              String nwavDescripcion) {
+        nwavValidarZona(nwavZona);
+        if (nwavImagen == null || nwavImagen.length == 0) {
+            throw new NwavEditorException("La imagen está vacía.");
+        }
+        byte[] nwavCopia = nwavImagen.clone();
+        return new NwavComandoContenido(this, nwavDocumento, nwavPagina, nwavTipo, nwavDescripcion, () -> {
+            PDImageXObject nwavXObjeto;
+            synchronized (nwavDocumento) {
+                try {
+                    nwavXObjeto = PDImageXObject.createFromByteArray(nwavDocumento.nwavPdDocument(), nwavCopia, "nwav");
+                } catch (IOException | IllegalArgumentException nwavError) {
+                    throw new NwavEditorException("La imagen no tiene un formato compatible.", nwavError);
+                }
+            }
+            nwavDibujarXObjeto(nwavDocumento, nwavPagina, nwavXObjeto, nwavZona);
+        });
+    }
+
     private void nwavDibujarImagen(NwavDocumentoPdf nwavDocumento, int nwavPagina, Path nwavRuta,
                                    NwavRectangulo nwavZona) {
         PDImageXObject nwavImagen;
         synchronized (nwavDocumento) {
             nwavImagen = NwavPaginaService.nwavCargarImagen(nwavDocumento.nwavPdDocument(), nwavRuta);
         }
+        nwavDibujarXObjeto(nwavDocumento, nwavPagina, nwavImagen, nwavZona);
+    }
+
+    private static void nwavDibujarXObjeto(NwavDocumentoPdf nwavDocumento, int nwavPagina, PDImageXObject nwavImagen,
+                                           NwavRectangulo nwavZona) {
         nwavDibujarEnPagina(nwavDocumento, nwavPagina, (nwavFlujo, nwavGeometria) ->
                 nwavFlujo.drawImage(nwavImagen, (float) nwavZona.nwavX(),
                         (float) (nwavGeometria.nwavAltoVisual() - nwavZona.nwavAbajo()),
@@ -282,7 +249,7 @@ public class NwavContenidoService {
     }
 
     @FunctionalInterface
-    private interface NwavDibujo {
+    interface NwavDibujo {
         void nwavDibujar(PDPageContentStream nwavFlujo, NwavGeometriaPagina nwavGeometria) throws IOException;
     }
 
@@ -290,7 +257,7 @@ public class NwavContenidoService {
      * Agrega un flujo de contenido al final de la pagina, aislado del contenido original
      * (q/Q) y con las coordenadas visuales ya transformadas a las de la pagina.
      */
-    private static void nwavDibujarEnPagina(NwavDocumentoPdf nwavDocumento, int nwavPagina, NwavDibujo nwavDibujo) {
+    static void nwavDibujarEnPagina(NwavDocumentoPdf nwavDocumento, int nwavPagina, NwavDibujo nwavDibujo) {
         synchronized (nwavDocumento) {
             nwavDocumento.nwavVerificarAbierto();
             PDDocument nwavPd = nwavDocumento.nwavPdDocument();

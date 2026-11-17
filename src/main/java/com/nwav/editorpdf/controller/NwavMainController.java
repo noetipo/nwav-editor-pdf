@@ -111,6 +111,7 @@ public class NwavMainController {
     @FXML private MenuItem nwavMnuRehacer;
     @FXML private Menu nwavMnuPaginas;
     @FXML private Menu nwavMnuVer;
+    @FXML private Menu nwavMnuHerramientas;
     @FXML private CheckMenuItem nwavMnuMiniaturas;
 
     @FXML private Label nwavLblEstadoDocumento;
@@ -173,6 +174,9 @@ public class NwavMainController {
         nwavMnuVer.getItems().stream()
                 .filter(nwavItem -> nwavItem != nwavMnuMiniaturas && !(nwavItem instanceof SeparatorMenuItem))
                 .forEach(nwavItem -> nwavItem.disableProperty().bind(nwavVisor.nwavHayDocumentoProperty().not()));
+        nwavMnuHerramientas.getItems().stream()
+                .filter(nwavItem -> !(nwavItem instanceof SeparatorMenuItem))
+                .forEach(nwavItem -> nwavItem.disableProperty().bind(nwavVisor.nwavPuedeEditarProperty().not()));
         nwavMnuMiniaturas.selectedProperty().bindBidirectional(nwavVisor.nwavMiniaturasVisiblesProperty());
 
         nwavConfigurarArrastrarSoltar();
@@ -391,6 +395,54 @@ public class NwavMainController {
     private void nwavOnPaginaSiguiente() {
         nwavIrA(NWAV_VISTA_VISOR);
         nwavVisor.nwavOnPaginaSiguiente();
+    }
+
+    @FXML
+    private void nwavOnBuscar() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnBuscar();
+    }
+
+    @FXML
+    private void nwavOnFormulario() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnFormulario();
+    }
+
+    @FXML
+    private void nwavOnFirma() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnFirma();
+    }
+
+    @FXML
+    private void nwavOnMarcaAgua() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnMarcaAgua();
+    }
+
+    @FXML
+    private void nwavOnNumerar() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnNumerar();
+    }
+
+    @FXML
+    private void nwavOnEncabezado() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnEncabezado();
+    }
+
+    @FXML
+    private void nwavOnProteccion() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnProteccion();
+    }
+
+    @FXML
+    private void nwavOnMetadatos() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnMetadatos();
     }
 
     /** Recarga el submenu "Abrir reciente" en segundo plano. */

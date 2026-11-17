@@ -113,6 +113,19 @@
                             <MenuItem text="Dividir PDF…" onAction="#nwavOnDividir"/>
                             <MenuItem id="nwavMnuUnir" text="Unir PDF…" onAction="#nwavOnUnir"/>
                         </Menu>
+                        <Menu fx:id="nwavMnuHerramientas" text="Herramientas">
+                            <MenuItem text="Buscar texto…" onAction="#nwavOnBuscar" accelerator="Shortcut+F"/>
+                            <SeparatorMenuItem/>
+                            <MenuItem text="Rellenar formulario…" onAction="#nwavOnFormulario"/>
+                            <MenuItem text="Firmar…" onAction="#nwavOnFirma"/>
+                            <SeparatorMenuItem/>
+                            <MenuItem text="Marca de agua…" onAction="#nwavOnMarcaAgua"/>
+                            <MenuItem text="Numerar páginas…" onAction="#nwavOnNumerar"/>
+                            <MenuItem text="Encabezado y pie…" onAction="#nwavOnEncabezado"/>
+                            <SeparatorMenuItem/>
+                            <MenuItem text="Protección con contraseña…" onAction="#nwavOnProteccion"/>
+                            <MenuItem text="Propiedades del documento…" onAction="#nwavOnMetadatos"/>
+                        </Menu>
                         <Menu fx:id="nwavMnuVer" text="Ver">
                             <MenuItem text="Acercar" onAction="#nwavOnAcercar" accelerator="Shortcut+Plus"/>
                             <MenuItem text="Alejar" onAction="#nwavOnAlejar" accelerator="Shortcut+Minus"/>

@@ -35,6 +35,10 @@ public class NwavEdicionService {
 
     private final NwavPaginaService nwavPaginas;
     private final NwavContenidoService nwavContenido;
+    private final NwavSelloService nwavSellos;
+    private final NwavSeguridadService nwavSeguridad;
+    private final NwavFormularioService nwavFormularios;
+    private final NwavMetadatosService nwavMetadatos;
     private final NwavHistorialService nwavHistorial;
 
     /** Lo que la interfaz necesita saber tras una edicion. */
@@ -113,6 +117,44 @@ public class NwavEdicionService {
                                                  double nwavGrosor) {
         return nwavAplicar(nwavDocumento, nwavContenido.nwavComandoForma(nwavDocumento, nwavPagina, nwavTipo,
                 nwavDesde, nwavHasta, nwavColor, nwavGrosor));
+    }
+
+    // ---------------------------------------------------- herramientas (Fase 4)
+
+    public NwavResultadoEdicion nwavRellenarFormulario(NwavDocumentoPdf nwavDocumento,
+                                                       java.util.Map<String, String> nwavValores) {
+        return nwavAplicar(nwavDocumento, nwavFormularios.nwavComandoRellenar(nwavDocumento, nwavValores));
+    }
+
+    public NwavResultadoEdicion nwavMarcaAgua(NwavDocumentoPdf nwavDocumento,
+                                              com.nwav.editorpdf.model.NwavOpcionesMarcaAgua nwavOpciones) {
+        return nwavAplicar(nwavDocumento, nwavSellos.nwavComandoMarcaAgua(nwavDocumento, nwavOpciones));
+    }
+
+    public NwavResultadoEdicion nwavEncabezado(NwavDocumentoPdf nwavDocumento,
+                                               com.nwav.editorpdf.model.NwavOpcionesEncabezado nwavOpciones) {
+        return nwavAplicar(nwavDocumento, nwavSellos.nwavComandoEncabezado(nwavDocumento, nwavOpciones));
+    }
+
+    public NwavResultadoEdicion nwavProteger(NwavDocumentoPdf nwavDocumento,
+                                             com.nwav.editorpdf.model.NwavOpcionesProteccion nwavOpciones) {
+        return nwavAplicar(nwavDocumento, nwavSeguridad.nwavComandoProteger(nwavDocumento, nwavOpciones));
+    }
+
+    public NwavResultadoEdicion nwavQuitarProteccion(NwavDocumentoPdf nwavDocumento, String nwavContrasenaPropietario) {
+        return nwavAplicar(nwavDocumento,
+                nwavSeguridad.nwavComandoQuitarProteccion(nwavDocumento, nwavContrasenaPropietario));
+    }
+
+    public NwavResultadoEdicion nwavInsertarFirma(NwavDocumentoPdf nwavDocumento, int nwavPagina, byte[] nwavPng,
+                                                  NwavRectangulo nwavZona) {
+        return nwavAplicar(nwavDocumento, nwavContenido.nwavComandoImagenBytes(nwavDocumento, nwavPagina, nwavPng,
+                nwavZona, NwavTipoOperacion.NWAV_FIRMA, "Insertar firma"));
+    }
+
+    public NwavResultadoEdicion nwavEditarMetadatos(NwavDocumentoPdf nwavDocumento,
+                                                    com.nwav.editorpdf.model.NwavMetadatos nwavNuevos) {
+        return nwavAplicar(nwavDocumento, nwavMetadatos.nwavComandoEditar(nwavDocumento, nwavNuevos));
     }
 
     /** Ejecuta cualquier comando (tambien los de fases posteriores). */

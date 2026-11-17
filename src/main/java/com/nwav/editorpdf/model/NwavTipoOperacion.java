@@ -20,6 +20,13 @@ public enum NwavTipoOperacion {
     NWAV_NOTA("Agregar nota"),
     NWAV_DIBUJO("Dibujo a mano alzada"),
     NWAV_FORMA("Agregar forma"),
+    NWAV_FORMULARIO("Rellenar formulario"),
+    NWAV_MARCA_AGUA("Marca de agua"),
+    NWAV_ENCABEZADO("Encabezado, pie y numeración"),
+    NWAV_PROTEGER("Proteger con contraseña"),
+    NWAV_QUITAR_PROTECCION("Quitar protección"),
+    NWAV_FIRMA("Insertar firma"),
+    NWAV_METADATOS("Editar metadatos"),
     NWAV_GUARDAR("Guardar"),
     NWAV_DESHACER("Deshacer"),
     NWAV_REHACER("Rehacer");

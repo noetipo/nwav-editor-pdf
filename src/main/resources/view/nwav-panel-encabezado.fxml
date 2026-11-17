@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nwav.editorpdf.controller.NwavPanelEncabezadoController"
+      styleClass="nwav-panel" prefWidth="460.0" maxWidth="460.0" maxHeight="Infinity">
+
+    <HBox styleClass="nwav-panel-cabecera" spacing="12.0" alignment="CENTER_LEFT">
+        <StackPane styleClass="nwav-panel-icono">
+            <FontIcon iconLiteral="fth-hash"/>
+        </StackPane>
+        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+            <Label text="Encabezado, pie y numeración" styleClass="nwav-panel-titulo-grande"/>
+            <Label text="Texto arriba y abajo de cada página. Usa {n}, {total}, {archivo} y {fecha}." styleClass="nwav-panel-subtitulo" wrapText="true"/>
+        </VBox>
+        <Button onAction="#nwavOnCerrar" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+        </Button>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="nwav-panel-scroll">
+        <VBox styleClass="nwav-panel-cuerpo" spacing="12.0">
+            <HBox spacing="8.0" alignment="CENTER_LEFT">
+                <Label text="Atajos:" styleClass="nwav-texto-tenue"/>
+                <Button text="Número" onAction="#nwavOnPresetNumero" styleClass="button-outlined, small"/>
+                <Button text="Página n de total" onAction="#nwavOnPresetPaginaDeTotal" styleClass="button-outlined, small"/>
+            </HBox>
+            <Label text="Encabezado" styleClass="nwav-campo-label"/>
+            <HBox spacing="8.0">
+                <TextField fx:id="nwavTxtEncabezado" promptText="Ej.: Informe {archivo}" HBox.hgrow="ALWAYS"/>
+                <ComboBox fx:id="nwavCmbAlineacionEncabezado" prefWidth="120.0"/>
+            </HBox>
+            <Label text="Pie de página" styleClass="nwav-campo-label"/>
+            <HBox spacing="8.0">
+                <TextField fx:id="nwavTxtPie" promptText="Ej.: Página {n} de {total}" HBox.hgrow="ALWAYS"/>
+                <ComboBox fx:id="nwavCmbAlineacionPie" prefWidth="120.0"/>
+            </HBox>
+            <GridPane hgap="12.0" vgap="10.0">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="130.0"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="Letra" styleClass="nwav-campo-label"/>
+                <ComboBox fx:id="nwavCmbFuente" maxWidth="Infinity" GridPane.columnIndex="1"/>
+                <Label text="Tamaño y color" styleClass="nwav-campo-label" GridPane.rowIndex="1"/>
+                <HBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                    <Spinner fx:id="nwavSpnTamano" editable="true" prefWidth="90.0"/>
+                    <ColorPicker fx:id="nwavSelectorColor"/>
+                </HBox>
+                <Label text="Margen (pt)" styleClass="nwav-campo-label" GridPane.rowIndex="2"/>
+                <Spinner fx:id="nwavSpnMargen" editable="true" prefWidth="90.0" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                <Label text="Primer número" styleClass="nwav-campo-label" GridPane.rowIndex="3"/>
+                <Spinner fx:id="nwavSpnNumeroInicial" editable="true" prefWidth="110.0" GridPane.columnIndex="1"
+                         GridPane.rowIndex="3"/>
+                <Label text="Páginas" styleClass="nwav-campo-label" GridPane.rowIndex="4"/>
+                <TextField fx:id="nwavTxtPaginas" promptText="Todas (o p. ej. 2-)" GridPane.columnIndex="1"
+                           GridPane.rowIndex="4"/>
+            </GridPane>
+            <Label text="«Primer número» es el que lleva la página 1 del documento. Se fija en las páginas y se puede deshacer."
+                   styleClass="nwav-panel-ayuda" wrapText="true"/>
+        </VBox>
+    </ScrollPane>
+
+    <HBox styleClass="nwav-panel-pie" spacing="10.0" alignment="CENTER_RIGHT">
+        <Button text="Cancelar" onAction="#nwavOnCerrar" styleClass="button-outlined" cancelButton="true"/>
+        <Button  text="Aplicar" onAction="#nwavOnAplicar" styleClass="accent">
+            <graphic><FontIcon iconLiteral="fth-check"/></graphic>
+        </Button>
+    </HBox>
+</VBox>

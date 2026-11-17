@@ -47,6 +47,8 @@ public class NwavDocumentoPdf implements AutoCloseable {
     private final Map<Object, Integer> nwavVersiones = Collections.synchronizedMap(new IdentityHashMap<>());
     private volatile List<NwavTamanoPagina> nwavTamanos;
     private volatile boolean nwavCerrado;
+    /** Proteger o quitar proteccion, pendiente hasta el proximo guardado (null = sin cambios). */
+    private volatile NwavCambioProteccion nwavProteccionPendiente;
 
     NwavDocumentoPdf(Path nwavRuta, PDDocument nwavDocumento, String nwavContrasena) {
         this.nwavRuta = nwavRuta;
@@ -127,6 +129,14 @@ public class NwavDocumentoPdf implements AutoCloseable {
 
     String nwavContrasena() {
         return nwavContrasena;
+    }
+
+    public NwavCambioProteccion getNwavProteccionPendiente() {
+        return nwavProteccionPendiente;
+    }
+
+    void nwavEstablecerProteccionPendiente(NwavCambioProteccion nwavCambio) {
+        this.nwavProteccionPendiente = nwavCambio;
     }
 
     NwavCacheRender nwavCachePaginas() {
