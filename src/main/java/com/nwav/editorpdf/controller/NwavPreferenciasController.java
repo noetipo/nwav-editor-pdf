@@ -42,7 +42,6 @@ public class NwavPreferenciasController implements NwavRefrescable {
     private final NwavMainController nwavMain;
     private final Environment nwavEntorno;
     private final com.nwav.editorpdf.service.herramienta.NwavDependenciasService nwavDependencias;
-    private final com.nwav.editorpdf.service.ia.NwavConfiguracionIaService nwavConfiguracionIa;
 
     @FXML private ComboBox<String> nwavCmbTema;
     @FXML private ComboBox<String> nwavCmbZoomDefecto;
@@ -55,10 +54,6 @@ public class NwavPreferenciasController implements NwavRefrescable {
     @FXML private TextField nwavTxtRutaLibreOffice;
     @FXML private Label nwavLblEstadoOcr;
     @FXML private Label nwavLblEstadoOffice;
-    @FXML private javafx.scene.control.CheckBox nwavChkIaActiva;
-    @FXML private javafx.scene.control.PasswordField nwavTxtClaveIa;
-    @FXML private TextField nwavTxtModeloIa;
-    @FXML private Label nwavLblEstadoIa;
 
     @FXML
     public void initialize() {
@@ -88,29 +83,6 @@ public class NwavPreferenciasController implements NwavRefrescable {
         nwavTxtRutaLibreOffice.setText(nwavConfiguracion.nwavObtener(
                 com.nwav.editorpdf.service.herramienta.NwavDependenciasService.NWAV_CLAVE_RUTA_LIBREOFFICE, ""));
         nwavMostrarEstadoDependencias();
-        nwavCargarIa();
-    }
-
-    private void nwavCargarIa() {
-        nwavChkIaActiva.setSelected(nwavConfiguracionIa.nwavActiva());
-        nwavTxtClaveIa.clear(); // la clave nunca se muestra
-        nwavTxtClaveIa.setPromptText(nwavConfiguracionIa.nwavTieneClave()
-                ? "Guardada (cifrada). Escribe otra para cambiarla" : "sk-ant-…");
-        nwavTxtModeloIa.setText(nwavConfiguracionIa.nwavModelo());
-        nwavTxtModeloIa.setPromptText(com.nwav.editorpdf.service.ia.NwavConfiguracionIaService.NWAV_MODELO_DEFECTO);
-        var nwavEstado = nwavConfiguracionIa.nwavEstado();
-        nwavLblEstadoIa.setText((nwavEstado.nwavDisponible() ? "✓ " : "○ ") + nwavEstado.nwavDetalle());
-    }
-
-    @FXML
-    private void nwavOnBorrarClaveIa() {
-        nwavTareaFondo.nwavEjecutar("Borrando la clave…", () -> {
-            nwavConfiguracionIa.nwavBorrarClave();
-            return null;
-        }, nwavNada -> {
-            nwavNotificador.nwavExito("Clave de API borrada y funciones de IA desactivadas.");
-            nwavCargarIa();
-        }, null);
     }
 
     private void nwavMostrarEstadoDependencias() {
@@ -180,13 +152,6 @@ public class NwavPreferenciasController implements NwavRefrescable {
         String nwavRutaTesseract = nwavTxtRutaTesseract.getText();
         String nwavRutaIdiomas = nwavTxtRutaIdiomas.getText();
         String nwavRutaOffice = nwavTxtRutaLibreOffice.getText();
-        boolean nwavIaActiva = nwavChkIaActiva.isSelected();
-        String nwavClaveIa = nwavTxtClaveIa.getText();
-        String nwavModeloIa = nwavTxtModeloIa.getText();
-        if (nwavIaActiva && !nwavConfiguracionIa.nwavTieneClave() && (nwavClaveIa == null || nwavClaveIa.isBlank())) {
-            nwavNotificador.nwavAdvertencia("Para activar la IA escribe tu clave de API de Anthropic.");
-            return;
-        }
 
         nwavTareaFondo.nwavEjecutar("Guardando preferencias…", () -> {
             nwavConfiguracion.nwavGuardarTemaOscuro(nwavOscuro);
@@ -203,7 +168,6 @@ public class NwavPreferenciasController implements NwavRefrescable {
             nwavConfiguracion.nwavGuardar(com.nwav.editorpdf.service.herramienta.NwavDependenciasService.NWAV_CLAVE_RUTA_LIBREOFFICE,
                     nwavRutaOffice);
             nwavDependencias.nwavRefrescar();
-            nwavConfiguracionIa.nwavGuardar(nwavIaActiva, nwavClaveIa, nwavModeloIa);
             return null;
         }, nwavNada -> {
             if (nwavOscuro != nwavMain.nwavEsOscuro()) {
@@ -212,7 +176,6 @@ public class NwavPreferenciasController implements NwavRefrescable {
             nwavMain.nwavActualizarMenuRecientes();
             nwavNotificador.nwavExito("Preferencias guardadas. Si cambiaste la librería de Tesseract, reinicia la aplicación.");
             nwavMostrarEstadoDependencias();
-            nwavCargarIa();
         }, null);
     }
 
