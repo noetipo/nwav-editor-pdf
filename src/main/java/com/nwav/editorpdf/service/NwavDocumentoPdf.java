@@ -11,7 +11,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Documento abierto en el editor. Envuelve el {@link PDDocument} junto con su renderizador,
@@ -41,6 +43,8 @@ public class NwavDocumentoPdf implements AutoCloseable {
     private final NwavGestorComandos nwavGestor = new NwavGestorComandos();
     /** PDF de los que se importaron paginas: deben seguir abiertos hasta guardar o cerrar. */
     private final List<PDDocument> nwavAuxiliares = new ArrayList<>();
+    /** Version del contenido de cada pagina (por identidad): sube al editarla. */
+    private final Map<Object, Integer> nwavVersiones = Collections.synchronizedMap(new IdentityHashMap<>());
     private volatile List<NwavTamanoPagina> nwavTamanos;
     private volatile boolean nwavCerrado;
 
@@ -131,6 +135,15 @@ public class NwavDocumentoPdf implements AutoCloseable {
 
     NwavCacheRender nwavCacheMiniaturas() {
         return nwavCacheMiniaturas;
+    }
+
+    int nwavVersion(Object nwavPagina) {
+        return nwavVersiones.getOrDefault(nwavPagina, 0);
+    }
+
+    /** Invalida las imagenes en cache de la pagina (su contenido cambio). */
+    void nwavMarcarModificada(Object nwavPagina) {
+        nwavVersiones.merge(nwavPagina, 1, Integer::sum);
     }
 
     void nwavRetenerAuxiliar(PDDocument nwavAuxiliar) {

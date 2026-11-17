@@ -683,3 +683,96 @@
     -fx-alignment: CENTER_LEFT;
     -fx-padding: 0 10 0 10;
 }
+
+/* ================== FASE 3: EDICION DE CONTENIDO ====================== */
+
+.nwav-barra-edicion {
+    -fx-background-color: -color-bg-default;
+    -fx-border-color: transparent transparent -color-border-muted transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 5 14 5 14;
+}
+
+.nwav-boton-herramienta:selected {
+    -fx-background-color: -color-accent-subtle;
+}
+
+.nwav-boton-herramienta:selected .ikonli-font-icon {
+    -fx-icon-color: -color-accent-fg;
+}
+
+.nwav-boton-cubrir:selected {
+    -fx-background-color: -color-warning-subtle;
+}
+
+.nwav-boton-cubrir:selected .ikonli-font-icon {
+    -fx-icon-color: -color-warning-fg;
+}
+
+.nwav-selector-color {
+    -fx-pref-width: 56;
+}
+
+.nwav-ayuda-herramienta {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-padding: 0 0 0 8;
+}
+
+.nwav-ayuda-herramienta.nwav-ayuda-aviso {
+    -fx-text-fill: -color-warning-fg;
+    -fx-font-weight: bold;
+}
+
+.nwav-capa-edicion {
+    -fx-background-color: transparent;
+}
+
+.nwav-pendiente {
+    -fx-background-color: rgba(255, 255, 255, 0.0);
+}
+
+.nwav-pendiente-acciones {
+    -fx-background-color: -color-bg-default;
+    -fx-background-radius: 8;
+    -fx-padding: 3;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 8, 0, 0, 2);
+    -fx-max-width: -fx-pref-width;
+}
+
+.nwav-texto-pendiente,
+.nwav-texto-pendiente > .scroll-pane > .viewport > .content {
+    -fx-background-color: rgba(255, 255, 255, 0.55);
+}
+
+.nwav-texto-pendiente {
+    -fx-border-color: #1e90ff;
+    -fx-border-style: segments(6, 4);
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+
+.nwav-nota-pendiente {
+    -fx-background-color: #fff8c5;
+    -fx-background-radius: 8;
+    -fx-padding: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 10, 0, 0, 3);
+}
+
+.nwav-nota-icono {
+    -fx-icon-color: #b58100;
+    -fx-icon-size: 18px;
+}
+
+.nwav-imagen-pendiente {
+    -fx-border-color: #1e90ff;
+    -fx-border-width: 2;
+    -fx-border-style: segments(6, 4);
+}
+
+.nwav-asa {
+    -fx-background-color: #1e90ff;
+    -fx-background-radius: 2;
+    -fx-border-color: white;
+    -fx-border-width: 1;
+}

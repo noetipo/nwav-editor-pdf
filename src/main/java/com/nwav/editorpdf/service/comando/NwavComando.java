@@ -22,6 +22,14 @@ public interface NwavComando {
         return -1;
     }
 
+    /**
+     * {@code true} si cambia el numero, el orden o el tamano de las paginas (el visor debe
+     * reconstruirse); {@code false} si solo cambia el contenido de una pagina.
+     */
+    default boolean nwavCambiaEstructura() {
+        return true;
+    }
+
     /** {@code false} si la ejecucion no cambio nada (no se apila en el historial). */
     default boolean nwavTuvoEfecto() {
         return true;

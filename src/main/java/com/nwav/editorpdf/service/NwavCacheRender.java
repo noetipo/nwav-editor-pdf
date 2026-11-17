@@ -9,13 +9,14 @@ import java.util.Map;
  * Cache LRU de paginas renderizadas, limitada por memoria (bytes de pixeles), no por
  * cantidad de entradas. Es segura entre hilos.
  * <p>
- * La clave es la identidad de la pagina (su objeto PDF, no su numero), su rotacion y la
- * escala: asi reordenar, insertar o eliminar paginas no invalida las imagenes ya hechas.
+ * La clave es la identidad de la pagina (su objeto PDF, no su numero), su rotacion, la
+ * version de su contenido y la escala: reordenar no invalida las imagenes ya hechas, pero
+ * editar el contenido de una pagina si.
  */
 public class NwavCacheRender {
 
     /** {@code nwavPagina} se compara por identidad (los objetos COS no redefinen equals). */
-    private record NwavClave(Object nwavPagina, int nwavRotacion, int nwavEscalaMilesimas) {
+    private record NwavClave(Object nwavPagina, int nwavRotacion, int nwavVersion, int nwavEscalaMilesimas) {
     }
 
     private final long nwavLimiteBytes;
@@ -26,17 +27,18 @@ public class NwavCacheRender {
         this.nwavLimiteBytes = nwavLimiteBytes;
     }
 
-    public synchronized BufferedImage nwavObtener(Object nwavPagina, int nwavRotacion, float nwavEscala) {
-        return nwavEntradas.get(nwavClave(nwavPagina, nwavRotacion, nwavEscala));
+    public synchronized BufferedImage nwavObtener(Object nwavPagina, int nwavRotacion, int nwavVersion,
+                                               float nwavEscala) {
+        return nwavEntradas.get(nwavClave(nwavPagina, nwavRotacion, nwavVersion, nwavEscala));
     }
 
-    public synchronized void nwavGuardar(Object nwavPagina, int nwavRotacion, float nwavEscala,
+    public synchronized void nwavGuardar(Object nwavPagina, int nwavRotacion, int nwavVersion, float nwavEscala,
                                          BufferedImage nwavImagen) {
         long nwavTamano = nwavBytes(nwavImagen);
         if (nwavTamano > nwavLimiteBytes) {
             return; // Mas grande que toda la cache: no merece la pena guardarla.
         }
-        BufferedImage nwavAnterior = nwavEntradas.put(nwavClave(nwavPagina, nwavRotacion, nwavEscala), nwavImagen);
+        BufferedImage nwavAnterior = nwavEntradas.put(nwavClave(nwavPagina, nwavRotacion, nwavVersion, nwavEscala), nwavImagen);
         if (nwavAnterior != null) {
             nwavBytesUsados -= nwavBytes(nwavAnterior);
         }
@@ -62,8 +64,8 @@ public class NwavCacheRender {
         return nwavBytesUsados;
     }
 
-    private static NwavClave nwavClave(Object nwavPagina, int nwavRotacion, float nwavEscala) {
-        return new NwavClave(nwavPagina, nwavRotacion, Math.round(nwavEscala * 1000f));
+    private static NwavClave nwavClave(Object nwavPagina, int nwavRotacion, int nwavVersion, float nwavEscala) {
+        return new NwavClave(nwavPagina, nwavRotacion, nwavVersion, Math.round(nwavEscala * 1000f));
     }
 
     private static long nwavBytes(BufferedImage nwavImagen) {

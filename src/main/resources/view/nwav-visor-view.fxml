@@ -15,6 +15,7 @@
 
     <!-- ============ BARRA DE HERRAMIENTAS ============ -->
     <top>
+      <VBox>
         <HBox styleClass="nwav-barra-visor" spacing="6.0" alignment="CENTER_LEFT">
             <Button text="Abrir" onAction="#nwavOnAbrir" styleClass="accent">
                 <graphic><FontIcon iconLiteral="fth-folder"/></graphic>
@@ -114,6 +115,36 @@
             <Region HBox.hgrow="ALWAYS"/>
             <Label fx:id="nwavLblArchivo" styleClass="nwav-nombre-archivo" textOverrun="CENTER_ELLIPSIS" minWidth="0"/>
         </HBox>
+
+        <!-- Herramientas de edicion de contenido (Fase 3); los botones se crean en el controlador -->
+        <HBox fx:id="nwavBarraEdicion" styleClass="nwav-barra-edicion" spacing="6.0" alignment="CENTER_LEFT">
+            <HBox fx:id="nwavBotonesHerramientas" spacing="2.0" alignment="CENTER_LEFT"/>
+            <Separator orientation="VERTICAL"/>
+            <ColorPicker fx:id="nwavSelectorColor" styleClass="nwav-selector-color">
+                <tooltip><Tooltip text="Color"/></tooltip>
+            </ColorPicker>
+            <HBox fx:id="nwavControlesGrosor" spacing="6.0" alignment="CENTER_LEFT">
+                <Label text="Grosor" styleClass="nwav-texto-tenue"/>
+                <Spinner fx:id="nwavSpnGrosor" editable="true" prefWidth="84.0"/>
+            </HBox>
+            <HBox fx:id="nwavControlesTexto" spacing="6.0" alignment="CENTER_LEFT">
+                <ComboBox fx:id="nwavCmbFuente" prefWidth="190.0"/>
+                <Spinner fx:id="nwavSpnTamano" editable="true" prefWidth="76.0">
+                    <tooltip><Tooltip text="Tamaño en puntos"/></tooltip>
+                </Spinner>
+                <ToggleButton fx:id="nwavTglNegrita" styleClass="button-icon, flat">
+                    <graphic><FontIcon iconLiteral="fth-bold"/></graphic>
+                    <tooltip><Tooltip text="Negrita"/></tooltip>
+                </ToggleButton>
+                <ToggleButton fx:id="nwavTglCursiva" styleClass="button-icon, flat">
+                    <graphic><FontIcon iconLiteral="fth-italic"/></graphic>
+                    <tooltip><Tooltip text="Cursiva"/></tooltip>
+                </ToggleButton>
+            </HBox>
+            <Label fx:id="nwavLblAyudaHerramienta" styleClass="nwav-ayuda-herramienta" wrapText="true"
+                   minWidth="0" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        </HBox>
+      </VBox>
     </top>
 
     <!-- ============ MINIATURAS ============ -->

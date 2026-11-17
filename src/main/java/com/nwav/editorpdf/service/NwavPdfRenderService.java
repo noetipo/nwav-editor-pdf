@@ -58,14 +58,15 @@ public class NwavPdfRenderService {
             PDPage nwavPagina = nwavDocumento.nwavPdDocument().getPage(nwavIndice);
             Object nwavIdentidad = nwavPagina.getCOSObject();
             int nwavRotacion = NwavDocumentoPdf.nwavRotacionNormalizada(nwavPagina);
-            BufferedImage nwavGuardada = nwavCache.nwavObtener(nwavIdentidad, nwavRotacion, nwavSegura);
+            int nwavVersion = nwavDocumento.nwavVersion(nwavIdentidad);
+            BufferedImage nwavGuardada = nwavCache.nwavObtener(nwavIdentidad, nwavRotacion, nwavVersion, nwavSegura);
             if (nwavGuardada != null) {
                 return nwavGuardada;
             }
             try {
                 BufferedImage nwavImagen = nwavDocumento.nwavRenderizador()
                         .renderImage(nwavIndice, nwavSegura, ImageType.RGB);
-                nwavCache.nwavGuardar(nwavIdentidad, nwavRotacion, nwavSegura, nwavImagen);
+                nwavCache.nwavGuardar(nwavIdentidad, nwavRotacion, nwavVersion, nwavSegura, nwavImagen);
                 return nwavImagen;
             } catch (IOException nwavError) {
                 throw new NwavEditorException("No se pudo dibujar la página " + (nwavIndice + 1)

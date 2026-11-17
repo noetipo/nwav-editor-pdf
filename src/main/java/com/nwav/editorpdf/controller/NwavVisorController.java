@@ -5,6 +5,23 @@ import com.nwav.editorpdf.exception.NwavArchivoNoEncontradoException;
 import com.nwav.editorpdf.exception.NwavContrasenaIncorrectaException;
 import com.nwav.editorpdf.exception.NwavContrasenaRequeridaException;
 import com.nwav.editorpdf.exception.NwavTraductorErrores;
+import com.nwav.editorpdf.model.NwavColorRgb;
+import com.nwav.editorpdf.model.NwavEstiloTexto;
+import com.nwav.editorpdf.model.NwavFuente;
+import com.nwav.editorpdf.model.NwavPunto;
+import com.nwav.editorpdf.model.NwavRectangulo;
+import com.nwav.editorpdf.model.NwavTipoForma;
+import com.nwav.editorpdf.model.NwavTipoMarca;
+import com.nwav.editorpdf.ui.NwavEditorInteractivo;
+import com.nwav.editorpdf.ui.NwavEstadoHerramientas;
+import com.nwav.editorpdf.ui.NwavHerramienta;
+import javafx.geometry.Orientation;
+import javafx.scene.control.ColorPicker;
+import javafx.scene.control.Separator;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import com.nwav.editorpdf.model.NwavArchivoReciente;
 import com.nwav.editorpdf.model.NwavModoZoom;
 import com.nwav.editorpdf.model.NwavZoomPreferido;
@@ -144,12 +161,25 @@ public class NwavVisorController {
     @FXML private ScrollPane nwavScroll;
     @FXML private VBox nwavContenedorPaginas;
     @FXML private VBox nwavPanelVacio;
+    @FXML private HBox nwavBarraEdicion;
+    @FXML private HBox nwavBotonesHerramientas;
+    @FXML private ColorPicker nwavSelectorColor;
+    @FXML private HBox nwavControlesGrosor;
+    @FXML private Spinner<Double> nwavSpnGrosor;
+    @FXML private HBox nwavControlesTexto;
+    @FXML private ComboBox<NwavFuente> nwavCmbFuente;
+    @FXML private Spinner<Integer> nwavSpnTamano;
+    @FXML private ToggleButton nwavTglNegrita;
+    @FXML private ToggleButton nwavTglCursiva;
+    @FXML private Label nwavLblAyudaHerramienta;
 
     /** Pagina del visor: un marco con su imagen (o nada, si aun no se dibujo). */
     private static final class NwavNodoPagina {
         private final StackPane nwavMarco = new StackPane();
         private final ImageView nwavVista = new ImageView();
         private final Label nwavAviso = new Label();
+        /** Capa transparente donde actuan las herramientas de edicion. */
+        private final Pane nwavCapa = new Pane();
         private float nwavEscalaMostrada;
         private float nwavEscalaPedida;
     }
@@ -192,6 +222,8 @@ public class NwavVisorController {
     private final StringProperty nwavTitulo = new SimpleStringProperty("");
     private final StringProperty nwavEstado = new SimpleStringProperty("Sin documento");
     private BooleanBinding nwavPuedeEditar;
+    private final NwavEstadoHerramientas nwavHerramientas = new NwavEstadoHerramientas();
+    private NwavEditorInteractivo nwavEditorInteractivo;
 
     private Runnable nwavAccionVerRecientes = () -> { };
     private Runnable nwavAlCambiarRecientes = () -> { };
@@ -239,7 +271,14 @@ public class NwavVisorController {
             if (nwavDocumento == null) {
                 return;
             }
-            if (nwavEvento.getCode() == KeyCode.HOME) {
+            if (nwavEvento.getCode() == KeyCode.ESCAPE) {
+                if (nwavEditorInteractivo.nwavHayPendiente()) {
+                    nwavEditorInteractivo.nwavCancelarPendiente();
+                } else {
+                    nwavHerramientas.nwavHerramientaProperty().set(NwavHerramienta.NWAV_NAVEGAR);
+                }
+                nwavEvento.consume();
+            } else if (nwavEvento.getCode() == KeyCode.HOME) {
                 nwavIrAPagina(0);
                 nwavEvento.consume();
             } else if (nwavEvento.getCode() == KeyCode.END) {
@@ -281,6 +320,7 @@ public class NwavVisorController {
         });
 
         nwavConfigurarMiniaturas();
+        nwavConfigurarBarraEdicion();
 
         nwavMiniaturasVisibles.set(nwavConfiguracion.nwavMiniaturasVisibles());
         nwavTglMiniaturas.selectedProperty().bindBidirectional(nwavMiniaturasVisibles);
@@ -622,6 +662,8 @@ public class NwavVisorController {
     }
 
     private void nwavVaciarInterfaz() {
+        nwavEditorInteractivo.nwavCancelarPendiente();
+        nwavHerramientas.nwavHerramientaProperty().set(NwavHerramienta.NWAV_NAVEGAR);
         nwavDocumento = null;
         nwavGeneracion++;
         nwavGeneracionActiva = nwavGeneracion;
@@ -782,9 +824,13 @@ public class NwavVisorController {
             if (nwavDocumento != nwavActual) {
                 return;
             }
-            if (nwavResultado.nwavTuvoEfecto()) {
+            if (nwavResultado.nwavTuvoEfecto() && nwavResultado.nwavEstructural()) {
                 nwavRecargarEstructura(nwavResultado.nwavPaginaDestacada() >= 0
                         ? nwavResultado.nwavPaginaDestacada() : nwavPaginaActual);
+            } else if (nwavResultado.nwavTuvoEfecto()) {
+                nwavRefrescarContenido();
+            } else {
+                nwavActualizarEstadoEdicion();
             }
             if (nwavAlTerminar != null) {
                 nwavAlTerminar.accept(nwavResultado);
@@ -835,7 +881,7 @@ public class NwavVisorController {
     @FXML
     public void nwavOnDeshacer() {
         nwavEditar("Deshaciendo…", nwavDoc -> nwavEdicion.nwavDeshacer(nwavDoc)
-                        .orElse(new NwavResultadoEdicion("", -1, false)),
+                        .orElse(new NwavResultadoEdicion("", -1, false, false)),
                 nwavResultado -> {
                     if (nwavResultado.nwavTuvoEfecto()) {
                         nwavNotificador.nwavInfo("Deshecho: " + nwavResultado.nwavDescripcion());
@@ -846,7 +892,7 @@ public class NwavVisorController {
     @FXML
     public void nwavOnRehacer() {
         nwavEditar("Rehaciendo…", nwavDoc -> nwavEdicion.nwavRehacer(nwavDoc)
-                        .orElse(new NwavResultadoEdicion("", -1, false)),
+                        .orElse(new NwavResultadoEdicion("", -1, false, false)),
                 nwavResultado -> {
                     if (nwavResultado.nwavTuvoEfecto()) {
                         nwavNotificador.nwavInfo("Rehecho: " + nwavResultado.nwavDescripcion());
@@ -952,6 +998,7 @@ public class NwavVisorController {
     // ================================================================ paginas
 
     private void nwavConstruirPaginas() {
+        nwavEditorInteractivo.nwavCancelarPendiente();
         nwavNodos.clear();
         List<StackPane> nwavMarcos = new ArrayList<>();
         for (int nwavIndice = 0; nwavIndice < nwavDocumento.getNwavNumeroPaginas(); nwavIndice++) {
@@ -960,7 +1007,8 @@ public class NwavVisorController {
             nwavNodo.nwavAviso.setText("Página " + (nwavIndice + 1));
             nwavNodo.nwavAviso.getStyleClass().add("nwav-pagina-aviso");
             nwavNodo.nwavMarco.getStyleClass().add("nwav-pagina-pdf");
-            nwavNodo.nwavMarco.getChildren().addAll(nwavNodo.nwavAviso, nwavNodo.nwavVista);
+            nwavNodo.nwavMarco.getChildren().addAll(nwavNodo.nwavAviso, nwavNodo.nwavVista, nwavNodo.nwavCapa);
+            nwavEditorInteractivo.nwavInstalar(nwavNodo.nwavCapa, nwavIndice);
             nwavNodos.add(nwavNodo);
             nwavMarcos.add(nwavNodo.nwavMarco);
         }
@@ -1375,6 +1423,201 @@ public class NwavVisorController {
             nwavMiniaturasFx.put(nwavIndice, nwavImagen);
             nwavAlRecibir.accept(nwavImagen);
         }, nwavError -> nwavLog.debug("Fallo la miniatura {}", nwavIndice + 1, nwavError));
+    }
+
+    // ================================================= edicion de contenido
+
+    private void nwavConfigurarBarraEdicion() {
+        nwavEditorInteractivo = new NwavEditorInteractivo(nwavHerramientas, nwavDestinoEdicion(),
+                () -> nwavFactorZoom * NWAV_PIXELES_POR_PUNTO);
+        nwavBarraEdicion.visibleProperty().bind(nwavHayDocumento);
+        nwavBarraEdicion.managedProperty().bind(nwavHayDocumento);
+        nwavBarraEdicion.disableProperty().bind(nwavEditando);
+
+        ToggleGroup nwavGrupo = new ToggleGroup();
+        for (NwavHerramienta nwavHerramienta : NwavHerramienta.values()) {
+            ToggleButton nwavBoton = new ToggleButton(null, new FontIcon(nwavHerramienta.getNwavIcono()));
+            nwavBoton.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.FLAT, "nwav-boton-herramienta");
+            nwavBoton.setTooltip(new Tooltip(nwavHerramienta.getNwavDescripcion()));
+            nwavBoton.setToggleGroup(nwavGrupo);
+            nwavBoton.setUserData(nwavHerramienta);
+            if (nwavHerramienta == NwavHerramienta.NWAV_CUBRIR) {
+                nwavBoton.getStyleClass().add("nwav-boton-cubrir");
+            }
+            nwavBotonesHerramientas.getChildren().add(nwavBoton);
+            if (nwavHerramienta == NwavHerramienta.NWAV_NAVEGAR || nwavHerramienta == NwavHerramienta.NWAV_IMAGEN
+                    || nwavHerramienta == NwavHerramienta.NWAV_NOTA || nwavHerramienta == NwavHerramienta.NWAV_DIBUJO) {
+                nwavBotonesHerramientas.getChildren().add(new Separator(Orientation.VERTICAL));
+            }
+        }
+        nwavGrupo.selectToggle(nwavGrupo.getToggles().get(0));
+        nwavGrupo.selectedToggleProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
+            if (nwavAhora == null) {
+                nwavGrupo.selectToggle(nwavAntes); // siempre hay una herramienta
+                return;
+            }
+            nwavHerramientas.nwavHerramientaProperty().set((NwavHerramienta) nwavAhora.getUserData());
+        });
+        nwavHerramientas.nwavHerramientaProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
+            nwavGrupo.getToggles().stream().filter(nwavToggle -> nwavToggle.getUserData() == nwavAhora)
+                    .findFirst().ifPresent(nwavGrupo::selectToggle);
+            nwavMostrarOpcionesHerramienta(nwavAhora);
+        });
+
+        nwavSelectorColor.valueProperty().bindBidirectional(nwavHerramientas.nwavColorProperty());
+        nwavSpnGrosor.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(0.5, 20, 2, 0.5));
+        nwavSpnGrosor.getValueFactory().valueProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
+            if (nwavAhora != null) {
+                nwavHerramientas.nwavGrosorProperty().set(nwavAhora);
+            }
+        });
+        nwavCmbFuente.getItems().setAll(NwavFuente.values());
+        nwavCmbFuente.valueProperty().bindBidirectional(nwavHerramientas.nwavFuenteProperty());
+        nwavSpnTamano.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(
+                (int) NwavEstiloTexto.NWAV_TAMANO_MINIMO, (int) NwavEstiloTexto.NWAV_TAMANO_MAXIMO, 14));
+        nwavSpnTamano.getValueFactory().valueProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
+            if (nwavAhora != null) {
+                nwavHerramientas.nwavTamanoProperty().set(nwavAhora);
+            }
+        });
+        nwavTglNegrita.selectedProperty().bindBidirectional(nwavHerramientas.nwavNegritaProperty());
+        nwavTglCursiva.selectedProperty().bindBidirectional(nwavHerramientas.nwavCursivaProperty());
+        nwavMostrarOpcionesHerramienta(NwavHerramienta.NWAV_NAVEGAR);
+    }
+
+    private void nwavMostrarOpcionesHerramienta(NwavHerramienta nwavHerramienta) {
+        nwavMostrarSiAplica(nwavSelectorColor, nwavHerramienta.nwavUsaColor());
+        nwavMostrarSiAplica(nwavControlesGrosor, nwavHerramienta.nwavUsaGrosor());
+        nwavMostrarSiAplica(nwavControlesTexto, nwavHerramienta.nwavUsaTexto());
+        nwavLblAyudaHerramienta.setText(nwavHerramienta.getNwavAyuda());
+        nwavLblAyudaHerramienta.getStyleClass().remove("nwav-ayuda-aviso");
+        if (nwavHerramienta == NwavHerramienta.NWAV_CUBRIR) {
+            nwavLblAyudaHerramienta.getStyleClass().add("nwav-ayuda-aviso");
+            nwavNotificador.nwavAdvertencia("«Cubrir» solo tapa la zona visualmente: el texto de debajo sigue en el "
+                    + "PDF y se puede copiar o buscar. No sirve para eliminar información confidencial.");
+        }
+    }
+
+    private static void nwavMostrarSiAplica(javafx.scene.Node nwavNodo, boolean nwavVisible) {
+        nwavNodo.setVisible(nwavVisible);
+        nwavNodo.setManaged(nwavVisible);
+    }
+
+    /**
+     * Tras editar el contenido de una pagina (sin cambiar la estructura): vuelve a dibujar
+     * las paginas visibles y las miniaturas sin mover el scroll. Las imagenes actuales se
+     * mantienen hasta que llegan las nuevas.
+     */
+    private void nwavRefrescarContenido() {
+        nwavGeneracion++;
+        nwavGeneracionActiva = nwavGeneracion;
+        for (NwavNodoPagina nwavNodo : nwavNodos) {
+            nwavNodo.nwavEscalaMostrada = 0;
+            nwavNodo.nwavEscalaPedida = 0;
+        }
+        nwavMiniaturasFx.clear();
+        nwavListaMiniaturas.refresh();
+        nwavActualizarVisibles();
+        nwavActualizarEstadoEdicion();
+    }
+
+    /** Edicion pedida desde el editor interactivo: aviso de error y, si falla, el elemento vuelve. */
+    private void nwavEditarContenido(String nwavMensaje, Function<NwavDocumentoPdf, NwavResultadoEdicion> nwavOperacion,
+                                     Runnable nwavSiAplica, Runnable nwavSiFalla) {
+        if (!nwavPuedeEditar.get()) {
+            if (nwavSiFalla != null) {
+                nwavSiFalla.run();
+            }
+            return;
+        }
+        nwavEditar(nwavMensaje, nwavOperacion, nwavResultado -> {
+            if (nwavSiAplica != null) {
+                nwavSiAplica.run();
+            }
+        }, nwavError -> {
+            nwavLog.warn("Fallo una edicion de contenido: {}", nwavError.toString());
+            nwavNotificador.nwavError(NwavTraductorErrores.nwavMensaje(nwavError));
+            if (nwavSiFalla != null) {
+                nwavSiFalla.run();
+            }
+        });
+    }
+
+    private NwavEditorInteractivo.NwavDestino nwavDestinoEdicion() {
+        return new NwavEditorInteractivo.NwavDestino() {
+            @Override
+            public void nwavFijarTexto(int nwavPagina, NwavRectangulo nwavZona, String nwavTexto,
+                                       NwavEstiloTexto nwavEstilo, Runnable nwavSiAplica, Runnable nwavSiFalla) {
+                nwavEditarContenido("Agregando texto…",
+                        nwavDoc -> nwavEdicion.nwavAgregarTexto(nwavDoc, nwavPagina, nwavZona, nwavTexto, nwavEstilo),
+                        nwavSiAplica, nwavSiFalla);
+            }
+
+            @Override
+            public void nwavFijarImagen(int nwavPagina, Path nwavImagen, NwavRectangulo nwavZona,
+                                        Runnable nwavSiAplica, Runnable nwavSiFalla) {
+                nwavEditarContenido("Insertando imagen…",
+                        nwavDoc -> nwavEdicion.nwavInsertarImagen(nwavDoc, nwavPagina, nwavImagen, nwavZona),
+                        nwavSiAplica, nwavSiFalla);
+            }
+
+            @Override
+            public void nwavFijarNota(int nwavPagina, NwavPunto nwavPunto, String nwavTexto, NwavColorRgb nwavColor,
+                                      Runnable nwavSiAplica, Runnable nwavSiFalla) {
+                nwavEditarContenido("Agregando nota…",
+                        nwavDoc -> nwavEdicion.nwavAgregarNota(nwavDoc, nwavPagina, nwavPunto, nwavTexto, nwavColor),
+                        nwavSiAplica, nwavSiFalla);
+            }
+
+            @Override
+            public void nwavMarcar(int nwavPagina, NwavTipoMarca nwavTipo, NwavRectangulo nwavZona,
+                                   NwavColorRgb nwavColor) {
+                nwavEditarContenido(nwavTipo.getNwavDescripcion() + "…",
+                        nwavDoc -> nwavEdicion.nwavMarcar(nwavDoc, nwavPagina, nwavTipo, nwavZona, nwavColor),
+                        null, null);
+            }
+
+            @Override
+            public void nwavDibujar(int nwavPagina, List<NwavPunto> nwavTrazo, NwavColorRgb nwavColor,
+                                    double nwavGrosor) {
+                nwavEditarContenido("Dibujando…",
+                        nwavDoc -> nwavEdicion.nwavDibujar(nwavDoc, nwavPagina, nwavTrazo, nwavColor, nwavGrosor),
+                        null, null);
+            }
+
+            @Override
+            public void nwavForma(int nwavPagina, NwavTipoForma nwavTipo, NwavPunto nwavDesde, NwavPunto nwavHasta,
+                                  NwavColorRgb nwavColor, double nwavGrosor) {
+                nwavEditarContenido("Agregando forma…", nwavDoc -> nwavEdicion.nwavAgregarForma(nwavDoc, nwavPagina,
+                        nwavTipo, nwavDesde, nwavHasta, nwavColor, nwavGrosor), null, null);
+            }
+
+            @Override
+            public void nwavCubrir(int nwavPagina, NwavRectangulo nwavZona, NwavColorRgb nwavColor) {
+                nwavEditarContenido("Cubriendo zona…",
+                        nwavDoc -> nwavEdicion.nwavCubrir(nwavDoc, nwavPagina, nwavZona, nwavColor), null, null);
+            }
+
+            @Override
+            public Optional<Path> nwavElegirImagen() {
+                FileChooser nwavSelector = new FileChooser();
+                nwavSelector.setTitle("Imagen a insertar");
+                nwavSelector.getExtensionFilters().add(new FileChooser.ExtensionFilter("Imágenes",
+                        "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp", "*.PNG", "*.JPG", "*.JPEG"));
+                nwavConfiguracion.nwavCarpetaInicial().map(Path::toFile).ifPresent(nwavSelector::setInitialDirectory);
+                File nwavElegida = nwavSelector.showOpenDialog(nwavVentana());
+                return Optional.ofNullable(nwavElegida).map(File::toPath);
+            }
+
+            @Override
+            public boolean nwavPuedeEditar() {
+                return nwavPuedeEditar.get();
+            }
+        };
+    }
+
+    public NwavEstadoHerramientas nwavHerramientas() {
+        return nwavHerramientas;
     }
 
     /** Enlaza un boton o elemento a "se puede editar" (lo usan los paneles). */

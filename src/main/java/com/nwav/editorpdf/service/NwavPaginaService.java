@@ -207,14 +207,22 @@ public class NwavPaginaService {
 
     // --------------------------------------------------------------- internos
 
+    /** Carga una imagen (PNG, JPG, GIF, BMP…) para usarla en el documento. */
+    static PDImageXObject nwavCargarImagen(PDDocument nwavPd, Path nwavRuta) {
+        String nwavNombre = String.valueOf(nwavRuta.getFileName());
+        if (!java.nio.file.Files.isRegularFile(nwavRuta)) {
+            throw new com.nwav.editorpdf.exception.NwavArchivoNoEncontradoException(nwavNombre);
+        }
+        try {
+            return PDImageXObject.createFromFileByContent(nwavRuta.toFile(), nwavPd);
+        } catch (IOException | IllegalArgumentException nwavError) {
+            return nwavLeerConImageIo(nwavPd, nwavRuta, nwavNombre);
+        }
+    }
+
     private static PDPage nwavCrearPaginaConImagen(PDDocument nwavPd, Path nwavRuta) {
         String nwavNombre = String.valueOf(nwavRuta.getFileName());
-        PDImageXObject nwavImagen;
-        try {
-            nwavImagen = PDImageXObject.createFromFileByContent(nwavRuta.toFile(), nwavPd);
-        } catch (IOException | IllegalArgumentException nwavError) {
-            nwavImagen = nwavLeerConImageIo(nwavPd, nwavRuta, nwavNombre);
-        }
+        PDImageXObject nwavImagen = nwavCargarImagen(nwavPd, nwavRuta);
         float nwavAncho = nwavImagen.getWidth();
         float nwavAlto = nwavImagen.getHeight();
         PDRectangle nwavHoja = nwavAncho > nwavAlto

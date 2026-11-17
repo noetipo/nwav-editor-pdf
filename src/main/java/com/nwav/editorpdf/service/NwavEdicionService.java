@@ -1,6 +1,12 @@
 package com.nwav.editorpdf.service;
 
 import com.nwav.editorpdf.exception.NwavTraductorErrores;
+import com.nwav.editorpdf.model.NwavColorRgb;
+import com.nwav.editorpdf.model.NwavEstiloTexto;
+import com.nwav.editorpdf.model.NwavPunto;
+import com.nwav.editorpdf.model.NwavRectangulo;
+import com.nwav.editorpdf.model.NwavTipoForma;
+import com.nwav.editorpdf.model.NwavTipoMarca;
 import com.nwav.editorpdf.model.NwavTipoOperacion;
 import com.nwav.editorpdf.service.comando.NwavComando;
 import com.nwav.editorpdf.service.comando.NwavComandoDuplicar;
@@ -28,10 +34,12 @@ public class NwavEdicionService {
     private static final String NWAV_EN_MEMORIA = " (en memoria, sin guardar)";
 
     private final NwavPaginaService nwavPaginas;
+    private final NwavContenidoService nwavContenido;
     private final NwavHistorialService nwavHistorial;
 
     /** Lo que la interfaz necesita saber tras una edicion. */
-    public record NwavResultadoEdicion(String nwavDescripcion, int nwavPaginaDestacada, boolean nwavTuvoEfecto) {
+    public record NwavResultadoEdicion(String nwavDescripcion, int nwavPaginaDestacada, boolean nwavTuvoEfecto,
+                                       boolean nwavEstructural) {
     }
 
     public NwavResultadoEdicion nwavRotar(NwavDocumentoPdf nwavDocumento, List<Integer> nwavIndices, int nwavGrados) {
@@ -62,6 +70,51 @@ public class NwavEdicionService {
                 new NwavComandoInsertarImagenes(nwavPaginas, nwavDocumento, nwavImagenes, nwavPosicion));
     }
 
+    // ------------------------------------------------- contenido (Fase 3)
+
+    public NwavResultadoEdicion nwavAgregarTexto(NwavDocumentoPdf nwavDocumento, int nwavPagina,
+                                                 NwavRectangulo nwavZona, String nwavTexto, NwavEstiloTexto nwavEstilo) {
+        return nwavAplicar(nwavDocumento,
+                nwavContenido.nwavComandoTexto(nwavDocumento, nwavPagina, nwavZona, nwavTexto, nwavEstilo));
+    }
+
+    public NwavResultadoEdicion nwavInsertarImagen(NwavDocumentoPdf nwavDocumento, int nwavPagina, Path nwavImagen,
+                                                   NwavRectangulo nwavZona) {
+        return nwavAplicar(nwavDocumento,
+                nwavContenido.nwavComandoImagen(nwavDocumento, nwavPagina, nwavImagen, nwavZona));
+    }
+
+    public NwavResultadoEdicion nwavCubrir(NwavDocumentoPdf nwavDocumento, int nwavPagina, NwavRectangulo nwavZona,
+                                           NwavColorRgb nwavColor) {
+        return nwavAplicar(nwavDocumento,
+                nwavContenido.nwavComandoCubrir(nwavDocumento, nwavPagina, nwavZona, nwavColor));
+    }
+
+    public NwavResultadoEdicion nwavMarcar(NwavDocumentoPdf nwavDocumento, int nwavPagina, NwavTipoMarca nwavTipo,
+                                           NwavRectangulo nwavZona, NwavColorRgb nwavColor) {
+        return nwavAplicar(nwavDocumento,
+                nwavContenido.nwavComandoMarca(nwavDocumento, nwavPagina, nwavTipo, nwavZona, nwavColor));
+    }
+
+    public NwavResultadoEdicion nwavAgregarNota(NwavDocumentoPdf nwavDocumento, int nwavPagina, NwavPunto nwavPunto,
+                                                String nwavTexto, NwavColorRgb nwavColor) {
+        return nwavAplicar(nwavDocumento,
+                nwavContenido.nwavComandoNota(nwavDocumento, nwavPagina, nwavPunto, nwavTexto, nwavColor));
+    }
+
+    public NwavResultadoEdicion nwavDibujar(NwavDocumentoPdf nwavDocumento, int nwavPagina, List<NwavPunto> nwavTrazo,
+                                            NwavColorRgb nwavColor, double nwavGrosor) {
+        return nwavAplicar(nwavDocumento,
+                nwavContenido.nwavComandoDibujo(nwavDocumento, nwavPagina, nwavTrazo, nwavColor, nwavGrosor));
+    }
+
+    public NwavResultadoEdicion nwavAgregarForma(NwavDocumentoPdf nwavDocumento, int nwavPagina, NwavTipoForma nwavTipo,
+                                                 NwavPunto nwavDesde, NwavPunto nwavHasta, NwavColorRgb nwavColor,
+                                                 double nwavGrosor) {
+        return nwavAplicar(nwavDocumento, nwavContenido.nwavComandoForma(nwavDocumento, nwavPagina, nwavTipo,
+                nwavDesde, nwavHasta, nwavColor, nwavGrosor));
+    }
+
     /** Ejecuta cualquier comando (tambien los de fases posteriores). */
     public NwavResultadoEdicion nwavAplicar(NwavDocumentoPdf nwavDocumento, NwavComando nwavComando) {
         try {
@@ -75,7 +128,7 @@ public class NwavEdicionService {
                         null, nwavComando.nwavDescripcion() + NWAV_EN_MEMORIA);
             }
             return new NwavResultadoEdicion(nwavComando.nwavDescripcion(), nwavComando.nwavPaginaDestacada(),
-                    nwavApilado);
+                    nwavApilado, nwavComando.nwavCambiaEstructura());
         } catch (RuntimeException nwavError) {
             nwavHistorial.nwavRegistrarError(nwavComando.nwavTipo(), nwavOrigenes(nwavDocumento, nwavComando),
                     null, nwavError);
@@ -105,7 +158,9 @@ public class NwavEdicionService {
             nwavComando.ifPresent(nwavHecho -> nwavHistorial.nwavRegistrarExito(nwavTipo,
                     nwavDocumento.getNwavRuta(), null, nwavHecho.nwavDescripcion() + NWAV_EN_MEMORIA));
             return nwavComando.map(nwavHecho -> new NwavResultadoEdicion(nwavHecho.nwavDescripcion(),
-                    nwavTipo == NwavTipoOperacion.NWAV_REHACER ? nwavHecho.nwavPaginaDestacada() : -1, true));
+                    nwavHecho.nwavCambiaEstructura() && nwavTipo == NwavTipoOperacion.NWAV_DESHACER
+                            ? -1 : nwavHecho.nwavPaginaDestacada(),
+                    true, nwavHecho.nwavCambiaEstructura()));
         } catch (RuntimeException nwavError) {
             nwavHistorial.nwavRegistrarError(nwavTipo, nwavDocumento.getNwavRuta(), null, nwavError);
             throw NwavTraductorErrores.nwavTraducir(nwavError, nwavDocumento.getNwavNombre());
