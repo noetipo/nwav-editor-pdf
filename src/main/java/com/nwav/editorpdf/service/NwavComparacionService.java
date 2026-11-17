@@ -23,24 +23,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
-/**
- * Compara dos PDF: diferencias de texto palabra a palabra (en todo el documento, para que
- * un parrafo que cambia de pagina no cuente como cambio) y superposicion visual por pixeles.
- */
 @Service
 @RequiredArgsConstructor
 public class NwavComparacionService {
-
     private final NwavPdfDocumentoService nwavDocumentos;
 
-    /** Palabras de una pagina marcadas como quitadas (en el original) o anadidas (en el nuevo). */
     public record NwavMarcasPagina(List<NwavRectangulo> nwavQuitadas, List<NwavRectangulo> nwavAnadidas) {
     }
 
-    /**
-     * Sesion abierta de comparacion: mantiene ambos documentos para dibujar sus paginas.
-     * Hay que cerrarla al terminar.
-     */
     public static final class NwavSesion implements AutoCloseable {
         private final PDDocument nwavA;
         private final PDDocument nwavB;
@@ -87,7 +77,6 @@ public class NwavComparacionService {
             return nwavQuitadas == 0 && nwavAnadidas == 0;
         }
 
-        /** Marcas de la pagina en el original (vacias si no existe). */
         public NwavMarcasPagina nwavMarcasA(int nwavPagina) {
             return nwavPagina < nwavMarcasA.size() ? nwavMarcasA.get(nwavPagina) : new NwavMarcasPagina(List.of(), List.of());
         }
@@ -96,7 +85,6 @@ public class NwavComparacionService {
             return nwavPagina < nwavMarcasB.size() ? nwavMarcasB.get(nwavPagina) : new NwavMarcasPagina(List.of(), List.of());
         }
 
-        /** Pagina del original o del nuevo a la escala dada; null si ese documento no tiene esa pagina. */
         public synchronized BufferedImage nwavRenderizar(boolean nwavOriginal, int nwavPagina, float nwavEscala)
                 throws IOException {
             PDDocument nwavDoc = nwavOriginal ? nwavA : nwavB;
@@ -106,10 +94,6 @@ public class NwavComparacionService {
             return (nwavOriginal ? nwavRenderA : nwavRenderB).renderImage(nwavPagina, nwavEscala, ImageType.RGB);
         }
 
-        /**
-         * Superposicion: el original atenuado; en rojo lo que solo esta en el original y en
-         * verde lo que solo esta en el nuevo. Devuelve la imagen y el % de pixeles distintos.
-         */
         public synchronized NwavSuperposicion nwavSuperponer(int nwavPagina, float nwavEscala) throws IOException {
             BufferedImage nwavImagenA = nwavRenderizar(true, nwavPagina, nwavEscala);
             BufferedImage nwavImagenB = nwavRenderizar(false, nwavPagina, nwavEscala);
@@ -129,7 +113,6 @@ public class NwavComparacionService {
     public record NwavSuperposicion(BufferedImage nwavImagen, double nwavPorcentajeDistinto) {
     }
 
-    /** Abre ambos documentos y calcula las diferencias de texto. */
     public NwavSesion nwavComparar(Path nwavOriginal, String nwavClaveA, Path nwavNuevo, String nwavClaveB,
                                    NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) {
         PDDocument nwavA = null;
@@ -230,10 +213,9 @@ public class NwavComparacionService {
                 int nwavColor;
                 if (Math.abs(nwavLumA - nwavLumB) > 48) {
                     nwavDistintos++;
-                    // mas oscuro en el original = solo esta en el original (rojo); al reves, verde
                     nwavColor = nwavLumA < nwavLumB ? 0xE11D48 : 0x16A34A;
                 } else {
-                    int nwavAtenuado = 255 - (255 - nwavLumA) / 3; // original en gris claro
+                    int nwavAtenuado = 255 - (255 - nwavLumA) / 3;
                     nwavColor = (nwavAtenuado << 16) | (nwavAtenuado << 8) | nwavAtenuado;
                 }
                 nwavResultado.setRGB(nwavX, nwavY, nwavColor);
@@ -267,7 +249,6 @@ public class NwavComparacionService {
             try {
                 nwavPd.close();
             } catch (IOException nwavError) {
-                // ya se informa el error principal
             }
         }
     }

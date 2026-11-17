@@ -10,11 +10,9 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Path;
 
-/** Poner y quitar contrasenas en varios archivos a la vez (siempre en archivos nuevos). */
 @Service
 @RequiredArgsConstructor
 public class NwavProteccionLoteService {
-
     private final NwavPdfDocumentoService nwavDocumentos;
 
     public Path nwavProteger(Path nwavEntrada, String nwavContrasenaActual, NwavOpcionesProteccion nwavOpciones,
@@ -33,7 +31,6 @@ public class NwavProteccionLoteService {
         }
     }
 
-    /** Quita la contrasena: hace falta la de propietario (o que el PDF no tenga restricciones). */
     public Path nwavDesbloquear(Path nwavEntrada, String nwavContrasena, Path nwavDestino) {
         try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena)) {
             if (!nwavPd.isEncrypted()) {

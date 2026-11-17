@@ -17,11 +17,9 @@ import javafx.scene.paint.Color;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Panel "Encabezado, pie y numeración de páginas". */
 @Component
 @RequiredArgsConstructor
 public class NwavPanelEncabezadoController implements NwavPanel {
-
     private final NwavVisorController nwavVisor;
     private final NwavEdicionService nwavEdicion;
     private final NwavNotificador nwavNotificador;
@@ -53,10 +51,8 @@ public class NwavPanelEncabezadoController implements NwavPanel {
 
     @Override
     public void nwavPreparar() {
-        // Conserva lo ultimo escrito: es comodo repetir en otro documento.
     }
 
-    /** Abre el panel listo para numerar: pie centrado "Página n de total". */
     public void nwavPrepararNumeracion() {
         nwavTxtEncabezado.clear();
         nwavOnPresetPaginaDeTotal();

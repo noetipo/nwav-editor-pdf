@@ -15,14 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
-/**
- * Proteger con contrasena y quitar la proteccion. Ambos son cambios pendientes del
- * documento (se pueden deshacer) que se aplican al guardar. Quitar la proteccion exige
- * conocer la contrasena de propietario (o haber abierto el PDF con ella).
- */
 @Service
 public class NwavSeguridadService {
-
     public static final int NWAV_LARGO_MINIMO = 4;
 
     public NwavComando nwavComandoProteger(NwavDocumentoPdf nwavDocumento, NwavOpcionesProteccion nwavOpciones) {
@@ -36,10 +30,6 @@ public class NwavSeguridadService {
                 NwavTipoOperacion.NWAV_PROTEGER, "Proteger con contraseña");
     }
 
-    /**
-     * @param nwavContrasenaPropietario se exige si el documento no se abrio con permisos
-     *                                  de propietario.
-     */
     public NwavComando nwavComandoQuitarProteccion(NwavDocumentoPdf nwavDocumento, String nwavContrasenaPropietario) {
         if (!nwavDocumento.isNwavCifrado()) {
             throw new NwavEditorException("El documento no está protegido.");
@@ -51,7 +41,6 @@ public class NwavSeguridadService {
                 NwavTipoOperacion.NWAV_QUITAR_PROTECCION, "Quitar protección");
     }
 
-    /** {@code true} si el documento se abrio con permisos de propietario. */
     public boolean nwavAbiertoComoPropietario(NwavDocumentoPdf nwavDocumento) {
         synchronized (nwavDocumento) {
             nwavDocumento.nwavVerificarAbierto();
@@ -67,8 +56,6 @@ public class NwavSeguridadService {
         if (nwavContrasena == null || nwavContrasena.isEmpty()) {
             return false;
         }
-        // Se comprueba contra el archivo en disco: con la contrasena de propietario se
-        // obtienen todos los permisos.
         try (PDDocument nwavPrueba = Loader.loadPDF(nwavDocumento.getNwavRuta().toFile(), nwavContrasena)) {
             return nwavPrueba.getCurrentAccessPermission().isOwnerPermission();
         } catch (InvalidPasswordException nwavError) {
@@ -78,7 +65,6 @@ public class NwavSeguridadService {
         }
     }
 
-    /** Politica de PDFBox para unas opciones de proteccion. */
     static StandardProtectionPolicy nwavPolitica(NwavOpcionesProteccion nwavOpciones) {
         AccessPermission nwavPermisos = new AccessPermission();
         String nwavPropietario = nwavOpciones.nwavUsuario();
@@ -99,9 +85,7 @@ public class NwavSeguridadService {
         return nwavPolitica;
     }
 
-    /** Cambia la proteccion pendiente; deshacer restaura la anterior. */
     private static final class NwavComandoProteccion implements NwavComando {
-
         private final NwavDocumentoPdf nwavDocumento;
         private final NwavCambioProteccion nwavNuevo;
         private final NwavTipoOperacion nwavTipo;

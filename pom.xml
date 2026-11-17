@@ -37,14 +37,12 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- Driver de SQLite -->
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
             <version>${sqlite.version}</version>
         </dependency>
 
-        <!-- Dialecto de SQLite para Hibernate -->
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-community-dialects</artifactId>
@@ -56,7 +54,6 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Interfaz grafica -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -68,14 +65,12 @@
             <version>${javafx.version}</version>
         </dependency>
 
-        <!-- Motor de estilos -->
         <dependency>
             <groupId>io.github.mkpaz</groupId>
             <artifactId>atlantafx-base</artifactId>
             <version>${atlantafx.version}</version>
         </dependency>
 
-        <!-- Iconos (Feather) -->
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-javafx</artifactId>
@@ -87,14 +82,12 @@
             <version>${ikonli.version}</version>
         </dependency>
 
-        <!-- Motor de PDF -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
             <version>${pdfbox.version}</version>
         </dependency>
 
-        <!-- OCR: Tesseract mediante Tess4J (Apache 2.0). Usa la misma version de PDFBox. -->
         <dependency>
             <groupId>net.sourceforge.tess4j</groupId>
             <artifactId>tess4j</artifactId>
@@ -107,7 +100,6 @@
             </exclusions>
         </dependency>
 
-        <!-- PDF/A: validacion (Preflight) y metadatos XMP. Apache 2.0 -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>preflight</artifactId>
@@ -119,49 +111,42 @@
             <version>${pdfbox.version}</version>
         </dependency>
 
-        <!-- Office -> PDF con LibreOffice local (JODConverter, Apache 2.0; LibreOffice es externo) -->
         <dependency>
             <groupId>org.jodconverter</groupId>
             <artifactId>jodconverter-local</artifactId>
             <version>4.4.9</version>
         </dependency>
 
-        <!-- HTML -> PDF (openhtmltopdf, LGPL 2.1+, sobre PDFBox 3) -->
         <dependency>
             <groupId>io.github.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-pdfbox</artifactId>
             <version>1.1.28</version>
         </dependency>
 
-        <!-- HTML tolerante (HTML5 real -> DOM para openhtmltopdf). MIT -->
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>1.18.3</version>
         </dependency>
 
-        <!-- PDF -> Word / Excel / PowerPoint (Apache POI, Apache 2.0) -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>5.4.1</version>
         </dependency>
 
-        <!-- Comparar PDF: diferencias de texto (Apache 2.0) -->
         <dependency>
             <groupId>io.github.java-diff-utils</groupId>
             <artifactId>java-diff-utils</artifactId>
             <version>4.15</version>
         </dependency>
 
-        <!-- Firma digital PKCS#12 y verificacion (Bouncy Castle, licencia MIT) -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
             <version>1.80</version>
         </dependency>
 
-        <!-- Migraciones versionadas del esquema (version gestionada por Spring Boot) -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
@@ -181,7 +166,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>com.nwav.editorpdf.NwavLauncher</mainClass>
-                    <!-- El jar principal queda "fino" (para empaquetar con lib/); el ejecutable unico va aparte -->
                     <classifier>completo</classifier>
                     <excludes>
                         <exclude>

@@ -38,22 +38,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * "Convertir a PDF": imagenes (y carpetas de escaneos), documentos de Office mediante
- * LibreOffice local, y paginas HTML (archivo o URL). Todo se procesa en el equipo.
- */
 @Slf4j(topic = "com.nwav.editorpdf.service.NwavConversionAPdfService")
 @Service
 @RequiredArgsConstructor
 public class NwavConversionAPdfService {
-
     public static final List<String> NWAV_EXTENSIONES_IMAGEN = List.of("jpg", "jpeg", "png", "bmp", "gif", "tif", "tiff");
     public static final List<String> NWAV_EXTENSIONES_OFFICE = List.of("doc", "docx", "odt", "rtf", "txt", "xls", "xlsx",
             "ods", "csv", "ppt", "pptx", "odp");
 
     private final NwavDependenciasService nwavDependencias;
-
-    // ================================================================ imagenes
 
     public enum NwavTamanoHoja { NWAV_AJUSTAR, NWAV_A4, NWAV_CARTA }
 
@@ -69,7 +62,6 @@ public class NwavConversionAPdfService {
         }
     }
 
-    /** Crea un unico PDF con las imagenes en el orden dado. */
     public Path nwavImagenesAPdf(List<Path> nwavImagenes, NwavOpcionesImagenes nwavOpciones, Path nwavDestino,
                                  NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) {
         if (nwavImagenes == null || nwavImagenes.isEmpty()) {
@@ -103,7 +95,6 @@ public class NwavConversionAPdfService {
         PDRectangle nwavHoja = switch (nwavOpciones.nwavTamano()) {
             case NWAV_A4 -> PDRectangle.A4;
             case NWAV_CARTA -> PDRectangle.LETTER;
-            // "Ajustar": la hoja toma el tamano de la imagen (a 96 ppp), con el margen alrededor.
             default -> {
                 double nwavMargen = nwavOpciones.nwavMargenMm() * NwavOrganizarService.NWAV_PUNTOS_POR_MM * 2;
                 float nwavAncho = (float) (nwavPrimera.getWidth() * 0.75 * (nwavGrupo.size() == 2 && !nwavApaisadaImagen ? 2 : 1)
@@ -160,10 +151,6 @@ public class NwavConversionAPdfService {
         }
     }
 
-    /**
-     * Carga una imagen. Los JPEG sin girar se incrustan tal cual (sin perder calidad ni
-     * crecer); los que traen orientacion EXIF se giran. El resto se guarda sin perdida.
-     */
     static PDImageXObject nwavCargarImagen(PDDocument nwavPd, Path nwavRuta) throws IOException {
         String nwavNombre = nwavRuta.getFileName().toString().toLowerCase(Locale.ROOT);
         boolean nwavJpeg = nwavNombre.endsWith(".jpg") || nwavNombre.endsWith(".jpeg");
@@ -172,7 +159,6 @@ public class NwavConversionAPdfService {
             try (InputStream nwavEntrada = Files.newInputStream(nwavRuta)) {
                 return JPEGFactory.createFromStream(nwavPd, nwavEntrada);
             } catch (IOException | IllegalArgumentException nwavError) {
-                // JPEG raro (CMYK, progresivo con errores...): se decodifica abajo
             }
         }
         BufferedImage nwavImagen = ImageIO.read(nwavRuta.toFile());
@@ -185,7 +171,6 @@ public class NwavConversionAPdfService {
                 : LosslessFactory.createFromImage(nwavPd, nwavImagen);
     }
 
-    /** Lee la etiqueta EXIF Orientation (1-8) de un JPEG; 1 si no hay. */
     static int nwavOrientacionExif(Path nwavRuta) {
         try (DataInputStream nwavEntrada = new DataInputStream(new java.io.BufferedInputStream(Files.newInputStream(nwavRuta)))) {
             if (nwavEntrada.readUnsignedShort() != 0xFFD8) {
@@ -266,12 +251,6 @@ public class NwavConversionAPdfService {
         return nwavGirada;
     }
 
-    // ================================================================== Office
-
-    /**
-     * Convierte documentos de Office con LibreOffice (se arranca una vez para todo el lote).
-     * Devuelve un resultado por archivo: la ruta creada o el error.
-     */
     public List<NwavConvertido> nwavOfficeAPdf(List<Path> nwavDocumentos, Path nwavCarpeta, NwavAvance nwavAvance,
                                               NwavCancelacion nwavCancelacion) {
         Path nwavHome = nwavDependencias.nwavCarpetaLibreOffice().orElseThrow(() -> new NwavEditorException(
@@ -289,7 +268,6 @@ public class NwavConversionAPdfService {
                 nwavAvance.nwavInformar(nwavIndice, nwavDocumentos.size(), "Convirtiendo «" + nwavDocumento.getFileName() + "»…");
                 Path nwavDestino = NwavEscrituraSegura.nwavRutaSalida(nwavDocumento, nwavCarpeta, "", "pdf");
                 try {
-                    // El temporal no acaba en .pdf: el formato de salida se indica expresamente.
                     NwavEscrituraSegura.nwavEscribir(nwavDestino, nwavTemporal -> {
                         try {
                             nwavConversor.convert(nwavDocumento.toFile()).to(nwavTemporal.toFile())
@@ -319,12 +297,9 @@ public class NwavConversionAPdfService {
     public record NwavConvertido(Path nwavOrigen, Path nwavPdf, Throwable nwavError) {
     }
 
-    // ==================================================================== HTML
-
     public record NwavOpcionesHtml(String nwavTamano, boolean nwavHorizontal, double nwavMargenMm, boolean nwavFondos) {
     }
 
-    /** Convierte un archivo HTML local. Las imagenes y estilos relativos se buscan junto al archivo. */
     public Path nwavHtmlAPdf(Path nwavHtml, NwavOpcionesHtml nwavOpciones, Path nwavDestino) {
         try {
             org.jsoup.nodes.Document nwavDoc = Jsoup.parse(nwavHtml.toFile(), null, nwavHtml.toUri().toString());
@@ -334,10 +309,6 @@ public class NwavConversionAPdfService {
         }
     }
 
-    /**
-     * Descarga una pagina web y la convierte. Las paginas que se construyen con JavaScript
-     * pueden salir incompletas (no se ejecuta JavaScript).
-     */
     public Path nwavUrlAPdf(String nwavUrl, NwavOpcionesHtml nwavOpciones, Path nwavDestino) {
         URI nwavDireccion;
         try {
@@ -358,7 +329,6 @@ public class NwavConversionAPdfService {
         }
     }
 
-    /** Nombre de archivo razonable para una URL. */
     public static String nwavNombreParaUrl(String nwavUrl) {
         String nwavLimpio = nwavUrl.replaceFirst("(?i)^https?://", "").replaceFirst("^www\\.", "")
                 .replaceAll("[^\\p{L}\\p{N}._-]+", "_").replaceAll("_+$", "");
@@ -367,7 +337,6 @@ public class NwavConversionAPdfService {
 
     private Path nwavRenderizar(org.jsoup.nodes.Document nwavDoc, String nwavBase, NwavOpcionesHtml nwavOpciones,
                                 Path nwavDestino) {
-        // Las opciones elegidas van al final del <head> para que manden sobre la pagina.
         String nwavTamano = ("letter".equalsIgnoreCase(nwavOpciones.nwavTamano()) ? "letter" : "A4")
                 + (nwavOpciones.nwavHorizontal() ? " landscape" : " portrait");
         nwavDoc.head().appendElement("style").text("@page { size: " + nwavTamano + "; margin: "
@@ -387,7 +356,6 @@ public class NwavConversionAPdfService {
         });
     }
 
-    /** Para pruebas: escribe bytes de una imagen. */
     static byte[] nwavPng(BufferedImage nwavImagen) throws IOException {
         ByteArrayOutputStream nwavSalida = new ByteArrayOutputStream();
         ImageIO.write(nwavImagen, "png", nwavSalida);

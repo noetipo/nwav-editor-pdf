@@ -22,11 +22,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-/** Panel "Unir PDF": combina varios archivos, en el orden de la lista, en uno nuevo. */
 @Component
 @RequiredArgsConstructor
 public class NwavPanelUnirController implements NwavPanel {
-
     private final NwavVisorController nwavVisor;
     private final NwavArchivoPdfService nwavArchivos;
     private final NwavConfiguracionService nwavConfiguracion;

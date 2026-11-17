@@ -2,9 +2,7 @@ package com.nwav.editorpdf.model;
 
 import java.util.Locale;
 
-/** Color RGB (0-255) independiente de JavaFX y de PDFBox. */
 public record NwavColorRgb(int nwavRojo, int nwavVerde, int nwavAzul) {
-
     public static final NwavColorRgb NWAV_NEGRO = new NwavColorRgb(0, 0, 0);
     public static final NwavColorRgb NWAV_BLANCO = new NwavColorRgb(255, 255, 255);
     public static final NwavColorRgb NWAV_AMARILLO = new NwavColorRgb(255, 221, 0);
@@ -16,7 +14,6 @@ public record NwavColorRgb(int nwavRojo, int nwavVerde, int nwavAzul) {
         nwavAzul = Math.max(0, Math.min(255, nwavAzul));
     }
 
-    /** Componentes entre 0 y 1, como los usa PDF. */
     public float[] nwavComponentes() {
         return new float[]{nwavRojo / 255f, nwavVerde / 255f, nwavAzul / 255f};
     }

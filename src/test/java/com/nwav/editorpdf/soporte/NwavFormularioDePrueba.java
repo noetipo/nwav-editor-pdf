@@ -25,12 +25,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * PDF de una pagina con formulario AcroForm: "nombre" (texto, etiqueta "Nombre completo"),
- * "acepto" (casilla), "pais" (lista) y "codigo" (texto de solo lectura = "X-1").
- */
 public final class NwavFormularioDePrueba {
-
     private NwavFormularioDePrueba() {
     }
 
@@ -91,7 +86,6 @@ public final class NwavFormularioDePrueba {
         return nwavWidget;
     }
 
-    /** Apariencias "Yes" (cuadro relleno) y "Off" (vacio) de la casilla. */
     private static PDAppearanceDictionary nwavAparienciaCasilla(PDDocument nwavPd) throws IOException {
         COSDictionary nwavNormal = new COSDictionary();
         for (String nwavEstado : List.of("Yes", "Off")) {

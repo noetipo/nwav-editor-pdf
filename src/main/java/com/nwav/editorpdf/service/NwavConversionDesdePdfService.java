@@ -66,23 +66,14 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.IntStream;
 
-/**
- * "Convertir desde PDF": paginas a imagen, extraer imagenes, texto/Markdown y Office
- * (Word, Excel, PowerPoint). La conversion a Office reconstruye la estructura a partir de
- * la posicion del texto: el resultado es editable, pero puede necesitar ajustes.
- */
 @Service
 @RequiredArgsConstructor
 public class NwavConversionDesdePdfService {
-
     public static final String NWAV_AVISO_OFFICE = "La conversión reconstruye el documento a partir de la posición del "
             + "texto: es editable, pero el diseño puede necesitar ajustes (columnas, tablas complejas, fuentes).";
 
     private final NwavPdfDocumentoService nwavDocumentos;
 
-    // ================================================================ a imagen
-
-    /** Cada pagina a una imagen JPG o PNG. Devuelve los archivos creados. */
     public List<Path> nwavAImagenes(Path nwavEntrada, String nwavContrasena, String nwavFormato, int nwavDpi,
                                     float nwavCalidad, String nwavRangos, Path nwavCarpeta, NwavAvance nwavAvance,
                                     NwavCancelacion nwavCancelacion) {
@@ -131,17 +122,11 @@ public class NwavConversionDesdePdfService {
         }
     }
 
-    // ======================================================== extraer imagenes
-
-    /**
-     * Guarda las imagenes incrustadas tal como estan (los JPEG sin recomprimir). Se omiten
-     * las repetidas y las menores de {@code nwavMinimoPx} pixeles de lado.
-     */
     public List<Path> nwavExtraerImagenes(Path nwavEntrada, String nwavContrasena, int nwavMinimoPx, Path nwavCarpeta,
                                           NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) {
         try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena)) {
             Set<COSStream> nwavVistas = new HashSet<>();
-            Set<String> nwavHuellas = new HashSet<>(); // la misma imagen guardada como objetos distintos
+            Set<String> nwavHuellas = new HashSet<>();
             List<Path> nwavCreados = new ArrayList<>();
             int nwavTotal = nwavPd.getNumberOfPages();
             for (int nwavIndice = 0; nwavIndice < nwavTotal; nwavIndice++) {
@@ -212,15 +197,12 @@ public class NwavConversionDesdePdfService {
                 }
             });
         }
-        BufferedImage nwavPixeles = nwavImagen.getImage(); // aplica la mascara de transparencia
+        BufferedImage nwavPixeles = nwavImagen.getImage();
         Path nwavDestino = NwavEscrituraSegura.nwavRutaSalida(nwavEntrada, nwavCarpeta, nwavSufijo, "png");
         return NwavEscrituraSegura.nwavEscribir(nwavDestino, nwavTemporal -> ImageIO.write(nwavPixeles, "png",
                 nwavTemporal.toFile()));
     }
 
-    // ========================================================= texto/Markdown
-
-    /** Texto plano, pagina a pagina (en orden de lectura). */
     public Path nwavATexto(Path nwavEntrada, String nwavContrasena, Path nwavDestino) {
         try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena)) {
             PDFTextStripper nwavExtractor = new PDFTextStripper();
@@ -242,7 +224,6 @@ public class NwavConversionDesdePdfService {
         }
     }
 
-    /** Markdown con titulos, listas, tablas y enlaces (las imagenes se omiten). */
     public Path nwavAMarkdown(Path nwavEntrada, String nwavContrasena, Path nwavDestino, NwavCancelacion nwavCancelacion) {
         try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena)) {
             List<NwavPagina> nwavPaginas = NwavDisposicionPdf.nwavAnalizar(nwavPd, nwavTodas(nwavPd), nwavCancelacion);
@@ -289,7 +270,7 @@ public class NwavConversionDesdePdfService {
                                 .append("\n\n");
                     }
                     default -> {
-                        continue; // imagenes: no van en el Markdown
+                        continue;
                     }
                 }
                 nwavAnterior = nwavBloque.nwavTipo();
@@ -309,7 +290,6 @@ public class NwavConversionDesdePdfService {
         return nwavTexto.replaceAll("^([#>+])", "\\\\$1");
     }
 
-    /** Sustituye las palabras con enlace por [texto](uri). */
     private static String nwavConEnlaces(NwavBloque nwavBloque, NwavPagina nwavPagina, String nwavTexto) {
         if (nwavPagina.nwavEnlaces().isEmpty()) {
             return nwavTexto;
@@ -348,8 +328,6 @@ public class NwavConversionDesdePdfService {
                     + "Aplica primero la herramienta OCR.");
         }
     }
-
-    // ==================================================================== Word
 
     public Path nwavAWord(Path nwavEntrada, String nwavContrasena, boolean nwavConImagenes, Path nwavDestino,
                           NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) {
@@ -428,7 +406,7 @@ public class NwavConversionDesdePdfService {
                     return;
                 }
                 byte[] nwavPng = nwavPng(nwavBloque.nwavImagen().nwavImagen().getImage());
-                double nwavAncho = Math.min(nwavBloque.nwavImagen().nwavZona().nwavAncho(), 468); // ancho util A4/Carta
+                double nwavAncho = Math.min(nwavBloque.nwavImagen().nwavZona().nwavAncho(), 468);
                 double nwavAlto = nwavAncho * nwavBloque.nwavImagen().nwavZona().nwavAlto()
                         / nwavBloque.nwavImagen().nwavZona().nwavAncho();
                 XWPFRun nwavRun = nwavWord.createParagraph().createRun();
@@ -447,7 +425,6 @@ public class NwavConversionDesdePdfService {
         }
     }
 
-    /** Escribe el texto del bloque palabra a palabra, con negrita/cursiva/color y enlaces. */
     private static void nwavRunsConEnlaces(XWPFParagraph nwavParrafo, NwavBloque nwavBloque, NwavPagina nwavPagina,
                                            boolean nwavSaltarMarca) {
         boolean nwavPrimera = true;
@@ -469,7 +446,6 @@ public class NwavConversionDesdePdfService {
                         + "|" + Math.round(nwavPalabra.nwavTamano()) + "|" + nwavUri;
                 String nwavSeparador = nwavPrimera ? "" : " ";
                 String nwavTexto = nwavPalabra.nwavTexto();
-                // Guion de fin de linea que parte una palabra: se une sin espacio ni guion.
                 if (nwavP == nwavPalabras.size() - 1 && nwavL < nwavLineas.size() - 1 && nwavTexto.endsWith("-")
                         && nwavTexto.length() > 1) {
                     String nwavSiguiente = nwavLineas.get(nwavL + 1).nwavPalabras().get(0).nwavTexto();
@@ -516,12 +492,6 @@ public class NwavConversionDesdePdfService {
         return String.format(Locale.ROOT, "%06X", nwavRgb & 0xFFFFFF);
     }
 
-    // =================================================================== Excel
-
-    /**
-     * Las tablas detectadas pasan a hojas de calculo (una hoja por pagina, o todo en una).
-     * Los numeros se convierten a numero real (admite 1.234,56 y 1,234.56).
-     */
     public Path nwavAExcel(Path nwavEntrada, String nwavContrasena, boolean nwavUnaHoja, boolean nwavSoloTablas,
                            Path nwavDestino, NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) {
         try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena);
@@ -565,7 +535,7 @@ public class NwavConversionDesdePdfService {
                                 nwavBloque.nwavTipo() == NwavTipoBloque.NWAV_LISTA
                                         ? "• " + nwavBloque.nwavTexto() : nwavBloque.nwavTexto());
                     }
-                    nwavFilaActual++; // fila en blanco entre bloques
+                    nwavFilaActual++;
                 }
                 for (int nwavColumna = 0; nwavColumna < 12; nwavColumna++) {
                     nwavHoja.autoSizeColumn(nwavColumna);
@@ -586,7 +556,6 @@ public class NwavConversionDesdePdfService {
         }
     }
 
-    /** Pone un numero si el texto lo es (formato espanol o ingles, con % o moneda), si no texto. */
     static void nwavValorCelda(XSSFCell nwavCelda, String nwavTexto) {
         BigDecimal nwavNumero = nwavNumero(nwavTexto);
         if (nwavNumero != null) {
@@ -615,10 +584,8 @@ public class NwavConversionDesdePdfService {
         if (nwavComa >= 0 && nwavPunto >= 0) {
             nwavNormal = nwavComa > nwavPunto ? nwavLimpio.replace(".", "").replace(',', '.') : nwavLimpio.replace(",", "");
         } else if (nwavComa >= 0) {
-            // "1,5" decimal; "1,234,567" miles
             nwavNormal = nwavLimpio.matches("[-+]?\\d{1,3}(,\\d{3})+") ? nwavLimpio.replace(",", "") : nwavLimpio.replace(',', '.');
         } else if (nwavPunto >= 0) {
-            // "1.234.567" miles; "3.5" decimal; "1.234" se toma como miles (formato espanol)
             nwavNormal = nwavLimpio.matches("[-+]?\\d{1,3}(\\.\\d{3})+") ? nwavLimpio.replace(".", "") : nwavLimpio;
         } else {
             nwavNormal = nwavLimpio;
@@ -631,13 +598,6 @@ public class NwavConversionDesdePdfService {
         }
     }
 
-    // ============================================================== PowerPoint
-
-    /**
-     * Una diapositiva por pagina. Con {@code nwavTextoEditable} la pagina se dibuja como fondo
-     * SIN su texto y el texto se anade en cuadros editables encima; si no, la pagina entera es
-     * una imagen (identica al PDF, pero no editable).
-     */
     public Path nwavAPowerPoint(Path nwavEntrada, String nwavContrasena, boolean nwavTextoEditable, Path nwavDestino,
                                 NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) {
         try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena);
@@ -701,7 +661,6 @@ public class NwavConversionDesdePdfService {
                         nwavCuadro.getTextParagraphs().indexOf(nwavVacio)));
     }
 
-    /** Renderizador que dibuja todo menos el texto (fondo de las diapositivas editables). */
     private static final class NwavRenderSinTexto extends PDFRenderer {
         NwavRenderSinTexto(PDDocument nwavPd) {
             super(nwavPd);
@@ -714,20 +673,16 @@ public class NwavConversionDesdePdfService {
                 protected void showFontGlyph(org.apache.pdfbox.util.Matrix nwavMatriz,
                                              org.apache.pdfbox.pdmodel.font.PDFont nwavFuente, int nwavCodigo,
                                              org.apache.pdfbox.util.Vector nwavDesplazamiento) {
-                    // el texto va en cuadros editables
                 }
 
                 @Override
                 protected void showType3Glyph(org.apache.pdfbox.util.Matrix nwavMatriz,
                                               org.apache.pdfbox.pdmodel.font.PDType3Font nwavFuente, int nwavCodigo,
                                               org.apache.pdfbox.util.Vector nwavDesplazamiento) {
-                    // idem
                 }
             };
         }
     }
-
-    // ================================================================ internos
 
     private static List<Integer> nwavTodas(PDDocument nwavPd) {
         return IntStream.range(0, nwavPd.getNumberOfPages()).boxed().toList();

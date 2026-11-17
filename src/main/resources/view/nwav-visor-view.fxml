@@ -13,7 +13,6 @@
         <ToggleGroup fx:id="nwavGrupoAjuste"/>
     </fx:define>
 
-    <!-- ============ BARRA DE HERRAMIENTAS ============ -->
     <top>
       <VBox>
         <HBox styleClass="nwav-barra-visor" spacing="6.0" alignment="CENTER_LEFT">
@@ -149,7 +148,6 @@
             <Label fx:id="nwavLblArchivo" styleClass="nwav-nombre-archivo" textOverrun="CENTER_ELLIPSIS" minWidth="0"/>
         </HBox>
 
-        <!-- Busqueda (Fase 4) -->
         <HBox fx:id="nwavBarraBusqueda" styleClass="nwav-barra-busqueda" spacing="6.0" alignment="CENTER_LEFT">
             <FontIcon iconLiteral="fth-search" styleClass="nwav-icono-tenue"/>
             <TextField fx:id="nwavTxtBuscar" promptText="Buscar en el documento (Intro)" prefWidth="300.0"/>
@@ -173,7 +171,6 @@
             </Button>
         </HBox>
 
-        <!-- Herramientas de edicion de contenido (Fase 3); los botones se crean en el controlador -->
         <HBox fx:id="nwavBarraEdicion" styleClass="nwav-barra-edicion" spacing="6.0" alignment="CENTER_LEFT">
             <HBox fx:id="nwavBotonesHerramientas" spacing="2.0" alignment="CENTER_LEFT"/>
             <Separator orientation="VERTICAL"/>
@@ -204,7 +201,6 @@
       </VBox>
     </top>
 
-    <!-- ============ MINIATURAS ============ -->
     <left>
         <VBox fx:id="nwavPanelMiniaturas" styleClass="nwav-panel-miniaturas" prefWidth="170.0" minWidth="170.0">
             <Label text="PÁGINAS" styleClass="nwav-panel-titulo"/>
@@ -214,7 +210,6 @@
         </VBox>
     </left>
 
-    <!-- ============ DOCUMENTO ============ -->
     <center>
         <StackPane styleClass="nwav-zona-documento">
             <ScrollPane fx:id="nwavScroll" styleClass="nwav-scroll-documento" pannable="false">

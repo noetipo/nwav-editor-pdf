@@ -1,6 +1,5 @@
 package com.nwav.editorpdf.model;
 
-/** Formas basicas (anotaciones). */
 public enum NwavTipoForma {
     NWAV_RECTANGULO("Rectángulo"),
     NWAV_ELIPSE("Elipse"),

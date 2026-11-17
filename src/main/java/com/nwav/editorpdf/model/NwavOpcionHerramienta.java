@@ -12,14 +12,12 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/** Ultimo valor usado de una opcion de una herramienta. */
 @Entity
 @Table(name = "nwav_opcion_herramienta")
 @Getter
 @Setter
 @NoArgsConstructor
 public class NwavOpcionHerramienta {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "nwav_id")

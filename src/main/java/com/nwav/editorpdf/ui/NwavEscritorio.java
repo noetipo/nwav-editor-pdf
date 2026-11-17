@@ -6,10 +6,8 @@ import org.springframework.stereotype.Component;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/** Abre archivos y carpetas con las aplicaciones del sistema. */
 @Component
 public class NwavEscritorio {
-
     private HostServices nwavServicios;
 
     public void nwavRegistrar(HostServices nwavServicios) {
@@ -22,7 +20,6 @@ public class NwavEscritorio {
         }
     }
 
-    /** Abre la carpeta que contiene el archivo (o la carpeta misma). */
     public void nwavMostrarCarpeta(Path nwavRuta) {
         if (nwavRuta == null) {
             return;

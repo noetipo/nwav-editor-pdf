@@ -1,6 +1,5 @@
 package com.nwav.editorpdf.ui;
 
-/** Categorias de la pantalla de inicio. */
 public enum NwavCategoriaHerramienta {
     NWAV_ORGANIZAR("Organizar", "nwav-cat-organizar"),
     NWAV_OPTIMIZAR("Optimizar", "nwav-cat-optimizar"),

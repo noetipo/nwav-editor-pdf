@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NwavZoomPreferidoTest {
-
     @Test
     void nwavSerializaYDeserializaElPorcentaje() {
         NwavZoomPreferido nwavZoom = new NwavZoomPreferido(NwavModoZoom.NWAV_PORCENTAJE, 1.25);

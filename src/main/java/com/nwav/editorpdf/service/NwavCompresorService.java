@@ -45,29 +45,17 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Compresion de PDF. Solo toca las imagenes: reduce las que superan la resolucion
- * objetivo, las recomprime en JPEG (conservando la transparencia) y une las duplicadas.
- * No toca las imagenes en blanco y negro de 1 bit ni el texto o los vectores. Ademas
- * comprime los flujos, guarda con object streams y, si se pide, quita metadatos y
- * miniaturas. Si el resultado no es mas pequeno, no se guarda.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NwavCompresorService {
-
-    /** Imagenes mas pequenas que esto no compensan recomprimirlas. */
     private static final int NWAV_PIXELES_MINIMOS = 32 * 32;
-    /** La nueva imagen debe ahorrar al menos un 5 % para reemplazar a la original. */
     private static final double NWAV_AHORRO_MINIMO = 0.95;
 
     private final NwavPdfDocumentoService nwavDocumentos;
 
-    /** Resultado de comprimir un archivo. {@code nwavDestino} es null si no se guardo. */
     public record NwavResultadoCompresion(long nwavAntes, long nwavDespues, Path nwavDestino, int nwavImagenesReducidas,
                                           int nwavImagenesDuplicadas) {
-
         public boolean nwavGuardado() {
             return nwavDestino != null;
         }
@@ -85,7 +73,6 @@ public class NwavCompresorService {
         }
     }
 
-    /** Comprime {@code nwavEntrada} en {@code nwavDestino}; si no mejora, no escribe nada. */
     public NwavResultadoCompresion nwavComprimir(Path nwavEntrada, String nwavContrasena, NwavOpcionesCompresion nwavOpciones,
                                                  Path nwavDestino, NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) {
         Path nwavFinal = nwavDestino.toAbsolutePath().normalize();
@@ -113,11 +100,6 @@ public class NwavCompresorService {
         }
     }
 
-    /**
-     * Comprime a un archivo dado (sin comprobar si mejora). Lo usa la vista previa.
-     *
-     * @return {imagenes reducidas o recomprimidas, imagenes duplicadas unidas}
-     */
     public int[] nwavComprimirA(Path nwavEntrada, String nwavContrasena, NwavOpcionesCompresion nwavOpciones, Path nwavSalida,
                                 NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) throws IOException {
         try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena)) {
@@ -130,15 +112,10 @@ public class NwavCompresorService {
         }
     }
 
-    /** Antes y despues de una pagina, para comparar la calidad. */
     public record NwavVistaPrevia(BufferedImage nwavAntes, BufferedImage nwavDespues, long nwavTamanoAntes,
                                   long nwavTamanoDespues, int nwavPaginas) {
     }
 
-    /**
-     * Comprime a un temporal (que se borra) y renderiza la misma pagina del original y del
-     * resultado a la escala indicada.
-     */
     public NwavVistaPrevia nwavVistaPrevia(Path nwavEntrada, String nwavContrasena, NwavOpcionesCompresion nwavOpciones,
                                            int nwavPagina, float nwavEscala, NwavAvance nwavAvance,
                                            NwavCancelacion nwavCancelacion) {
@@ -166,12 +143,9 @@ public class NwavCompresorService {
         }
     }
 
-    // =============================================================== documento
-
     int[] nwavComprimirDocumento(PDDocument nwavPd, NwavOpcionesCompresion nwavOpciones, NwavAvance nwavAvance,
                                  NwavCancelacion nwavCancelacion) throws IOException {
         int nwavTotal = nwavPd.getNumberOfPages();
-        // 1. Tamano con el que se dibuja cada imagen, para conocer su resolucion real.
         NwavMedidorImagenes nwavMedidor = new NwavMedidorImagenes();
         int nwavIndice = 0;
         for (PDPage nwavPagina : nwavPd.getPages()) {
@@ -185,7 +159,6 @@ public class NwavCompresorService {
             nwavIndice++;
         }
 
-        // 2. Imagenes: reducir, recomprimir y unir duplicadas (una sola vez por imagen).
         Map<COSBase, PDImageXObject> nwavProcesadas = new HashMap<>();
         Map<String, PDImageXObject> nwavPorHuella = new HashMap<>();
         Set<COSBase> nwavFormularios = new HashSet<>();
@@ -206,7 +179,6 @@ public class NwavCompresorService {
             nwavIndice++;
         }
 
-        // 3. Metadatos.
         if (nwavOpciones.nwavQuitarMetadatos()) {
             nwavPd.getDocumentCatalog().getCOSObject().removeItem(COSName.METADATA);
             nwavPd.getDocumentCatalog().getCOSObject().removeItem(COSName.PIECE_INFO);
@@ -270,16 +242,13 @@ public class NwavCompresorService {
         }
     }
 
-    // ================================================================= imagenes
-
-    /** Devuelve una imagen optimizada o la misma si no conviene cambiarla. */
     PDImageXObject nwavOptimizar(PDDocument nwavPd, PDImageXObject nwavImagen, float[] nwavTamanoDibujado,
                                  NwavOpcionesCompresion nwavOpciones) {
         try {
             COSStream nwavFlujo = nwavImagen.getCOSObject();
             if (nwavImagen.isStencil() || nwavImagen.getBitsPerComponent() == 1
                     || nwavFlujo.containsKey(COSName.MASK) || nwavFlujo.containsKey(COSName.DECODE)) {
-                return nwavImagen; // 1 bit, mascaras de color o Decode: no se tocan
+                return nwavImagen;
             }
             List<COSName> nwavFiltros = nwavImagen.getStream().getFilters();
             if (nwavFiltros.contains(COSName.CCITTFAX_DECODE) || nwavFiltros.contains(COSName.JBIG2_DECODE)) {
@@ -301,7 +270,7 @@ public class NwavCompresorService {
             }
             boolean nwavEsJpeg = nwavFiltros.contains(COSName.DCT_DECODE);
             if (nwavEscala == 1.0 && nwavEsJpeg && !nwavOpciones.nwavGrises() && nwavOpciones.nwavCalidad() >= 0.8f) {
-                return nwavImagen; // ya es JPEG y no hay nada que ganar
+                return nwavImagen;
             }
             BufferedImage nwavOriginal = nwavImagen.getImage();
             if (nwavOriginal == null) {
@@ -314,7 +283,6 @@ public class NwavCompresorService {
             if (nwavOpciones.nwavGrises()) {
                 nwavPreparada = nwavAGrises(nwavPreparada, nwavConAlfa);
             }
-            // JPEGFactory guarda el canal alfa como SMask: se conserva la transparencia.
             PDImageXObject nwavNueva = JPEGFactory.createFromImage(nwavPd, nwavPreparada, nwavOpciones.nwavCalidad());
             long nwavLargoNuevo = nwavLargo(nwavNueva.getCOSObject())
                     + (nwavNueva.getCOSObject().getCOSStream(COSName.SMASK) == null ? 0
@@ -329,13 +297,11 @@ public class NwavCompresorService {
             }
             return nwavNueva;
         } catch (IOException | RuntimeException nwavError) {
-            // Imagen que PDFBox no sabe leer (p. ej. JPEG 2000 sin plugin): se deja como esta.
             nwavLog.debug("Imagen no optimizable: {}", nwavError.toString());
             return nwavImagen;
         }
     }
 
-    /** Reduce por pasos (cada uno a la mitad como mucho) para mantener la nitidez. */
     static BufferedImage nwavEscalar(BufferedImage nwavOrigen, int nwavAncho, int nwavAlto, boolean nwavConAlfa) {
         int nwavTipo = nwavConAlfa ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
         BufferedImage nwavActual = nwavOrigen;
@@ -381,9 +347,6 @@ public class NwavCompresorService {
         return nwavGris;
     }
 
-    // ============================================================ contenido
-
-    /** Comprime con Flate los flujos de contenido que esten sin comprimir. */
     private static void nwavComprimirContenido(PDPage nwavPagina) {
         try {
             java.util.Iterator<PDStream> nwavFlujos = nwavContenidos(nwavPagina);
@@ -419,10 +382,6 @@ public class NwavCompresorService {
         return nwavLista.iterator();
     }
 
-    /**
-     * Escala de grises en texto y vectores: convierte los colores RGB y CMYK directos
-     * (rg, RG, k, K) en grises (g, G). Los espacios de color con nombre se dejan igual.
-     */
     private static void nwavGrisesEnContenido(PDDocument nwavPd, PDPage nwavPagina) {
         try {
             List<Object> nwavTokens = nwavConvertirTokens(new PDFStreamParser(nwavPagina).parse());
@@ -481,14 +440,11 @@ public class NwavCompresorService {
         return nwavSalida;
     }
 
-    // ============================================================= utilidades
-
     private static long nwavLargo(COSStream nwavFlujo) {
         long nwavLargo = nwavFlujo.getLength();
         return nwavLargo > 0 ? nwavLargo : nwavFlujo.getLong(COSName.LENGTH, 0);
     }
 
-    /** Huella de los datos codificados de una imagen (y su mascara), para unir duplicadas. */
     private static String nwavHuella(COSStream nwavFlujo) {
         try (InputStream nwavDatos = nwavFlujo.createRawInputStream()) {
             MessageDigest nwavResumen = MessageDigest.getInstance("SHA-256");
@@ -521,7 +477,6 @@ public class NwavCompresorService {
             try {
                 Files.deleteIfExists(nwavRuta);
             } catch (IOException nwavIgnorado) {
-                // temporal del sistema
             }
         }
     }

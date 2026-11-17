@@ -25,13 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Construye el formulario de opciones de una herramienta a partir de su lista de
- * {@link NwavCampoOpcion} y devuelve los valores elegidos. Las opciones dependientes
- * (nwavSi) se muestran u ocultan solas.
- */
 public class NwavFormularioOpciones {
-
     private final VBox nwavRaiz = new VBox(12);
     private final Map<String, StringProperty> nwavValores = new LinkedHashMap<>();
     private final List<NwavCampoOpcion> nwavCampos;
@@ -54,14 +48,12 @@ public class NwavFormularioOpciones {
         return nwavRaiz;
     }
 
-    /** Valores actuales de las opciones visibles y ocultas. */
     public Map<String, String> nwavValores() {
         Map<String, String> nwavSalida = new LinkedHashMap<>();
         nwavValores.forEach((nwavClave, nwavValor) -> nwavSalida.put(nwavClave, nwavValor.get()));
         return nwavSalida;
     }
 
-    /** Valores que se recuerdan (sin contrasenas). */
     public Map<String, String> nwavValoresGuardables() {
         Map<String, String> nwavSalida = new LinkedHashMap<>();
         for (NwavCampoOpcion nwavCampo : nwavCampos) {
@@ -213,7 +205,6 @@ public class NwavFormularioOpciones {
         }
     }
 
-    /** "valor=Etiqueta" -> parte 0 (valor) o 1 (etiqueta). */
     static String nwavParte(String nwavOpcion, int nwavParte) {
         int nwavIgual = nwavOpcion.indexOf('=');
         if (nwavIgual < 0) {
@@ -243,7 +234,6 @@ public class NwavFormularioOpciones {
                 (int) Math.round(nwavColor.getGreen() * 255), (int) Math.round(nwavColor.getBlue() * 255));
     }
 
-    /** Muestra la etiqueta de un valor en las listas desplegables. */
     private static final class NwavCeldaEtiqueta extends ListCell<String> {
         private final Map<String, String> nwavEtiquetas;
 

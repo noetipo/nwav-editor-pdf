@@ -6,16 +6,7 @@ import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDPage;
 
-/**
- * Foto del contenido (/Contents) y de las anotaciones (/Annots) de una pagina, para
- * deshacer y rehacer ediciones de contenido. Guarda la pagina por identidad, asi que sigue
- * valiendo aunque la pagina cambie de posicion. Es opaca fuera del paquete.
- * <p>
- * Los arreglos se copian: PDFBox agrega contenido y anotaciones modificando el arreglo
- * existente, y la foto no debe cambiar con ellos.
- */
 public final class NwavInstantaneaPagina {
-
     private final PDPage nwavPagina;
     private final COSBase nwavContenido;
     private final COSArray nwavAnotaciones;

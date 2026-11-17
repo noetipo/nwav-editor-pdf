@@ -41,18 +41,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
 
-/**
- * Interaccion de edicion sobre las paginas del visor. Cada pagina tiene una capa
- * transparente encima; segun la herramienta, arrastrar dibuja una vista previa y al
- * soltar se pide la edicion al {@link NwavDestino}. Texto, imagen y nota quedan como
- * elemento "pendiente" (editable, movible) hasta que el usuario lo fija con ✓.
- * <p>
- * Trabaja en pixeles de pantalla y convierte a coordenadas visuales en puntos PDF
- * dividiendo por la escala actual (pixeles por punto).
- */
 public class NwavEditorInteractivo {
-
-    /** Lo que el editor pide al visor. Los callbacks indican si la edicion se aplico. */
     public interface NwavDestino {
         void nwavFijarTexto(int nwavPagina, NwavRectangulo nwavZona, String nwavTexto, NwavEstiloTexto nwavEstilo,
                             Runnable nwavSiAplica, Runnable nwavSiFalla);
@@ -63,7 +52,6 @@ public class NwavEditorInteractivo {
         void nwavFijarNota(int nwavPagina, NwavPunto nwavPunto, String nwavTexto, NwavColorRgb nwavColor,
                            Runnable nwavSiAplica, Runnable nwavSiFalla);
 
-        /** Imagen ya en memoria (p. ej. una firma guardada). */
         void nwavFijarImagenBytes(int nwavPagina, byte[] nwavPng, NwavRectangulo nwavZona,
                                   Runnable nwavSiAplica, Runnable nwavSiFalla);
 
@@ -95,14 +83,12 @@ public class NwavEditorInteractivo {
     private final NwavDestino nwavDestino;
     private final DoubleSupplier nwavEscala;
 
-    // Arrastre en curso.
     private Pane nwavCapaActiva;
     private int nwavPaginaActiva = -1;
     private Point2D nwavInicio;
     private Shape nwavVistaPrevia;
     private final List<Point2D> nwavTrazo = new ArrayList<>();
 
-    /** Elemento pendiente de fijar (solo uno a la vez). */
     private NwavPendiente nwavPendiente;
 
     public NwavEditorInteractivo(NwavEstadoHerramientas nwavEstado, NwavDestino nwavDestino, DoubleSupplier nwavEscala) {
@@ -112,7 +98,6 @@ public class NwavEditorInteractivo {
         nwavEstado.nwavHerramientaProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> nwavCancelarPendiente());
     }
 
-    /** Prepara la capa de una pagina. La capa debe cubrir exactamente la pagina. */
     public void nwavInstalar(Pane nwavCapa, int nwavPagina) {
         nwavCapa.getStyleClass().add("nwav-capa-edicion");
         nwavCapa.mouseTransparentProperty().bind(
@@ -137,7 +122,6 @@ public class NwavEditorInteractivo {
         return nwavPendiente != null;
     }
 
-    /** Descarta el elemento pendiente y cualquier arrastre a medias. */
     public void nwavCancelarPendiente() {
         if (nwavPendiente != null) {
             nwavPendiente.nwavQuitar();
@@ -146,10 +130,7 @@ public class NwavEditorInteractivo {
         nwavLimpiarArrastre();
     }
 
-    // ================================================================ raton
-
     private void nwavAlPresionar(Pane nwavCapa, int nwavPagina, MouseEvent nwavEvento) {
-        // Solo cuentan los clics sobre la capa vacia (no sobre un elemento pendiente).
         if (nwavEvento.getTarget() != nwavCapa || !nwavEvento.isPrimaryButtonDown() || nwavPendiente != null
                 || !nwavDestino.nwavPuedeEditar()) {
             return;
@@ -305,7 +286,6 @@ public class NwavEditorInteractivo {
             case NWAV_IMAGEN -> nwavDestino.nwavElegirImagen().ifPresent(nwavRuta ->
                     nwavPendiente = new NwavImagenPendiente(nwavCapa, nwavPagina, nwavRuta, null, nwavAPuntos(nwavFin)));
             default -> {
-                // navegar: nada
             }
         }
     }
@@ -330,10 +310,6 @@ public class NwavEditorInteractivo {
         return new NwavPunto(nwavPixel.getX() / nwavPorPunto, nwavPixel.getY() / nwavPorPunto);
     }
 
-    /**
-     * Coloca en el centro de la pagina una imagen en memoria (una firma) como elemento
-     * pendiente: se puede mover y redimensionar antes de fijarla.
-     */
     public void nwavColocarImagen(Pane nwavCapa, int nwavPagina, byte[] nwavPng) {
         nwavCancelarPendiente();
         double nwavPorPunto = nwavEscala.getAsDouble();
@@ -342,14 +318,7 @@ public class NwavEditorInteractivo {
         nwavPendiente = new NwavImagenPendiente(nwavCapa, nwavPagina, null, nwavPng, nwavCentro);
     }
 
-    // ============================================================ pendientes
-
-    /**
-     * Elemento flotante sin fijar. Guarda su posicion en puntos PDF para recolocarse si
-     * cambia el zoom mientras se edita.
-     */
     private abstract class NwavPendiente {
-
         protected final Pane nwavCapa;
         protected final int nwavPagina;
         protected final VBox nwavRaiz = new VBox(4);
@@ -372,7 +341,6 @@ public class NwavEditorInteractivo {
             nwavCapa.widthProperty().addListener(nwavOyenteTamano);
         }
 
-        /** Barra con ✓ (fijar) y ✕ (cancelar). */
         protected HBox nwavCrearAcciones(String nwavTextoFijar) {
             Button nwavFijar = new Button(null, new FontIcon(Feather.CHECK));
             nwavFijar.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.SUCCESS, Styles.SMALL);
@@ -393,7 +361,6 @@ public class NwavEditorInteractivo {
             nwavReubicar();
         }
 
-        /** Oculta mientras se aplica la edicion; si falla, se vuelve a mostrar. */
         private void nwavIntentarFijar() {
             nwavRaiz.setVisible(false);
             nwavFijar(() -> {
@@ -414,9 +381,7 @@ public class NwavEditorInteractivo {
         abstract void nwavFijar(Runnable nwavSiAplica, Runnable nwavSiFalla);
     }
 
-    /** Cuadro de texto: la vista previa usa la misma letra, tamano y color. */
     private final class NwavTextoPendiente extends NwavPendiente {
-
         private final double nwavX;
         private final double nwavY;
         private final double nwavAncho;
@@ -467,9 +432,7 @@ public class NwavEditorInteractivo {
         }
     }
 
-    /** Nota: un cuadro pequeno para escribir el texto de la nota. */
     private final class NwavNotaPendiente extends NwavPendiente {
-
         private final NwavPunto nwavPunto;
         private final TextArea nwavEditor = new TextArea();
 
@@ -502,9 +465,7 @@ public class NwavEditorInteractivo {
         }
     }
 
-    /** Imagen: se mueve arrastrandola y se redimensiona (manteniendo la proporcion) por la esquina. */
     private final class NwavImagenPendiente extends NwavPendiente {
-
         private final Path nwavRuta;
         private final byte[] nwavBytes;
         private final ImageView nwavVista = new ImageView();
@@ -516,7 +477,6 @@ public class NwavEditorInteractivo {
         private double nwavAncho;
         private Point2D nwavAgarre;
 
-        /** Desde un archivo ({@code nwavRuta}) o desde memoria ({@code nwavBytes}). */
         NwavImagenPendiente(Pane nwavCapa, int nwavPagina, Path nwavRuta, byte[] nwavBytes, NwavPunto nwavCentro) {
             super(nwavCapa, nwavPagina);
             this.nwavRuta = nwavRuta;
@@ -582,7 +542,6 @@ public class NwavEditorInteractivo {
             nwavVista.setFitHeight(nwavAltoPx);
             nwavMarco.setPrefSize(nwavAnchoPx, nwavAltoPx);
             nwavMarco.setMaxSize(nwavAnchoPx, nwavAltoPx);
-            // Las acciones van encima de la imagen: la imagen queda en (x, y).
             nwavRaiz.relocate(nwavX * nwavPorPunto, nwavY * nwavPorPunto - 32);
         }
 
@@ -597,7 +556,6 @@ public class NwavEditorInteractivo {
         }
     }
 
-    /** Utilidad para el visor: nodo de ayuda visible solo con una herramienta activa. */
     public static boolean nwavEsEdicion(NwavHerramienta nwavHerramienta) {
         return nwavHerramienta != null && nwavHerramienta != NwavHerramienta.NWAV_NAVEGAR;
     }

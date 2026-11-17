@@ -12,26 +12,21 @@ import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import java.io.IOException;
 import java.nio.file.Path;
 
-/** Genera PDF pequenos para las pruebas, sin depender de archivos externos. */
 public final class NwavPdfDePrueba {
-
     public static final String NWAV_CLAVE_PROPIETARIO = "propietario-nwav";
 
     private NwavPdfDePrueba() {
     }
 
-    /** PDF A4 con {@code nwavPaginas} paginas, cada una con su numero escrito. */
     public static Path nwavCrear(Path nwavCarpeta, String nwavNombre, int nwavPaginas) throws IOException {
         return nwavGuardar(nwavCarpeta.resolve(nwavNombre), nwavPaginas, null, 0);
     }
 
-    /** Igual, pero la segunda pagina (si existe) va girada {@code nwavRotacion} grados. */
     public static Path nwavCrearConRotacion(Path nwavCarpeta, String nwavNombre, int nwavPaginas,
                                            int nwavRotacion) throws IOException {
         return nwavGuardar(nwavCarpeta.resolve(nwavNombre), nwavPaginas, null, nwavRotacion);
     }
 
-    /** PDF cifrado con contrasena de usuario. */
     public static Path nwavCrearCifrado(Path nwavCarpeta, String nwavNombre, int nwavPaginas,
                                        String nwavClaveUsuario) throws IOException {
         return nwavGuardar(nwavCarpeta.resolve(nwavNombre), nwavPaginas, nwavClaveUsuario, 0);

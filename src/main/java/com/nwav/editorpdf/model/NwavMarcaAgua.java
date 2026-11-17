@@ -14,14 +14,12 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/** Plantilla reutilizable de marca de agua. Se usa en la Fase 4. */
 @Entity
 @Table(name = "nwav_marca_agua")
 @Getter
 @Setter
 @NoArgsConstructor
 public class NwavMarcaAgua {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "nwav_id")
@@ -46,7 +44,6 @@ public class NwavMarcaAgua {
     @Column(name = "nwav_tamano_fuente")
     private Double nwavTamanoFuente;
 
-    /** Color en formato #RRGGBB o #RRGGBBAA. */
     @Column(name = "nwav_color", length = 9)
     private String nwavColor;
 

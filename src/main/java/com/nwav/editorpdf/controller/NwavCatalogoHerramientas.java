@@ -29,14 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Catalogo de herramientas de la pantalla de inicio. Cada herramienta declara sus opciones
- * y su proceso (un servicio sin JavaFX); la interfaz comun se encarga del resto.
- */
 @Component
 @RequiredArgsConstructor
 public class NwavCatalogoHerramientas {
-
     public static final String NWAV_COMPRIMIR = "comprimir";
     public static final String NWAV_OCR = "ocr";
     public static final String NWAV_REPARAR = "reparar";
@@ -81,8 +76,6 @@ public class NwavCatalogoHerramientas {
         nwavAgregarSeguridad(nwavLista);
         return nwavLista;
     }
-
-    // ================================================================ Organizar
 
     private void nwavAgregarOrganizar(List<NwavDefinicionHerramienta> nwavLista) {
         nwavLista.add(new NwavDefinicionHerramienta("unir", "Unir PDF",
@@ -222,8 +215,6 @@ public class NwavCatalogoHerramientas {
         return new NwavResultadoProceso(nwavPartes, nwavResumen, nwavResumen + " (" + nwavModo + ")");
     }
 
-    // ================================================================ Optimizar
-
     private void nwavAgregarOptimizar(List<NwavDefinicionHerramienta> nwavLista) {
         NwavVistaPreviaCompresion nwavVistaPrevia = new NwavVistaPreviaCompresion(nwavCompresor, nwavTareaFondo,
                 nwavNotificador, NwavCatalogoHerramientas::nwavOpcionesCompresion);
@@ -349,8 +340,6 @@ public class NwavCatalogoHerramientas {
                 nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion());
         return NwavResultadoProceso.nwavDe(nwavResultado.nwavDestino(), nwavResultado.nwavResumen());
     }
-
-    // ========================================================== Convertir a PDF
 
     private void nwavAgregarAPdf(List<NwavDefinicionHerramienta> nwavLista) {
         String[] nwavImagenes = com.nwav.editorpdf.service.NwavConversionAPdfService.NWAV_EXTENSIONES_IMAGEN
@@ -501,8 +490,6 @@ public class NwavCatalogoHerramientas {
         return new NwavResultadoProceso(nwavCreados, nwavResumen, nwavResumen);
     }
 
-    // ====================================================== Convertir desde PDF
-
     private void nwavAgregarDesdePdf(List<NwavDefinicionHerramienta> nwavLista) {
         nwavLista.add(new NwavDefinicionHerramienta("pdf-imagen", "PDF a imagen",
                 "Convierte cada página en una imagen JPG o PNG con la resolución que elijas.",
@@ -626,8 +613,6 @@ public class NwavCatalogoHerramientas {
                 .nwavConPalabrasClave("pdfa archivo largo plazo preflight validar"));
     }
 
-    // ================================================================== Editar
-
     private void nwavAgregarEditar(List<NwavDefinicionHerramienta> nwavLista) {
         nwavLista.add(new NwavDefinicionHerramienta("editar", "Editar PDF",
                 "Añade texto, imágenes, formas, notas y resaltados.", NwavCategoriaHerramienta.NWAV_EDITAR, Feather.EDIT_3)
@@ -726,8 +711,6 @@ public class NwavCatalogoHerramientas {
         return new com.nwav.editorpdf.model.NwavColorRgb(Integer.parseInt(nwavDigitos.substring(0, 2), 16),
                 Integer.parseInt(nwavDigitos.substring(2, 4), 16), Integer.parseInt(nwavDigitos.substring(4, 6), 16));
     }
-
-    // ================================================================ Seguridad
 
     private void nwavAgregarSeguridad(List<NwavDefinicionHerramienta> nwavLista) {
         nwavLista.add(new NwavDefinicionHerramienta("proteger", "Proteger o desbloquear",
@@ -917,7 +900,6 @@ public class NwavCatalogoHerramientas {
         com.nwav.editorpdf.model.NwavRectangulo nwavZona = null;
         int nwavPagina = "primera".equals(nwavEntrada.nwavTexto("pagina", "ultima")) ? 0 : -1;
         if (nwavEntrada.nwavSiNo("visible", true)) {
-            // tamano del sello: 200 x 60 pt, a 36 pt del borde (coordenadas visuales)
             Path nwavArchivo = nwavEntrada.nwavArchivo();
             float[] nwavTamano = nwavTamanoPagina(nwavArchivo, nwavEntrada.nwavContrasena(nwavArchivo), nwavPagina);
             String nwavEsquina = nwavEntrada.nwavTexto("esquina", "abajo-derecha");
@@ -934,7 +916,6 @@ public class NwavCatalogoHerramientas {
         return NwavResultadoProceso.nwavDe(nwavFirmado, "Firmado digitalmente");
     }
 
-    /** Ancho y alto visibles de una pagina (-1 = la ultima). */
     private float[] nwavTamanoPagina(Path nwavArchivo, String nwavClave, int nwavPagina) {
         try (var nwavDocumento = nwavDocumentosPdf.nwavAbrir(nwavArchivo, nwavClave)) {
             int nwavIndice = nwavPagina < 0 ? nwavDocumento.getNwavNumeroPaginas() - 1 : nwavPagina;

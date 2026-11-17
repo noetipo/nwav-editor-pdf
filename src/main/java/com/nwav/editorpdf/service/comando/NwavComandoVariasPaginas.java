@@ -8,12 +8,7 @@ import com.nwav.editorpdf.service.NwavInstantaneaPagina;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Como {@link NwavComandoContenido}, pero para una operacion que cambia el contenido de
- * varias paginas a la vez (marca de agua, numeracion…): guarda una foto de cada una.
- */
 public class NwavComandoVariasPaginas implements NwavComando {
-
     private final NwavContenidoService nwavServicio;
     private final NwavDocumentoPdf nwavDocumento;
     private final List<Integer> nwavPaginas;

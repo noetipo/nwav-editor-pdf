@@ -12,19 +12,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.BooleanSupplier;
 
-/**
- * Busqueda de texto en todo el documento. Por defecto no distingue mayusculas ni tildes
- * ("pagina" encuentra "Página"). Devuelve la posicion de cada aparicion para resaltarla.
- */
 @Service
 public class NwavBusquedaService {
-
     public static final int NWAV_MAXIMO_RESULTADOS = 5000;
     private static final int NWAV_CONTEXTO = 35;
 
-    /**
-     * @param nwavCancelada se consulta entre paginas; si devuelve true se termina antes.
-     */
     public List<NwavCoincidencia> nwavBuscar(NwavDocumentoPdf nwavDocumento, String nwavConsulta,
                                              boolean nwavDistinguirMayusculas, NwavAvance nwavAvance,
                                              BooleanSupplier nwavCancelada) {
@@ -53,7 +45,6 @@ public class NwavBusquedaService {
 
     private static void nwavBuscarEnPagina(int nwavPagina, List<NwavGlifo> nwavLetras, String nwavBuscado,
                                            boolean nwavDistinguir, List<NwavCoincidencia> nwavResultados) {
-        // Texto normalizado de la pagina y, para cada caracter, la letra de la que viene (-1 = separador).
         StringBuilder nwavTexto = new StringBuilder();
         StringBuilder nwavOriginal = new StringBuilder();
         List<Integer> nwavOrigen = new ArrayList<>();
@@ -64,7 +55,7 @@ public class NwavBusquedaService {
             for (char nwavCaracter : nwavNormal.toCharArray()) {
                 boolean nwavEsEspacio = Character.isWhitespace(nwavCaracter);
                 if (nwavEsEspacio && (nwavTexto.isEmpty() || nwavTexto.charAt(nwavTexto.length() - 1) == ' ')) {
-                    continue; // espacios colapsados
+                    continue;
                 }
                 nwavTexto.append(nwavEsEspacio ? ' ' : nwavCaracter);
                 nwavOriginal.append(nwavEsEspacio ? ' ' : nwavPieza.charAt(0));
@@ -93,7 +84,6 @@ public class NwavBusquedaService {
         }
     }
 
-    /** Minusculas (si no se distinguen) y sin tildes; conserva la ñ. */
     static String nwavNormalizar(String nwavTexto, boolean nwavDistinguirMayusculas) {
         StringBuilder nwavResultado = new StringBuilder();
         for (char nwavCaracter : nwavTexto.toCharArray()) {

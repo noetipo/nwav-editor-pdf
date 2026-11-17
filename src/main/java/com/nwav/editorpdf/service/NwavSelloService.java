@@ -23,15 +23,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.IntStream;
 
-/**
- * Elementos repetidos en varias paginas: marca de agua (texto o imagen), encabezado, pie y
- * numeracion. Se fijan en el contenido de cada pagina y se pueden deshacer de una vez.
- * Se dibujan "derechos" respecto a como se ve cada pagina, aunque este rotada.
- */
 @Service
 @RequiredArgsConstructor
 public class NwavSelloService {
-
     public static final String NWAV_MARCA_NUMERO = "{n}";
     public static final String NWAV_MARCA_TOTAL = "{total}";
     public static final String NWAV_MARCA_ARCHIVO = "{archivo}";
@@ -39,8 +33,6 @@ public class NwavSelloService {
     private static final DateTimeFormatter NWAV_FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final NwavContenidoService nwavContenido;
-
-    // ============================================================ marca de agua
 
     public NwavComando nwavComandoMarcaAgua(NwavDocumentoPdf nwavDocumento, NwavOpcionesMarcaAgua nwavOpciones) {
         List<Integer> nwavPaginas = nwavPaginasElegidas(nwavDocumento, nwavOpciones.nwavPaginas());
@@ -70,7 +62,6 @@ public class NwavSelloService {
             PDImageXObject nwavImagen;
             synchronized (nwavDocumento) {
                 try {
-                    // Una sola imagen compartida por todas las paginas.
                     nwavImagen = PDImageXObject.createFromByteArray(nwavDocumento.nwavPdDocument(),
                             nwavOpciones.nwavImagen(), "nwav-marca");
                 } catch (IOException | IllegalArgumentException nwavError) {
@@ -118,11 +109,6 @@ public class NwavSelloService {
         }
     }
 
-    /**
-     * Centros (x, y con Y hacia arriba) donde dibujar la marca: uno segun la posicion, con un
-     * margen, o una rejilla al tresbolillo para el mosaico. Tiene en cuenta el giro para que
-     * la marca no se salga de la pagina.
-     */
     static List<float[]> nwavCentros(NwavPosicionMarca nwavPosicion, float nwavAnchoPagina, float nwavAltoPagina,
                                      float nwavAncho, float nwavAlto, float nwavAngulo) {
         double nwavCos = Math.abs(Math.cos(nwavAngulo));
@@ -141,7 +127,7 @@ public class NwavSelloService {
                     nwavCentros.add(new float[]{nwavX, nwavY});
                 }
                 if (nwavCentros.size() > 400) {
-                    break; // marca diminuta en pagina enorme: limite razonable
+                    break;
                 }
             }
             return nwavCentros;
@@ -161,8 +147,6 @@ public class NwavSelloService {
         return nwavCentros;
     }
 
-    // ===================================================== encabezado, pie y numeros
-
     public NwavComando nwavComandoEncabezado(NwavDocumentoPdf nwavDocumento, NwavOpcionesEncabezado nwavOpciones) {
         if (nwavOpciones.nwavEncabezado().isEmpty() && nwavOpciones.nwavPie().isEmpty()) {
             throw new NwavEditorException("Escribe el texto del encabezado o del pie.");
@@ -171,7 +155,6 @@ public class NwavSelloService {
         int nwavTotal = nwavDocumento.getNwavNumeroPaginas() + nwavOpciones.nwavNumeroInicial() - 1;
         String nwavArchivo = nwavDocumento.getNwavNombre();
         LocalDate nwavHoy = LocalDate.now();
-        // Se valida con el texto mas largo posible para detectar caracteres sin soporte.
         nwavValidar(nwavOpciones.nwavFuente(), nwavSustituir(nwavOpciones.nwavEncabezado() + " " + nwavOpciones.nwavPie(),
                 nwavTotal, nwavTotal, nwavArchivo, nwavHoy));
         String nwavDescripcion = nwavOpciones.nwavPie().contains(NWAV_MARCA_NUMERO)
@@ -221,7 +204,6 @@ public class NwavSelloService {
         nwavFlujo.endText();
     }
 
-    /** Sustituye {n}, {total}, {archivo} y {fecha}. */
     public static String nwavSustituir(String nwavPlantilla, int nwavNumero, int nwavTotal, String nwavArchivo,
                                        LocalDate nwavFecha) {
         return nwavLimpiarLinea(nwavPlantilla)
@@ -230,8 +212,6 @@ public class NwavSelloService {
                 .replace(NWAV_MARCA_ARCHIVO, nwavArchivo == null ? "" : nwavArchivo)
                 .replace(NWAV_MARCA_FECHA, NWAV_FORMATO_FECHA.format(nwavFecha));
     }
-
-    // =============================================================== utilidades
 
     private static List<Integer> nwavPaginasElegidas(NwavDocumentoPdf nwavDocumento, String nwavRangos) {
         int nwavTotal = nwavDocumento.getNwavNumeroPaginas();

@@ -17,12 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 
-/**
- * Utilidades de salida de las herramientas: nombres que nunca pisan el original ni otro
- * archivo, y escritura atomica (temporal en la misma carpeta y despues mover).
- */
 public final class NwavEscrituraSegura {
-
     @FunctionalInterface
     public interface NwavEscritor {
         void nwavEscribir(Path nwavTemporal) throws IOException;
@@ -31,10 +26,6 @@ public final class NwavEscrituraSegura {
     private NwavEscrituraSegura() {
     }
 
-    /**
-     * Ruta de salida "{base}_{sufijo}.{ext}" en la carpeta indicada (o la del original),
-     * sin colisiones. Nunca devuelve la ruta del original.
-     */
     public static Path nwavRutaSalida(Path nwavOriginal, Path nwavCarpeta, String nwavSufijo, String nwavExtension) {
         Path nwavDirectorio = nwavCarpeta != null ? nwavCarpeta : nwavOriginal.toAbsolutePath().getParent();
         String nwavBase = nwavSinExtension(nwavOriginal.getFileName().toString());
@@ -43,7 +34,6 @@ public final class NwavEscrituraSegura {
         return nwavSinColision(nwavDirectorio.resolve(nwavNombre), nwavOriginal);
     }
 
-    /** "x.pdf" -> "x (2).pdf" si ya existe o coincide con {@code nwavEvitar}. */
     public static Path nwavSinColision(Path nwavRuta, Path nwavEvitar) {
         Path nwavNormalizada = nwavRuta.toAbsolutePath().normalize();
         Path nwavProhibida = nwavEvitar == null ? null : nwavEvitar.toAbsolutePath().normalize();
@@ -73,7 +63,6 @@ public final class NwavEscrituraSegura {
         return nwavPunto > 0 ? nwavNombre.substring(nwavPunto + 1).toLowerCase(Locale.ROOT) : "";
     }
 
-    /** Escribe en un temporal junto al destino y lo mueve al final (atomico si se puede). */
     public static Path nwavEscribir(Path nwavDestino, NwavEscritor nwavEscritor) {
         Path nwavFinal = nwavDestino.toAbsolutePath().normalize();
         Path nwavCarpeta = nwavFinal.getParent();
@@ -98,22 +87,16 @@ public final class NwavEscrituraSegura {
                 try {
                     Files.deleteIfExists(nwavTemporal);
                 } catch (IOException nwavIgnorado) {
-                    // se informa el error original
                 }
             }
         }
     }
 
-    /** Guarda un documento con flujos y objetos comprimidos (object streams). */
     public static Path nwavGuardarPdf(PDDocument nwavPd, Path nwavDestino) {
         return nwavEscribir(nwavDestino, nwavTemporal -> nwavPd.save(nwavTemporal.toFile(),
                 CompressParameters.DEFAULT_COMPRESSION));
     }
 
-    /**
-     * Antes de guardar un PDF que se abrio cifrado: vuelve a cifrarlo con la misma
-     * contrasena de apertura y permisos (nunca se quita la proteccion en silencio).
-     */
     public static void nwavMantenerProteccion(PDDocument nwavPd, String nwavContrasenaUsuario) {
         if (!nwavPd.isEncrypted()) {
             return;

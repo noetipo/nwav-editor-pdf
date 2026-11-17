@@ -19,15 +19,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * Pantalla de inicio: una tarjeta por herramienta, agrupadas por categoria, con buscador.
- * Las herramientas que necesitan algo que falta (Tesseract, LibreOffice) aparecen
- * atenuadas con la explicacion.
- */
 @Component
 @RequiredArgsConstructor
 public class NwavInicioController implements NwavRefrescable {
-
     private final NwavCatalogoHerramientas nwavCatalogo;
     private final NwavMainController nwavMain;
     private final NwavTareaFondo nwavTareaFondo;
@@ -43,10 +37,8 @@ public class NwavInicioController implements NwavRefrescable {
         nwavPintar();
     }
 
-    /** Se repinta al volver: el estado de las dependencias puede haber cambiado. */
     @Override
     public void nwavRefrescar() {
-        // La deteccion de Tesseract puede tardar: se hace en segundo plano y luego se repinta.
         nwavTareaFondo.nwavEjecutarSilencioso(() -> {
             nwavCatalogo.nwavTodas().forEach(NwavDefinicionHerramienta::nwavEstado);
             return null;
@@ -86,7 +78,6 @@ public class NwavInicioController implements NwavRefrescable {
         VBox nwavTarjeta = new VBox(10, nwavIcono, nwavNombre, nwavDescripcion);
         nwavTarjeta.setAlignment(Pos.TOP_LEFT);
         nwavTarjeta.getStyleClass().add("nwav-tarjeta-herramienta");
-        // Solo se consulta cuando ya esta comprobado (la comprobacion corre en segundo plano).
         var nwavEstado = nwavDependencias.nwavComprobado() ? nwavDefinicion.nwavEstado() : null;
         if (nwavEstado != null && !nwavEstado.nwavDisponible()) {
             nwavTarjeta.getStyleClass().add("nwav-tarjeta-no-disponible");

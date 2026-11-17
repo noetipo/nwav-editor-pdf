@@ -7,13 +7,10 @@ import java.awt.image.BufferedImage;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NwavCacheRenderTest {
-
     private static final Object NWAV_PAGINA_A = new Object();
     private static final Object NWAV_PAGINA_B = new Object();
     private static final Object NWAV_PAGINA_C = new Object();
 
-
-    /** 10x10 px = 400 bytes. */
     private static BufferedImage nwavImagen() {
         return new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
     }
@@ -23,7 +20,7 @@ class NwavCacheRenderTest {
         NwavCacheRender nwavCache = new NwavCacheRender(1000);
         nwavCache.nwavGuardar(NWAV_PAGINA_A, 0, 0, 1f, nwavImagen());
         nwavCache.nwavGuardar(NWAV_PAGINA_B, 0, 0, 1f, nwavImagen());
-        nwavCache.nwavObtener(NWAV_PAGINA_A, 0, 0, 1f); // la 0 pasa a ser la mas reciente
+        nwavCache.nwavObtener(NWAV_PAGINA_A, 0, 0, 1f);
         nwavCache.nwavGuardar(NWAV_PAGINA_C, 0, 0, 1f, nwavImagen());
 
         assertThat(nwavCache.nwavObtener(NWAV_PAGINA_B, 0, 0, 1f)).isNull();
@@ -63,7 +60,7 @@ class NwavCacheRenderTest {
     void nwavLimpiarVaciaTodo() {
         NwavCacheRender nwavCache = new NwavCacheRender(10_000);
         nwavCache.nwavGuardar(NWAV_PAGINA_A, 0, 0, 1f, nwavImagen());
-        nwavCache.nwavGuardar(NWAV_PAGINA_A, 0, 0, 1f, nwavImagen()); // reemplazo: no duplica bytes
+        nwavCache.nwavGuardar(NWAV_PAGINA_A, 0, 0, 1f, nwavImagen());
         assertThat(nwavCache.nwavBytesUsados()).isEqualTo(400);
 
         nwavCache.nwavLimpiar();

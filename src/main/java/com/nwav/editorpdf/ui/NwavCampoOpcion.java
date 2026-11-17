@@ -5,13 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-/**
- * Opcion de una herramienta, descrita de forma declarativa: el formulario se construye
- * solo a partir de esta descripcion. Los valores de las elecciones se escriben como
- * "valor=Etiqueta".
- */
 public final class NwavCampoOpcion {
-
     public enum NwavTipo {
         NWAV_ELECCION, NWAV_ENTERO, NWAV_DECIMAL, NWAV_CASILLA, NWAV_TEXTO, NWAV_CONTRASENA, NWAV_MULTIPLE, NWAV_COLOR,
         NWAV_ARCHIVO
@@ -71,7 +65,6 @@ public final class NwavCampoOpcion {
         return new NwavCampoOpcion(nwavClave, nwavEtiqueta, NwavTipo.NWAV_TEXTO, nwavDefecto);
     }
 
-    /** Nunca se guarda en la base de datos. */
     public static NwavCampoOpcion nwavContrasena(String nwavClave, String nwavEtiqueta) {
         return new NwavCampoOpcion(nwavClave, nwavEtiqueta, NwavTipo.NWAV_CONTRASENA, "");
     }
@@ -80,7 +73,6 @@ public final class NwavCampoOpcion {
         return new NwavCampoOpcion(nwavClave, nwavEtiqueta, NwavTipo.NWAV_COLOR, nwavDefectoHex);
     }
 
-    /** Ruta de un archivo con boton "Elegir..." (p. ej. un certificado .p12). */
     public static NwavCampoOpcion nwavArchivo(String nwavClave, String nwavEtiqueta, String... nwavExtensiones) {
         NwavCampoOpcion nwavCampo = new NwavCampoOpcion(nwavClave, nwavEtiqueta, NwavTipo.NWAV_ARCHIVO, "");
         List<String> nwavLista = List.of(nwavExtensiones);
@@ -88,7 +80,6 @@ public final class NwavCampoOpcion {
         return nwavCampo;
     }
 
-    /** Varias casillas; el valor es la lista de valores marcados separados por comas. */
     public static NwavCampoOpcion nwavMultiple(String nwavClave, String nwavEtiqueta, String nwavDefecto,
                                                Supplier<List<String>> nwavValores) {
         NwavCampoOpcion nwavCampo = new NwavCampoOpcion(nwavClave, nwavEtiqueta, NwavTipo.NWAV_MULTIPLE, nwavDefecto);
@@ -96,7 +87,6 @@ public final class NwavCampoOpcion {
         return nwavCampo;
     }
 
-    /** Solo se muestra cuando la opcion {@code nwavOtraClave} vale alguno de los valores dados. */
     public NwavCampoOpcion nwavSi(String nwavOtraClave, String... nwavValoresQueMuestran) {
         this.nwavSiClave = nwavOtraClave;
         this.nwavSiValores = Set.of(nwavValoresQueMuestran);

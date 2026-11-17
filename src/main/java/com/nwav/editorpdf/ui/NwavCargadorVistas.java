@@ -11,22 +11,15 @@ import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Carga vistas FXML con controladores inyectados por Spring y las conserva para
- * reutilizarlas (patron de la plantilla, extraido del controlador principal).
- */
 @Component
 @RequiredArgsConstructor
 public class NwavCargadorVistas {
-
-    /** Nodo raiz de la vista y su controlador. */
     public record NwavVistaCargada(Parent nwavNodo, Object nwavControlador) {
     }
 
     private final ApplicationContext nwavContexto;
     private final Map<String, NwavVistaCargada> nwavVistas = new HashMap<>();
 
-    /** Devuelve la vista {@code /view/{nombre}.fxml}, cargandola solo la primera vez. */
     public NwavVistaCargada nwavObtener(String nwavNombre) {
         return nwavVistas.computeIfAbsent(nwavNombre, this::nwavCargar);
     }
@@ -39,7 +32,6 @@ public class NwavCargadorVistas {
     private NwavVistaCargada nwavCargar(String nwavNombre) {
         FXMLLoader nwavCargador = new FXMLLoader(getClass().getResource("/view/" + nwavNombre + ".fxml"));
         nwavCargador.setControllerFactory(nwavContexto::getBean);
-        // Explicito: en macOS el hilo de eventos puede no tener class loader de contexto.
         nwavCargador.setClassLoader(getClass().getClassLoader());
         try {
             Parent nwavNodo = nwavCargador.load();

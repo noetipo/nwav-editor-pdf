@@ -13,17 +13,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Preferencias del usuario guardadas en {@code nwav_configuracion}.
- * <p>
- * Las lecturas se sirven desde memoria (se cargan una vez), de modo que la interfaz
- * puede consultarlas sin tocar la base de datos. Las escrituras actualizan la tabla y
- * la memoria; desde la interfaz conviene hacerlas en segundo plano.
- */
 @Service
 @RequiredArgsConstructor
 public class NwavConfiguracionService {
-
     public static final String NWAV_CLAVE_TEMA = "nwav.tema";
     public static final String NWAV_CLAVE_ZOOM_DEFECTO = "nwav.zoom.defecto";
     public static final String NWAV_CLAVE_CARPETA_DEFECTO = "nwav.carpeta.defecto";
@@ -43,8 +35,6 @@ public class NwavConfiguracionService {
     private final Map<String, String> nwavMemoria = new ConcurrentHashMap<>();
     private volatile boolean nwavCargada;
 
-    // ------------------------------------------------------------- genericos
-
     public Optional<String> nwavObtener(String nwavClave) {
         nwavCargarSiHaceFalta();
         return Optional.ofNullable(nwavMemoria.get(nwavClave));
@@ -54,7 +44,6 @@ public class NwavConfiguracionService {
         return nwavObtener(nwavClave).orElse(nwavPorDefecto);
     }
 
-    /** Guarda el valor; {@code null} o vacio elimina la preferencia. */
     @Transactional
     public void nwavGuardar(String nwavClave, String nwavValor) {
         nwavCargarSiHaceFalta();
@@ -67,7 +56,6 @@ public class NwavConfiguracionService {
         }
     }
 
-    /** Vuelve a leer la tabla (util en pruebas o si otro proceso la cambio). */
     @Transactional(readOnly = true)
     public synchronized void nwavRecargar() {
         nwavMemoria.clear();
@@ -89,8 +77,6 @@ public class NwavConfiguracionService {
         }
     }
 
-    // ------------------------------------------------------------- tipados
-
     public boolean nwavTemaOscuro() {
         return NWAV_TEMA_OSCURO.equals(nwavObtener(NWAV_CLAVE_TEMA, NWAV_TEMA_CLARO));
     }
@@ -109,7 +95,6 @@ public class NwavConfiguracionService {
         nwavGuardar(NWAV_CLAVE_ZOOM_DEFECTO, nwavZoom.nwavSerializar());
     }
 
-    /** Carpeta configurada para abrir y guardar, solo si sigue existiendo. */
     public Optional<Path> nwavCarpetaPorDefecto() {
         return nwavCarpetaExistente(NWAV_CLAVE_CARPETA_DEFECTO);
     }
@@ -128,7 +113,6 @@ public class NwavConfiguracionService {
         nwavGuardar(NWAV_CLAVE_ULTIMA_CARPETA, nwavCarpeta == null ? null : nwavCarpeta.toString());
     }
 
-    /** Carpeta inicial de los dialogos: la por defecto, si no la ultima usada. */
     public Optional<Path> nwavCarpetaInicial() {
         return nwavCarpetaPorDefecto().or(this::nwavUltimaCarpeta);
     }

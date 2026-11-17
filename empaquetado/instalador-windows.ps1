@@ -1,20 +1,4 @@
-﻿<#
-  Crea el INSTALADOR de NWAV Editor PDF para Windows (se ejecuta EN Windows).
-
-  Requisitos:
-    - JDK 21 (por ejemplo Eclipse Temurin 21) con JAVA_HOME configurado: trae "jpackage".
-    - Para un instalador .exe: WiX Toolset 3.14 (wixtoolset.org) en el PATH.
-      Sin WiX se genera igualmente una carpeta lista para usar (app-image) en un ZIP.
-
-  Uso (PowerShell, en la carpeta del proyecto):
-    powershell -ExecutionPolicy Bypass -File empaquetado\instalador-windows.ps1
-    powershell -ExecutionPolicy Bypass -File empaquetado\instalador-windows.ps1 -SinPruebas
-
-  Resultado: target\instalador\NWAV Editor PDF-<version>.exe  (o el ZIP de la carpeta)
-  El instalador es por usuario (no pide permisos de administrador), crea acceso en el
-  menu Inicio y en el Escritorio, y ofrece la aplicacion en "Abrir con" para los PDF.
-#>
-param([switch]$SinPruebas)
+﻿param([switch]$SinPruebas)
 $ErrorActionPreference = 'Stop'
 $Raiz = Split-Path -Parent $PSScriptRoot
 Set-Location $Raiz
@@ -24,7 +8,6 @@ $JPackage = Join-Path $env:JAVA_HOME 'bin\jpackage.exe'
 if (-not (Test-Path $JPackage)) { throw "No se encontro jpackage en $JPackage. Instala un JDK 21 completo." }
 
 $Version = (& .\mvnw.cmd -q -B help:evaluate '-Dexpression=project.version' -DforceStdout).Trim()
-# jpackage solo admite versiones numericas (1.2.3)
 $VersionApp = ($Version -replace '[^0-9.].*$', '')
 
 if (-not $SinPruebas) {

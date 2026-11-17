@@ -8,21 +8,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
-/**
- * Interpreta rangos de paginas escritos por el usuario, numerados desde 1:
- * {@code "1-3, 5, 8-"} (un guion al final significa "hasta la ultima"; al principio,
- * "desde la primera"). Internamente se trabaja con indices desde 0.
- */
 public final class NwavRangosPaginas {
-
-    /** Rango inclusivo de indices (desde 0). */
     public record NwavRango(int nwavDesde, int nwavHasta) {
-
         public List<Integer> nwavIndices() {
             return IntStream.rangeClosed(nwavDesde, nwavHasta).boxed().toList();
         }
 
-        /** Como lo leeria el usuario: "1-3" o "5". */
         public String nwavDescripcion() {
             return nwavDesde == nwavHasta ? String.valueOf(nwavDesde + 1) : (nwavDesde + 1) + "-" + (nwavHasta + 1);
         }
@@ -72,14 +63,12 @@ public final class NwavRangosPaginas {
         return nwavRangos;
     }
 
-    /** Indices de todas las paginas nombradas, en el orden escrito y sin repetir. */
     public static List<Integer> nwavIndices(String nwavTexto, int nwavTotal) {
         Set<Integer> nwavUnicos = new LinkedHashSet<>();
         nwavInterpretar(nwavTexto, nwavTotal).forEach(nwavRango -> nwavUnicos.addAll(nwavRango.nwavIndices()));
         return List.copyOf(nwavUnicos);
     }
 
-    /** Divide el documento en bloques de {@code nwavTamano} paginas. */
     public static List<NwavRango> nwavCada(int nwavTamano, int nwavTotal) {
         if (nwavTamano < 1) {
             throw new NwavEditorException("El número de páginas por archivo debe ser al menos 1.");
@@ -91,7 +80,6 @@ public final class NwavRangosPaginas {
         return nwavRangos;
     }
 
-    /** Texto compacto para una seleccion: [0,1,2,4] produce "1-3, 5". */
     public static String nwavDescribir(List<Integer> nwavIndices) {
         List<Integer> nwavOrdenados = nwavIndices.stream().distinct().sorted().toList();
         StringBuilder nwavTexto = new StringBuilder();

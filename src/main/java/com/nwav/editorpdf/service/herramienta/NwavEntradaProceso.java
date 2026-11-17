@@ -7,18 +7,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Datos de una ejecucion de herramienta.
- *
- * @param nwavArchivos      archivos de entrada (uno si la herramienta procesa archivo a archivo)
- * @param nwavOpciones      opciones elegidas (clave -> valor)
- * @param nwavCarpetaSalida carpeta de salida; {@code null} = la del archivo original
- * @param nwavContrasenas   contrasenas conocidas por archivo
- */
 public record NwavEntradaProceso(List<Path> nwavArchivos, Map<String, String> nwavOpciones, Path nwavCarpetaSalida,
                                  Map<Path, String> nwavContrasenas, NwavAvance nwavAvance,
                                  NwavCancelacion nwavCancelacion) {
-
     public Path nwavArchivo() {
         return nwavArchivos.get(0);
     }

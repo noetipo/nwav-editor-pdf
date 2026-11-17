@@ -15,18 +15,11 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Firmas guardadas del usuario ({@code nwav_firma}). Son firmas <b>visuales</b> (una
- * imagen), no firmas digitales con certificado. Se guardan como PNG con fondo
- * transparente y recortadas a su contenido.
- */
 @Service
 @RequiredArgsConstructor
 public class NwavFirmaService {
-
     public static final int NWAV_BYTES_MAXIMOS = 2 * 1024 * 1024;
     public static final int NWAV_LADO_MAXIMO = 1600;
-    /** Brillo a partir del cual un pixel se considera fondo blanco (0-255). */
     private static final int NWAV_UMBRAL_BLANCO = 235;
 
     private final NwavFirmaRepository nwavRepositorio;
@@ -48,7 +41,7 @@ public class NwavFirmaService {
         if (nwavPng.length > NWAV_BYTES_MAXIMOS) {
             throw new NwavEditorException("La imagen de la firma es demasiado grande (máximo 2 MB).");
         }
-        nwavLeer(nwavPng); // valida que sea una imagen
+        nwavLeer(nwavPng);
         NwavFirma nwavFirma = new NwavFirma();
         nwavFirma.setNwavNombre(nwavLimpio.length() > 120 ? nwavLimpio.substring(0, 120) : nwavLimpio);
         nwavFirma.setNwavImagen(nwavPng);
@@ -61,12 +54,6 @@ public class NwavFirmaService {
         nwavRepositorio.deleteById(nwavId);
     }
 
-    /**
-     * Prepara una imagen para usarla como firma: opcionalmente vuelve transparente el fondo
-     * blanco (util para firmas escaneadas), la recorta a su contenido y la reduce si es
-     * muy grande. Devuelve PNG.
-     */
-    /** Fuentes de aspecto manuscrito disponibles en este equipo (la primera es la recomendada). */
     public static java.util.List<String> nwavFuentesManuscritas() {
         java.util.Set<String> nwavInstaladas = new java.util.HashSet<>(java.util.Arrays.asList(
                 java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()));
@@ -78,11 +65,10 @@ public class NwavFirmaService {
                 nwavElegidas.add(nwavCandidata);
             }
         }
-        nwavElegidas.add("Serif"); // siempre existe (cursiva)
+        nwavElegidas.add("Serif");
         return nwavElegidas;
     }
 
-    /** Firma escrita: el texto en una fuente manuscrita, como PNG transparente. */
     public byte[] nwavFirmaEscrita(String nwavTexto, String nwavFamilia, java.awt.Color nwavColor) {
         String nwavLimpio = nwavTexto == null ? "" : nwavTexto.strip();
         if (nwavLimpio.isEmpty()) {

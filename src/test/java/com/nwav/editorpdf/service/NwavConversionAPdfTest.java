@@ -31,9 +31,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-/** Fase C: convertir a PDF. */
 class NwavConversionAPdfTest {
-
     @TempDir
     Path nwavCarpeta;
 
@@ -46,14 +44,13 @@ class NwavConversionAPdfTest {
         nwavG.setColor(Color.ORANGE);
         nwavG.fillRect(0, 0, nwavAncho, nwavAlto);
         nwavG.setColor(Color.BLUE);
-        nwavG.fillRect(0, 0, nwavAncho / 4, nwavAlto / 4); // marca la esquina superior izquierda
+        nwavG.fillRect(0, 0, nwavAncho / 4, nwavAlto / 4);
         nwavG.dispose();
         Path nwavRuta = nwavCarpeta.resolve(nwavNombre);
         ImageIO.write(nwavImagen, nwavFormato, nwavRuta.toFile());
         return nwavRuta;
     }
 
-    /** JPEG con una etiqueta EXIF Orientation (insertada a mano tras SOI). */
     private Path nwavJpegConOrientacion(String nwavNombre, int nwavOrientacion) throws Exception {
         Path nwavPlano = nwavImagen("plano_" + nwavNombre, 400, 200, "jpg");
         byte[] nwavJpeg = Files.readAllBytes(nwavPlano);
@@ -107,7 +104,6 @@ class NwavConversionAPdfTest {
             assertThat(nwavPd.getPage(0).getMediaBox().getWidth()).isGreaterThan(nwavPd.getPage(0).getMediaBox().getHeight());
             assertThat(nwavAj.getPage(0).getMediaBox().getWidth()).isCloseTo(600f, within(0.5f));
             assertThat(nwavAj.getPage(0).getMediaBox().getHeight()).isCloseTo(300f, within(0.5f));
-            // el JPEG se incrusta tal cual (DCT), sin recomprimir
             PDImageXObject nwavIncrustada = nwavPrimeraImagen(nwavPd.getPage(0));
             assertThat(nwavIncrustada.getCOSObject().getCOSName(COSName.FILTER)).isEqualTo(COSName.DCT_DECODE);
         }
@@ -115,7 +111,7 @@ class NwavConversionAPdfTest {
 
     @Test
     void nwavRespetaLaOrientacionExif() throws Exception {
-        Path nwavGirada = nwavJpegConOrientacion("girada.jpg", 6); // 90 grados a la derecha
+        Path nwavGirada = nwavJpegConOrientacion("girada.jpg", 6);
         assertThat(NwavConversionAPdfService.nwavOrientacionExif(nwavGirada)).isEqualTo(6);
 
         Path nwavPdf = nwavServicio.nwavImagenesAPdf(List.of(nwavGirada),
@@ -125,7 +121,6 @@ class NwavConversionAPdfTest {
             PDImageXObject nwavImagen = nwavPrimeraImagen(nwavPd.getPage(0));
             assertThat(nwavImagen.getWidth()).isEqualTo(200);
             assertThat(nwavImagen.getHeight()).isEqualTo(400);
-            // la marca azul (arriba-izquierda en el original) queda arriba-derecha al girar 90
             BufferedImage nwavPixeles = nwavImagen.getImage();
             Color nwavArribaDerecha = new Color(nwavPixeles.getRGB(190, 10));
             assertThat(nwavArribaDerecha.getBlue()).isGreaterThan(150);

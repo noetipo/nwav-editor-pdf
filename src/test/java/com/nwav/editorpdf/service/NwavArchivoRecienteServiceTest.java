@@ -20,7 +20,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NwavArchivoRecienteServiceTest extends NwavPruebaConBaseDatos {
-
     @Autowired private NwavArchivoRecienteService nwavServicio;
     @Autowired private NwavConfiguracionService nwavConfiguracion;
     @Autowired private NwavArchivoRecienteRepository nwavRepositorio;
@@ -100,7 +99,7 @@ class NwavArchivoRecienteServiceTest extends NwavPruebaConBaseDatos {
         for (int nwavIndice = 0; nwavIndice < 7; nwavIndice++) {
             Path nwavPdf = NwavPdfDePrueba.nwavCrear(nwavCarpeta, "doc" + nwavIndice + ".pdf", 1);
             nwavServicio.nwavRegistrarApertura(nwavPdf);
-            Thread.sleep(5); // fechas de apertura distintas
+            Thread.sleep(5);
         }
 
         assertThat(nwavRepositorio.count()).isEqualTo(5);

@@ -6,9 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-/** Lo que una pieza adicional de una herramienta (p. ej. una vista previa) puede consultar. */
 public interface NwavContextoHerramienta {
-
     List<Path> nwavArchivos();
 
     Map<String, String> nwavOpciones();

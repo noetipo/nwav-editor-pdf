@@ -44,17 +44,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Conversion a PDF/A-1b (archivo a largo plazo) validada con Apache PDFBox Preflight.
- * Primero intenta conservar el documento (texto seleccionable): quita cifrado, JavaScript y
- * adjuntos, anade el perfil de color y los metadatos XMP. Si aun asi no cumple (p. ej.
- * fuentes sin incrustar o transparencias), puede rehacer cada pagina como imagen, que
- * siempre cumple pero pierde el texto seleccionable (se puede recuperar con OCR).
- */
 @Service
 @RequiredArgsConstructor
 public class NwavPdfAService {
-
     private final NwavPdfDocumentoService nwavDocumentos;
 
     public record NwavResultadoPdfA(Path nwavDestino, boolean nwavValido, boolean nwavRasterizado, List<String> nwavMotivos) {
@@ -70,11 +62,6 @@ public class NwavPdfAService {
         }
     }
 
-    /**
-     * @param nwavRasterizarSiFalla si el documento no se puede convertir conservandolo, rehace
-     *                              las paginas como imagen; si es {@code false}, no guarda
-     *                              nada y explica los motivos.
-     */
     public NwavResultadoPdfA nwavConvertir(Path nwavEntrada, String nwavContrasena, boolean nwavRasterizarSiFalla,
                                            Path nwavDestino, NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) {
         Path nwavTemporal = null;
@@ -116,13 +103,11 @@ public class NwavPdfAService {
                 try {
                     Files.deleteIfExists(nwavTemporal);
                 } catch (IOException nwavError) {
-                    // temporal: se limpia el sistema
                 }
             }
         }
     }
 
-    /** Valida con Preflight y devuelve los motivos (en espanol) por los que no cumple. */
     public List<String> nwavValidar(Path nwavPdf) throws IOException {
         ValidationResult nwavResultado;
         try {
@@ -154,8 +139,6 @@ public class NwavPdfAService {
         };
     }
 
-    // ================================================================ internos
-
     private static void nwavLimpiar(PDDocument nwavPd) throws IOException {
         PDDocumentCatalog nwavCatalogo = nwavPd.getDocumentCatalog();
         PDDocumentNameDictionary nwavNombres = nwavCatalogo.getNames();
@@ -165,7 +148,7 @@ public class NwavPdfAService {
         }
         nwavCatalogo.getCOSObject().removeItem(COSName.AA);
         nwavCatalogo.getCOSObject().removeItem(COSName.OPEN_ACTION);
-        nwavCatalogo.getCOSObject().removeItem(COSName.getPDFName("OCProperties")); // capas: no en PDF/A-1
+        nwavCatalogo.getCOSObject().removeItem(COSName.getPDFName("OCProperties"));
         for (PDPage nwavPagina : nwavPd.getPages()) {
             nwavPagina.getCOSObject().removeItem(COSName.AA);
             List<PDAnnotation> nwavValidas = new ArrayList<>();
@@ -178,8 +161,8 @@ public class NwavPdfAService {
                 nwavAnotacion.setHidden(false);
                 nwavAnotacion.setInvisible(false);
                 nwavAnotacion.setNoView(false);
-                nwavAnotacion.getCOSObject().removeItem(COSName.CA); // opacidad = transparencia
-                nwavAnotacion.getCOSObject().removeItem(COSName.A); // acciones
+                nwavAnotacion.getCOSObject().removeItem(COSName.CA);
+                nwavAnotacion.getCOSObject().removeItem(COSName.A);
                 nwavValidas.add(nwavAnotacion);
             }
             nwavPagina.setAnnotations(nwavValidas);
@@ -190,7 +173,6 @@ public class NwavPdfAService {
         }
     }
 
-    /** Version 1.4, perfil de color sRGB y metadatos XMP coherentes con la informacion del documento. */
     private static void nwavMarcarPdfA(PDDocument nwavPd) throws IOException {
         nwavPd.getDocument().setVersion(1.4f);
         PDDocumentInformation nwavInfo = nwavPd.getDocumentInformation();
@@ -200,7 +182,6 @@ public class NwavPdfAService {
         if (nwavInfo.getCreationDate() == null) {
             nwavInfo.setCreationDate(nwavAhora);
         }
-        // Campos que PDF/A-1 exige reflejar en XMP: se quitan los que no se reflejan.
         COSDictionary nwavDicc = nwavInfo.getCOSObject();
         for (COSName nwavClave : List.copyOf(nwavDicc.keySet())) {
             if (!List.of(COSName.TITLE, COSName.AUTHOR, COSName.SUBJECT, COSName.KEYWORDS, COSName.CREATOR,
@@ -255,7 +236,6 @@ public class NwavPdfAService {
         nwavCatalogo.addOutputIntent(nwavIntencion);
     }
 
-    /** Rehace cada pagina como una imagen JPEG (sin transparencias ni fuentes). */
     private void nwavRasterizar(Path nwavEntrada, String nwavContrasena, Path nwavSalida, NwavCancelacion nwavCancelacion)
             throws IOException {
         try (PDDocument nwavOrigen = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena);
@@ -281,7 +261,6 @@ public class NwavPdfAService {
         }
     }
 
-    /** Comprobacion rapida para la interfaz: ¿el archivo ya es PDF/A valido? */
     public boolean nwavEsPdfA(Path nwavPdf) {
         try {
             return nwavValidar(nwavPdf).isEmpty();

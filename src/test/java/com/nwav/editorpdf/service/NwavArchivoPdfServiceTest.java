@@ -21,9 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Guardar, extraer, dividir y unir, con registro en el historial (SQLite temporal). */
 class NwavArchivoPdfServiceTest extends NwavPruebaConBaseDatos {
-
     @Autowired private NwavArchivoPdfService nwavArchivos;
     @Autowired private NwavEdicionService nwavEdicion;
     @Autowired private NwavPdfDocumentoService nwavDocumentos;
@@ -132,7 +130,6 @@ class NwavArchivoPdfServiceTest extends NwavPruebaConBaseDatos {
                     "informe - parte 03 (pág. 5-7).pdf");
             assertThat(NwavLectorPdf.nwavTextos(nwavPartes.get(2))).containsExactly("Pagina5", "Pagina6", "Pagina7");
 
-            // Repetir no reemplaza: crea nombres nuevos.
             List<Path> nwavOtraVez = nwavArchivos.nwavDividir(nwavDocumento, NwavRangosPaginas.nwavCada(3, 7),
                     nwavSalida, "informe", NwavAvance.NWAV_NINGUNO);
             assertThat(nwavOtraVez).hasSize(3);

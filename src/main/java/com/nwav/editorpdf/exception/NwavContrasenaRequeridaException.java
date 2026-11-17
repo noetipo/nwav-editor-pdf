@@ -1,8 +1,6 @@
 package com.nwav.editorpdf.exception;
 
-/** El PDF esta cifrado y no se indico contrasena. */
 public class NwavContrasenaRequeridaException extends NwavEditorException {
-
     public NwavContrasenaRequeridaException(String nwavArchivo) {
         super("«" + nwavArchivo + "» está protegido con contraseña.");
     }

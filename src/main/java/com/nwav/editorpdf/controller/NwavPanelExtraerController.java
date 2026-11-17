@@ -20,11 +20,9 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
-/** Panel "Extraer páginas": copia una seleccion de paginas a un PDF nuevo. */
 @Component
 @RequiredArgsConstructor
 public class NwavPanelExtraerController implements NwavPanel {
-
     private final NwavVisorController nwavVisor;
     private final NwavArchivoPdfService nwavArchivos;
     private final NwavTareaFondo nwavTareaFondo;

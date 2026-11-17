@@ -12,14 +12,12 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/** Firma guardada por el usuario (imagen PNG). Se usa en la Fase 4. */
 @Entity
 @Table(name = "nwav_firma")
 @Getter
 @Setter
 @NoArgsConstructor
 public class NwavFirma {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "nwav_id")

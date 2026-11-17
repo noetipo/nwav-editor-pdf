@@ -1,6 +1,5 @@
 package com.nwav.editorpdf.model;
 
-/** Como se calcula el zoom del visor. */
 public enum NwavModoZoom {
     NWAV_AJUSTAR_ANCHO("Ajustar al ancho"),
     NWAV_AJUSTAR_PAGINA("Ajustar a la página"),

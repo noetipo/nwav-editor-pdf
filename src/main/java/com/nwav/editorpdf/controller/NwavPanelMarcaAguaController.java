@@ -36,11 +36,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Locale;
 
-/** Panel "Marca de agua": texto o imagen, con plantillas guardadas en SQLite. */
 @Component
 @RequiredArgsConstructor
 public class NwavPanelMarcaAguaController implements NwavPanel {
-
     private final NwavVisorController nwavVisor;
     private final NwavEdicionService nwavEdicion;
     private final NwavMarcaAguaService nwavPlantillas;

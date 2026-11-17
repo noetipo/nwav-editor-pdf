@@ -1,11 +1,6 @@
 package com.nwav.editorpdf.model;
 
-/**
- * Zoom guardado (por defecto o por archivo). {@code nwavFactor} solo aplica al modo
- * {@link NwavModoZoom#NWAV_PORCENTAJE}: 1.0 equivale a 100 %.
- */
 public record NwavZoomPreferido(NwavModoZoom nwavModo, double nwavFactor) {
-
     public static final double NWAV_FACTOR_MINIMO = 0.10;
     public static final double NWAV_FACTOR_MAXIMO = 8.00;
     public static final NwavZoomPreferido NWAV_POR_DEFECTO =
@@ -21,7 +16,6 @@ public record NwavZoomPreferido(NwavModoZoom nwavModo, double nwavFactor) {
         nwavFactor = Math.max(NWAV_FACTOR_MINIMO, Math.min(NWAV_FACTOR_MAXIMO, nwavFactor));
     }
 
-    /** Formato de almacenamiento: {@code MODO} o {@code MODO:factor}. */
     public String nwavSerializar() {
         return nwavModo == NwavModoZoom.NWAV_PORCENTAJE ? nwavModo.name() + ":" + nwavFactor : nwavModo.name();
     }

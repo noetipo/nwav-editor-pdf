@@ -1,4 +1,3 @@
-# Al subir una etiqueta vX.Y.Z: construye la version portable para Windows y crea la release.
 name: Release
 
 on:
@@ -28,7 +27,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            # la release ya existe (etiqueta movida): se reemplaza el ZIP y las notas
             gh release upload "$GITHUB_REF_NAME" target/NWAV-Editor-PDF-*-windows-x64.zip --clobber
             gh release edit "$GITHUB_REF_NAME" --notes-file empaquetado/notas-release.md
           else

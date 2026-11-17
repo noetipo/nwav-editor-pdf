@@ -1,4 +1,3 @@
-# Compila y pasa TODAS las pruebas en Windows, y genera el instalador y la version portable.
 name: Windows
 
 on:

@@ -18,10 +18,8 @@ import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
-/** Propiedades del documento (Info): leerlas y editarlas con deshacer. */
 @Service
 public class NwavMetadatosService {
-
     public NwavInfoDocumento nwavLeer(NwavDocumentoPdf nwavDocumento) {
         synchronized (nwavDocumento) {
             nwavDocumento.nwavVerificarAbierto();
@@ -50,10 +48,6 @@ public class NwavMetadatosService {
         }
     }
 
-    /**
-     * Cambia titulo, autor, asunto y palabras clave (los demas campos se conservan) y
-     * actualiza la fecha de modificacion. Deshacer restaura el diccionario anterior.
-     */
     public NwavComando nwavComandoEditar(NwavDocumentoPdf nwavDocumento, NwavMetadatos nwavNuevos) {
         return new NwavComando() {
             private COSDictionary nwavAntes;

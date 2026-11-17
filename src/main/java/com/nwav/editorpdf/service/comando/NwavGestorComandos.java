@@ -4,12 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Optional;
 
-/**
- * Pilas de deshacer/rehacer de un documento. Tambien sabe si hay cambios sin guardar:
- * compara el comando en la cima con el que habia al guardar por ultima vez.
- */
 public class NwavGestorComandos {
-
     public static final int NWAV_MAXIMO_PASOS = 100;
 
     private final Deque<NwavComando> nwavHechos = new ArrayDeque<>();
@@ -17,10 +12,6 @@ public class NwavGestorComandos {
     private NwavComando nwavMarcaGuardado;
     private boolean nwavMarcaPerdida;
 
-    /**
-     * Ejecuta el comando y lo apila. Devuelve {@code false} si no tuvo efecto
-     * (por ejemplo, mover una pagina a su misma posicion).
-     */
     public synchronized boolean nwavEjecutar(NwavComando nwavComando) {
         nwavComando.nwavEjecutar();
         if (!nwavComando.nwavTuvoEfecto()) {
@@ -28,7 +19,7 @@ public class NwavGestorComandos {
         }
         nwavHechos.push(nwavComando);
         if (nwavDeshechos.contains(nwavMarcaGuardado)) {
-            nwavMarcaPerdida = true; // el estado guardado ya no se puede alcanzar
+            nwavMarcaPerdida = true;
         }
         nwavDeshechos.clear();
         if (nwavHechos.size() > NWAV_MAXIMO_PASOS) {

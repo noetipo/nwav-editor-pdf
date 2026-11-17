@@ -19,20 +19,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Reparar PDF: abre el archivo en modo tolerante (PDFBox reconstruye la tabla de
- * referencias si esta danada), comprueba cada pagina y guarda una copia reconstruida.
- * Si no se puede recuperar nada, lo dice con claridad.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NwavReparacionService {
-
-    /** Resultado de la reparacion. */
     public record NwavResultadoReparacion(Path nwavDestino, int nwavPaginas, int nwavPaginasConProblemas,
                                           List<String> nwavProblemas) {
-
         public String nwavResumen() {
             return nwavPaginas + (nwavPaginas == 1 ? " página recuperada" : " páginas recuperadas")
                     + (nwavPaginasConProblemas == 0 ? " sin problemas"

@@ -42,28 +42,14 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-/**
- * Edicion del contenido de una pagina. Cada metodo {@code nwavComando...} devuelve un
- * comando reversible; el dibujo real ocurre al ejecutarlo.
- * <ul>
- *   <li>Texto, imagen y cobertura se <b>fijan</b> en el contenido de la pagina: se ven igual
- *       en cualquier lector.</li>
- *   <li>Resaltado, subrayado, tachado, notas, dibujo a mano y formas son <b>anotaciones</b>
- *       PDF estandar (con su apariencia generada), que otros lectores pueden mostrar u ocultar.</li>
- * </ul>
- * Todas las coordenadas son visuales (ver {@link NwavPunto}).
- */
 @Service
 @Slf4j
 public class NwavContenidoService {
-
     public static final String NWAV_AUTOR_ANOTACIONES = "NWAV Editor PDF";
     public static final float NWAV_INTERLINEADO = 1.2f;
     public static final float NWAV_TAMANO_ICONO_NOTA = 20f;
     private static final double NWAV_ZONA_MINIMA = 1.0;
     private static final int NWAV_MAXIMO_PUNTOS_TRAZO = 1500;
-
-    // ================================================================ comandos
 
     public NwavComando nwavComandoTexto(NwavDocumentoPdf nwavDocumento, int nwavPagina, NwavRectangulo nwavZona,
                                         String nwavTexto, NwavEstiloTexto nwavEstilo) {
@@ -134,8 +120,6 @@ public class NwavContenidoService {
                 () -> nwavCrearForma(nwavDocumento, nwavPagina, nwavTipo, nwavDesde, nwavHasta, nwavColor, nwavGrosor));
     }
 
-    // ============================================================ instantaneas
-
     public NwavInstantaneaPagina nwavCapturar(NwavDocumentoPdf nwavDocumento, int nwavPagina) {
         synchronized (nwavDocumento) {
             nwavDocumento.nwavVerificarAbierto();
@@ -151,12 +135,6 @@ public class NwavContenidoService {
         }
     }
 
-    // ============================================================ texto en pagina
-
-    /**
-     * Rectangulos (visuales) de las lineas de texto que quedan dentro de la zona; vacio si
-     * no hay texto (p. ej. un PDF escaneado) o no se puede extraer.
-     */
     public List<NwavRectangulo> nwavLineasDeTexto(NwavDocumentoPdf nwavDocumento, int nwavPagina,
                                                   NwavRectangulo nwavZona) {
         List<NwavTextoPagina.NwavGlifo> nwavLetras;
@@ -172,8 +150,6 @@ public class NwavContenidoService {
                 .toList();
         return NwavTextoPagina.nwavAgruparEnLineas(nwavDentro);
     }
-
-    // ============================================================ contenido fijo
 
     private void nwavDibujarTexto(NwavDocumentoPdf nwavDocumento, int nwavPagina, NwavRectangulo nwavZona,
                                   String nwavTexto, NwavEstiloTexto nwavEstilo) {
@@ -198,7 +174,6 @@ public class NwavContenidoService {
         });
     }
 
-    /** Firma u otra imagen ya en memoria (PNG/JPG), p. ej. de la base de datos. */
     public NwavComando nwavComandoImagenBytes(NwavDocumentoPdf nwavDocumento, int nwavPagina, byte[] nwavImagen,
                                               NwavRectangulo nwavZona, NwavTipoOperacion nwavTipo,
                                               String nwavDescripcion) {
@@ -253,10 +228,6 @@ public class NwavContenidoService {
         void nwavDibujar(PDPageContentStream nwavFlujo, NwavGeometriaPagina nwavGeometria) throws IOException;
     }
 
-    /**
-     * Agrega un flujo de contenido al final de la pagina, aislado del contenido original
-     * (q/Q) y con las coordenadas visuales ya transformadas a las de la pagina.
-     */
     static void nwavDibujarEnPagina(NwavDocumentoPdf nwavDocumento, int nwavPagina, NwavDibujo nwavDibujo) {
         synchronized (nwavDocumento) {
             nwavDocumento.nwavVerificarAbierto();
@@ -275,8 +246,6 @@ public class NwavContenidoService {
             nwavDocumento.nwavMarcarModificada(nwavHoja.getCOSObject());
         }
     }
-
-    // ================================================================= anotaciones
 
     private void nwavCrearMarca(NwavDocumentoPdf nwavDocumento, int nwavPagina, NwavTipoMarca nwavTipo,
                                 NwavRectangulo nwavZona, NwavColorRgb nwavColor) {
@@ -356,7 +325,6 @@ public class NwavContenidoService {
                     ? new PDAnnotationCircle() : new PDAnnotationSquare();
             PDRectangle nwavCaja = nwavGeometria.nwavRectanguloPdf(NwavRectangulo.nwavEntre(nwavDesde, nwavHasta));
             float nwavMitad = (float) nwavGrosor / 2;
-            // El borde se dibuja dentro del rectangulo de la anotacion: se agranda medio grosor.
             nwavAnotacion.setRectangle(new PDRectangle(nwavCaja.getLowerLeftX() - nwavMitad,
                     nwavCaja.getLowerLeftY() - nwavMitad, nwavCaja.getWidth() + 2 * nwavMitad,
                     nwavCaja.getHeight() + 2 * nwavMitad));
@@ -371,7 +339,6 @@ public class NwavContenidoService {
         PDAnnotationMarkup nwavCrear(NwavGeometriaPagina nwavGeometria);
     }
 
-    /** Crea la anotacion, le pone autor, fecha y color, genera su apariencia y la agrega. */
     private static void nwavAgregarAnotacion(NwavDocumentoPdf nwavDocumento, int nwavPagina,
                                              NwavFabricaAnotacion nwavFabrica, NwavColorRgb nwavColor) {
         synchronized (nwavDocumento) {
@@ -400,8 +367,6 @@ public class NwavContenidoService {
         }
     }
 
-    // ================================================================= utilidades
-
     static PDType1Font nwavFuente(NwavEstiloTexto nwavEstilo) {
         boolean nwavNegrita = nwavEstilo.nwavNegrita();
         boolean nwavCursiva = nwavEstilo.nwavCursiva();
@@ -419,7 +384,6 @@ public class NwavContenidoService {
         return new PDType1Font(nwavNombre);
     }
 
-    /** Las fuentes estandar no tienen todos los caracteres: se avisa del primero que falte. */
     private static void nwavValidarCaracteres(PDType1Font nwavFuente, NwavEstiloTexto nwavEstilo, String nwavTexto) {
         nwavTexto.codePoints().filter(nwavCodigo -> nwavCodigo != '\n').distinct().forEach(nwavCodigo -> {
             String nwavCaracter = new String(Character.toChars(nwavCodigo));
@@ -432,7 +396,6 @@ public class NwavContenidoService {
         });
     }
 
-    /** Respeta los saltos de linea y ajusta al ancho (en puntos; 0 = sin ajuste). */
     static List<String> nwavPartirLineas(String nwavTexto, PDType1Font nwavFuente, float nwavTamano, double nwavAncho) {
         List<String> nwavLineas = new ArrayList<>();
         for (String nwavParrafo : nwavTexto.split("\n", -1)) {
@@ -451,7 +414,6 @@ public class NwavContenidoService {
                     nwavLineas.add(nwavActual.toString());
                 }
                 nwavActual = new StringBuilder(nwavPalabra);
-                // Palabra mas larga que el ancho: se corta por caracteres.
                 while (nwavMedir(nwavFuente, nwavTamano, nwavActual.toString()) > nwavAncho && nwavActual.length() > 1) {
                     int nwavCorte = nwavActual.length() - 1;
                     while (nwavCorte > 1 && nwavMedir(nwavFuente, nwavTamano, nwavActual.substring(0, nwavCorte)) > nwavAncho) {
@@ -480,7 +442,6 @@ public class NwavContenidoService {
         return nwavBorde;
     }
 
-    /** Rectangulo que envuelve una lista de coordenadas x,y, con margen. */
     private static PDRectangle nwavEnvolvente(float[] nwavCoordenadas, float nwavMargen) {
         float nwavMinX = Float.MAX_VALUE;
         float nwavMinY = Float.MAX_VALUE;
@@ -496,7 +457,6 @@ public class NwavContenidoService {
                 nwavMaxX - nwavMinX + 2 * nwavMargen, nwavMaxY - nwavMinY + 2 * nwavMargen);
     }
 
-    /** Reduce trazos muy largos tomando puntos equiespaciados (el dibujo apenas cambia). */
     private static List<NwavPunto> nwavSimplificar(List<NwavPunto> nwavTrazo) {
         if (nwavTrazo.size() <= NWAV_MAXIMO_PUNTOS_TRAZO) {
             return nwavTrazo;

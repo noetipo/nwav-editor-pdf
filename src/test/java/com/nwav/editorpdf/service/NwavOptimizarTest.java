@@ -28,9 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-/** Fase A: comprimir, reparar y OCR (el OCR se omite si Tesseract no esta instalado). */
 class NwavOptimizarTest {
-
     private final NwavPdfDocumentoService nwavDocumentos = new NwavPdfDocumentoService();
     private final NwavCompresorService nwavCompresor = new NwavCompresorService(nwavDocumentos);
     private final NwavReparacionService nwavReparacion = new NwavReparacionService();
@@ -48,8 +46,6 @@ class NwavOptimizarTest {
         }
         return nwavLista;
     }
-
-    // ================================================================ comprimir
 
     @Test
     void nwavComprimirReduceElTamanoYConservaPaginasYTexto() throws Exception {
@@ -74,15 +70,11 @@ class NwavOptimizarTest {
             List<PDImageXObject> nwavImagenes = nwavImagenes(nwavComprimido, 0);
             PDImageXObject nwavFoto = nwavImagenes.stream().filter(nwavImagen -> "jpg".equals(nwavImagen.getSuffix())
                     && nwavImagen.getCOSObject().getCOSStream(COSName.SMASK) == null).findFirst().orElseThrow();
-            // 3 pulgadas a 150 DPI = 450 px (con margen del 15 % no se reduce por debajo).
             assertThat(nwavFoto.getWidth()).isBetween(440, 460);
             assertThat(nwavFoto.getSuffix()).isEqualTo("jpg");
-            // El PNG con transparencia conserva su mascara (SMask).
             assertThat(nwavImagenes).anySatisfy(nwavImagen ->
                     assertThat(nwavImagen.getCOSObject().getCOSStream(COSName.SMASK)).isNotNull());
-            // La imagen de 1 bit no se toca.
             assertThat(nwavImagenes).anySatisfy(nwavImagen -> assertThat(nwavImagen.getBitsPerComponent()).isEqualTo(1));
-            // La misma foto en las dos paginas queda como un solo objeto.
             PDImageXObject nwavFotoPagina2 = nwavImagenes(nwavComprimido, 1).get(0);
             assertThat(nwavFotoPagina2.getCOSObject()).isSameAs(nwavFoto.getCOSObject());
         }
@@ -114,7 +106,7 @@ class NwavOptimizarTest {
 
         try (PDDocument nwavPd = Loader.loadPDF(nwavDestino.toFile())) {
             BufferedImage nwavImagen = new PDFRenderer(nwavPd).renderImage(0, 1f);
-            Color nwavRectangulo = new Color(nwavImagen.getRGB(450, 842 - 725)); // era rojo
+            Color nwavRectangulo = new Color(nwavImagen.getRGB(450, 842 - 725));
             Color nwavFoto = new Color(nwavImagen.getRGB(180, 842 - 470));
             for (Color nwavColor : List.of(nwavRectangulo, nwavFoto)) {
                 assertThat(Math.abs(nwavColor.getRed() - nwavColor.getGreen())).isLessThan(8);
@@ -139,7 +131,6 @@ class NwavOptimizarTest {
             assertThat(nwavSegunda).doesNotExist();
             assertThat(nwavResultado.nwavResumen()).contains("No se guardó");
         } else {
-            // Si aun se gano algo, debe ser poco y el archivo debe ser valido.
             assertThat(nwavResultado.nwavDespues()).isLessThan(nwavResultado.nwavAntes());
         }
     }
@@ -169,13 +160,10 @@ class NwavOptimizarTest {
         }
     }
 
-    // ================================================================= reparar
-
     @Test
     void nwavRepararRecuperaUnPdfTruncado() throws Exception {
         Path nwavOriginal = NwavPdfDePrueba.nwavCrear(nwavCarpeta, "sano.pdf", 3);
         byte[] nwavBytes = Files.readAllBytes(nwavOriginal);
-        // Se corta el final (tabla de referencias y trailer).
         Path nwavRoto = Files.write(nwavCarpeta.resolve("roto.pdf"),
                 java.util.Arrays.copyOf(nwavBytes, (int) (nwavBytes.length * 0.9)));
         Path nwavDestino = nwavCarpeta.resolve("roto_reparado.pdf");
@@ -199,8 +187,6 @@ class NwavOptimizarTest {
                 .isInstanceOf(NwavEditorException.class)
                 .hasMessageContaining("no se puede recuperar");
     }
-
-    // ===================================================================== OCR
 
     @Test
     void nwavOcrConvierteUnEscaneadoEnTextoBuscable() throws Exception {

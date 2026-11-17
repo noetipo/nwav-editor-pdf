@@ -6,6 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface NwavMarcaAguaRepository extends JpaRepository<NwavMarcaAgua, Long> {
-
     List<NwavMarcaAgua> findAllByOrderByNwavNombreAsc();
 }

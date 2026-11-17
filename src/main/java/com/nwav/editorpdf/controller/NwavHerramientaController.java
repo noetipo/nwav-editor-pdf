@@ -46,14 +46,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * Pagina comun de las herramientas por lotes: elegir o arrastrar archivos, configurar las
- * opciones, procesar (en segundo plano y cancelable) y abrir los resultados o su carpeta.
- */
 @Component
 @RequiredArgsConstructor
 public class NwavHerramientaController implements NwavReceptorArchivos, NwavContextoHerramienta {
-
     private final NwavEjecutorHerramientasService nwavEjecutor;
     private final NwavOpcionesHerramientaService nwavOpcionesGuardadas;
     private final NwavConfiguracionService nwavConfiguracion;
@@ -106,7 +101,6 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
         });
     }
 
-    /** Muestra la herramienta con los archivos iniciales (p. ej. el resultado de otra). */
     public void nwavPreparar(NwavDefinicionHerramienta nwavNueva, List<Path> nwavArchivos) {
         boolean nwavMisma = nwavDefinicion == nwavNueva;
         nwavDefinicion = nwavNueva;
@@ -153,8 +147,6 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
         nwavActualizarBotones();
     }
 
-    // ================================================================ archivos
-
     @FXML
     private void nwavOnAnadir() {
         FileChooser nwavSelector = new FileChooser();
@@ -191,8 +183,6 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
 
     @Override
     public void nwavRecibir(List<File> nwavRecibidos) {
-        // Las carpetas se expanden a sus archivos compatibles, por orden natural de nombre
-        // (asi "escaneo2" va antes que "escaneo10").
         List<File> nwavArchivos = new java.util.ArrayList<>();
         for (File nwavRecibido : nwavRecibidos) {
             if (nwavRecibido.isDirectory()) {
@@ -219,7 +209,6 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
         nwavRecibirRutas(nwavValidos.stream().map(File::toPath).toList());
     }
 
-    /** Compara nombres tratando los numeros como numeros ("p2" &lt; "p10"). */
     static int nwavCompararNatural(String nwavA, String nwavB) {
         java.util.regex.Matcher nwavTrozosA = java.util.regex.Pattern.compile("\\d+|\\D+").matcher(nwavA.toLowerCase(Locale.ROOT));
         java.util.regex.Matcher nwavTrozosB = java.util.regex.Pattern.compile("\\d+|\\D+").matcher(nwavB.toLowerCase(Locale.ROOT));
@@ -312,8 +301,6 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
                 ? "Procesar " + nwavCantidad + " archivos" : "Procesar");
     }
 
-    // ================================================================= salida
-
     @FXML
     private void nwavOnElegirCarpeta() {
         DirectoryChooser nwavSelector = new DirectoryChooser();
@@ -336,8 +323,6 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
     private Path nwavCarpetaElegida() {
         return nwavRdbOtraCarpeta.isSelected() ? nwavCarpetaSalida : null;
     }
-
-    // =============================================================== procesar
 
     @FXML
     private void nwavOnProcesar() {
@@ -464,8 +449,6 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
         nwavMain.nwavIrA(NwavMainController.NWAV_VISTA_INICIO);
     }
 
-    // ============================================================== contexto
-
     @Override
     public List<Path> nwavArchivos() {
         return new ArrayList<>(nwavListaArchivos.getItems());
@@ -486,7 +469,6 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
         return nwavListaArchivos.getScene() == null ? null : nwavListaArchivos.getScene().getWindow();
     }
 
-    /** Fila de la lista de archivos: nombre, carpeta y tamano. */
     private static final class NwavCeldaArchivo extends ListCell<Path> {
         private final Label nwavNombre = new Label();
         private final Label nwavDetalle = new Label();

@@ -26,14 +26,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.function.Consumer;
 
-/**
- * Punto unico para la retroalimentacion visual de la aplicacion: notificaciones
- * flotantes, dialogos modales y panel lateral. El {@code NwavMainController}
- * registra aqui las capas de la ventana principal. (Heredado de la plantilla.)
- */
 @Component
 public class NwavNotificador {
-
     private static final Duration NWAV_DURACION_TOAST = Duration.seconds(4);
     private static final String NWAV_PROPIEDAD_CERRANDO = "nwav-cerrando";
 
@@ -46,8 +40,6 @@ public class NwavNotificador {
         this.nwavModalDialogo = nwavModalDialogo;
         this.nwavZonaToasts = nwavZonaToasts;
     }
-
-    // ---------------------------------------------------------------- toasts
 
     public void nwavExito(String nwavMensaje) {
         nwavToast(nwavMensaje, Feather.CHECK_CIRCLE, Styles.SUCCESS);
@@ -98,9 +90,6 @@ public class NwavNotificador {
         nwavSalida.play();
     }
 
-    // ---------------------------------------------------------------- dialogos
-
-    /** Dialogo de confirmacion de una accion destructiva; ejecuta la accion solo si se acepta. */
     public void nwavConfirmar(String nwavTitulo, String nwavMensaje, String nwavTextoAccion, Runnable nwavAlConfirmar) {
         Button nwavCancelar = nwavBotonSecundario("Cancelar", null);
         Button nwavAceptar = new Button(nwavTextoAccion);
@@ -114,18 +103,12 @@ public class NwavNotificador {
         nwavAceptar.requestFocus();
     }
 
-    /** Opcion de un dialogo de eleccion. La que tiene {@code nwavPorDefecto} responde a Intro. */
     public record NwavOpcion(String nwavTexto, String nwavEstilo, Runnable nwavAccion, boolean nwavPorDefecto) {
-
         public static NwavOpcion nwavCancelar() {
             return new NwavOpcion("Cancelar", Styles.BUTTON_OUTLINED, null, false);
         }
     }
 
-    /**
-     * Dialogo con varias acciones (p. ej. "Cancelar / Descartar / Guardar como…").
-     * La primera opcion sin accion actua como cancelar (tecla Esc).
-     */
     public void nwavElegir(String nwavTitulo, String nwavMensaje, boolean nwavAdvertencia, NwavOpcion... nwavOpciones) {
         Button[] nwavBotones = new Button[nwavOpciones.length];
         Button nwavFoco = null;
@@ -155,11 +138,6 @@ public class NwavNotificador {
         }
     }
 
-    /**
-     * Pide la contrasena de un PDF protegido.
-     *
-     * @param nwavReintento muestra el aviso de contrasena incorrecta.
-     */
     public void nwavPedirContrasena(String nwavArchivo, boolean nwavReintento,
                                     Consumer<String> nwavAlAceptar, Runnable nwavAlCancelar) {
         PasswordField nwavCampo = new PasswordField();
@@ -234,11 +212,7 @@ public class NwavNotificador {
         nwavModalDialogo.show(nwavDialogo);
     }
 
-    // ------------------------------------------------------------ panel lateral
-
-    /** Desliza un panel desde la derecha. */
     public void nwavAbrirPanel(Node nwavContenido) {
-        // Se renuevan las transiciones: el ModalPane las cachea para el primer nodo mostrado.
         nwavModalPanel.usePredefinedTransitionFactories(Side.RIGHT,
                 Duration.millis(320), Duration.millis(220));
         nwavModalPanel.show(nwavContenido);

@@ -16,14 +16,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-/** Plantillas reutilizables de marca de agua ({@code nwav_marca_agua}). */
 @Service
 @RequiredArgsConstructor
 public class NwavMarcaAguaService {
-
     private final NwavMarcaAguaRepository nwavRepositorio;
 
-    /** Plantillas en orden alfabetico espanol (sin distinguir mayusculas ni tildes). */
     @Transactional(readOnly = true)
     public List<NwavMarcaAgua> nwavListar() {
         java.text.Collator nwavOrden = java.text.Collator.getInstance(Locale.forLanguageTag("es"));
@@ -33,7 +30,6 @@ public class NwavMarcaAguaService {
                 .toList();
     }
 
-    /** Guarda las opciones como plantilla; si ya hay una con ese nombre, la reemplaza. */
     @Transactional
     public NwavMarcaAgua nwavGuardar(String nwavNombre, NwavOpcionesMarcaAgua nwavOpciones) {
         String nwavLimpio = nwavNombre == null ? "" : nwavNombre.strip();
@@ -69,7 +65,6 @@ public class NwavMarcaAguaService {
         nwavRepositorio.deleteById(nwavId);
     }
 
-    /** Convierte una plantilla guardada en opciones aplicables (todas las paginas). */
     public static NwavOpcionesMarcaAgua nwavAOpciones(NwavMarcaAgua nwavPlantilla) {
         NwavFuente nwavFuente;
         try {

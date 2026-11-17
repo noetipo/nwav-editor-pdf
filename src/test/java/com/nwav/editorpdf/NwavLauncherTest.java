@@ -6,9 +6,7 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** En Windows los datos van a %LOCALAPPDATA%; en el resto, a la carpeta configurada. */
 class NwavLauncherTest {
-
     @Test
     void nwavCarpetaDeDatosSegunElSistema() {
         assertThat(NwavLauncher.nwavCarpetaDatos("Windows 11", "C:\\Users\\ana\\AppData\\Local"))

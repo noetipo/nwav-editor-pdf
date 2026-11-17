@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class NwavComandoInsertarImagenes extends NwavComandoEstructural {
-
     private final List<Path> nwavImagenes;
     private final int nwavPosicion;
 

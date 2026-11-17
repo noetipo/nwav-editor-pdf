@@ -37,15 +37,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-/**
- * Comparar dos PDF: lado a lado con el desplazamiento sincronizado y las palabras quitadas
- * (rojo) y anadidas (verde) resaltadas, o superposicion visual por pixeles.
- */
 @Slf4j(topic = "com.nwav.editorpdf.controller.NwavCompararController")
 @Component
 @RequiredArgsConstructor
 public class NwavCompararController implements NwavVistaHerramienta {
-
     private static final double NWAV_ESCALA_MINIMA = 0.4;
     private static final double NWAV_ESCALA_MAXIMA = 3;
 
@@ -83,7 +78,6 @@ public class NwavCompararController implements NwavVistaHerramienta {
 
     @FXML
     public void initialize() {
-        // Desplazamiento sincronizado en ambas direcciones.
         nwavScrollIzquierda.vvalueProperty().addListener((nwavObs, nwavAntes, nwavAhora) ->
                 nwavSincronizar(() -> nwavScrollDerecha.setVvalue(nwavAhora.doubleValue())));
         nwavScrollDerecha.vvalueProperty().addListener((nwavObs, nwavAntes, nwavAhora) ->
@@ -94,7 +88,7 @@ public class NwavCompararController implements NwavVistaHerramienta {
                 nwavSincronizar(() -> nwavScrollIzquierda.setHvalue(nwavAhora.doubleValue())));
         nwavGrupoModo.selectedToggleProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
             if (nwavAhora == null) {
-                nwavAntes.setSelected(true); // siempre hay un modo elegido
+                nwavAntes.setSelected(true);
                 return;
             }
             nwavMostrarPagina();
@@ -124,8 +118,6 @@ public class NwavCompararController implements NwavVistaHerramienta {
             nwavSincronizando = false;
         }
     }
-
-    // ================================================================ archivos
 
     @FXML
     private void nwavOnElegirOriginal() {
@@ -158,8 +150,6 @@ public class NwavCompararController implements NwavVistaHerramienta {
         nwavLblNuevo.setText(String.valueOf(nwavRuta.getFileName()));
         nwavActualizarControles();
     }
-
-    // ============================================================== comparar
 
     @FXML
     private void nwavOnComparar() {
@@ -225,8 +215,6 @@ public class NwavCompararController implements NwavVistaHerramienta {
         return 0;
     }
 
-    // ============================================================ navegacion
-
     @FXML
     private void nwavOnAnterior() {
         if (nwavSesion != null && nwavPagina > 0) {
@@ -287,7 +275,7 @@ public class NwavCompararController implements NwavVistaHerramienta {
                     nwavActual.nwavRenderizar(false, nwavIndice, nwavFactor)};
         }, nwavImagenes -> {
             if (nwavActual != nwavSesion || nwavIndice != nwavPagina) {
-                return; // el usuario ya cambio de pagina
+                return;
             }
             nwavPintar(nwavLienzoIzquierda, nwavImagenes[0],
                     nwavVisual ? List.of() : nwavActual.nwavMarcasA(nwavIndice).nwavQuitadas(), Color.web("#e11d48"));

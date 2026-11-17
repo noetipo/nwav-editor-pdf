@@ -12,7 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NwavPdfRenderServiceTest {
-
     private final NwavPdfDocumentoService nwavDocumentos = new NwavPdfDocumentoService();
     private final NwavPdfRenderService nwavRender = new NwavPdfRenderService();
 
@@ -27,7 +26,6 @@ class NwavPdfRenderServiceTest {
 
             assertThat(nwavImagen.getWidth()).isBetween(594, 596);
             assertThat(nwavImagen.getHeight()).isBetween(841, 843);
-            // La pagina tiene texto negro sobre blanco: no puede ser todo blanco.
             assertThat(nwavTienePixelesOscuros(nwavImagen)).isTrue();
         }
     }

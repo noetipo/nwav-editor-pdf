@@ -39,9 +39,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Fase D: convertir desde PDF (imagen, Markdown, Office y PDF/A). */
 class NwavConversionDesdePdfTest {
-
     @TempDir
     Path nwavCarpeta;
 
@@ -49,7 +47,6 @@ class NwavConversionDesdePdfTest {
     private final NwavConversionDesdePdfService nwavServicio = new NwavConversionDesdePdfService(nwavDocumentos);
     private final NwavPdfAService nwavPdfA = new NwavPdfAService(nwavDocumentos);
 
-    /** PDF con estructura: titulos, parrafo, vinetas, lista numerada, tabla, enlace e imagen. */
     private Path nwavPdfEstructurado(boolean nwavFuenteIncrustada) throws Exception {
         Path nwavRuta = nwavCarpeta.resolve(nwavFuenteIncrustada ? "incrustada.pdf" : "estructurado.pdf");
         try (PDDocument nwavPd = new PDDocument()) {
@@ -94,7 +91,6 @@ class NwavConversionDesdePdfTest {
                 nwavG.dispose();
                 nwavFlujo.drawImage(LosslessFactory.createFromImage(nwavPd, nwavImagen), 72, nwavAlto - 500, 200, 100);
             }
-            // enlace sobre "visita la web"
             float nwavInicio = 72 + nwavNormal.getStringWidth("Más información: ") / 1000 * 11;
             float nwavAncho = nwavNormal.getStringWidth("visita la web") / 1000 * 11;
             PDAnnotationLink nwavLink = new PDAnnotationLink();
@@ -132,7 +128,7 @@ class NwavConversionDesdePdfTest {
         assertThat(nwavJpg).extracting(nwavRuta -> nwavRuta.getFileName().toString())
                 .containsExactly("tres_p01.jpg", "tres_p03.jpg");
         BufferedImage nwavLeida = ImageIO.read(nwavJpg.get(0).toFile());
-        assertThat(nwavLeida.getWidth()).isEqualTo(595); // A4 a 72 ppp
+        assertThat(nwavLeida.getWidth()).isEqualTo(595);
 
         List<Path> nwavPng = nwavServicio.nwavAImagenes(nwavPdf, null, "png", 150, 1f, "", null,
                 NwavAvance.NWAV_NINGUNO, NwavCancelacion.NWAV_NUNCA);
@@ -153,11 +149,10 @@ class NwavConversionDesdePdfTest {
                 PDPage nwavPagina = new PDPage(PDRectangle.A4);
                 nwavPd.addPage(nwavPagina);
                 try (PDPageContentStream nwavFlujo = new PDPageContentStream(nwavPd, nwavPagina)) {
-                    nwavFlujo.drawImage(nwavJpg, 50, 400, 300, 200); // mismo objeto en las dos paginas
-                    // mismo PNG pero como objetos distintos en cada pagina
+                    nwavFlujo.drawImage(nwavJpg, 50, 400, 300, 200);
                     nwavFlujo.drawImage(LosslessFactory.createFromImage(nwavPd, nwavFoto), 50, 100, 150, 100);
                     nwavFlujo.drawImage(LosslessFactory.createFromImage(nwavPd, new BufferedImage(10, 10,
-                            BufferedImage.TYPE_INT_RGB)), 400, 100, 10, 10); // diminuta: se omite
+                            BufferedImage.TYPE_INT_RGB)), 400, 100, 10, 10);
                 }
             }
             nwavPd.save(nwavPdf.toFile());
@@ -167,7 +162,7 @@ class NwavConversionDesdePdfTest {
 
         assertThat(nwavImagenes).extracting(nwavRuta -> nwavRuta.getFileName().toString())
                 .containsExactly("fotos_p1_img1.jpg", "fotos_p1_img2.png");
-        assertThat(Files.readAllBytes(nwavImagenes.get(0))).isEqualTo(Files.readAllBytes(nwavJpeg)); // sin recomprimir
+        assertThat(Files.readAllBytes(nwavImagenes.get(0))).isEqualTo(Files.readAllBytes(nwavJpeg));
         assertThat(ImageIO.read(nwavImagenes.get(1).toFile()).getWidth()).isEqualTo(300);
 
         Path nwavSinImagenes = NwavPdfDePrueba.nwavCrear(nwavCarpeta, "texto.pdf", 1);
@@ -224,7 +219,7 @@ class NwavConversionDesdePdfTest {
         Path nwavXlsx = nwavServicio.nwavAExcel(nwavPdfEstructurado(false), null, false, true, nwavCarpeta.resolve("s.xlsx"),
                 NwavAvance.NWAV_NINGUNO, NwavCancelacion.NWAV_NUNCA);
         try (XSSFWorkbook nwavLibro = new XSSFWorkbook(Files.newInputStream(nwavXlsx))) {
-            assertThat(nwavLibro.getNumberOfSheets()).isEqualTo(1); // la pagina 2 no tiene tablas
+            assertThat(nwavLibro.getNumberOfSheets()).isEqualTo(1);
             XSSFSheet nwavHoja = nwavLibro.getSheetAt(0);
             assertThat(nwavHoja.getRow(0).getCell(0).getStringCellValue()).isEqualTo("Producto");
             assertThat(nwavHoja.getRow(1).getCell(1).getNumericCellValue()).isEqualTo(12);
@@ -270,12 +265,12 @@ class NwavConversionDesdePdfTest {
         try (PDDocument nwavPd = Loader.loadPDF(nwavResultado.nwavDestino().toFile())) {
             assertThat(new PDFTextStripper().getText(nwavPd)).contains("Informe trimestral");
         }
-        assertThat(nwavPdfA.nwavValidar(nwavPdf)).isNotEmpty(); // el original no era PDF/A
+        assertThat(nwavPdfA.nwavValidar(nwavPdf)).isNotEmpty();
     }
 
     @Test
     void nwavPdfAExplicaLosMotivosYPuedeRasterizar() throws Exception {
-        Path nwavPdf = nwavPdfEstructurado(false); // Helvetica sin incrustar
+        Path nwavPdf = nwavPdfEstructurado(false);
         NwavPdfAService.NwavResultadoPdfA nwavSoloInforme = nwavPdfA.nwavConvertir(nwavPdf, null, false,
                 nwavCarpeta.resolve("no.pdf"), NwavAvance.NWAV_NINGUNO, NwavCancelacion.NWAV_NUNCA);
         assertThat(nwavSoloInforme.nwavValido()).isFalse();

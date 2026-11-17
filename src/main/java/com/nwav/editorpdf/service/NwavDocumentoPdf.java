@@ -15,18 +15,8 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Documento abierto en el editor. Envuelve el {@link PDDocument} junto con su renderizador,
- * sus caches y su historial de cambios (deshacer/rehacer); al cerrarlo se libera todo.
- * Se usa con try-with-resources o se cierra explicitamente al cambiar de archivo.
- * <p>
- * PDFBox no es seguro entre hilos: todo acceso al documento debe sincronizarse sobre
- * esta instancia (lo hacen los servicios).
- */
 @Slf4j
 public class NwavDocumentoPdf implements AutoCloseable {
-
-    /** Tamano visible de una pagina, en puntos PDF, con la rotacion ya aplicada. */
     public record NwavTamanoPagina(float nwavAncho, float nwavAlto) {
     }
 
@@ -41,13 +31,10 @@ public class NwavDocumentoPdf implements AutoCloseable {
     private final NwavCacheRender nwavCachePaginas = new NwavCacheRender(NWAV_CACHE_PAGINAS_BYTES);
     private final NwavCacheRender nwavCacheMiniaturas = new NwavCacheRender(NWAV_CACHE_MINIATURAS_BYTES);
     private final NwavGestorComandos nwavGestor = new NwavGestorComandos();
-    /** PDF de los que se importaron paginas: deben seguir abiertos hasta guardar o cerrar. */
     private final List<PDDocument> nwavAuxiliares = new ArrayList<>();
-    /** Version del contenido de cada pagina (por identidad): sube al editarla. */
     private final Map<Object, Integer> nwavVersiones = Collections.synchronizedMap(new IdentityHashMap<>());
     private volatile List<NwavTamanoPagina> nwavTamanos;
     private volatile boolean nwavCerrado;
-    /** Proteger o quitar proteccion, pendiente hasta el proximo guardado (null = sin cambios). */
     private volatile NwavCambioProteccion nwavProteccionPendiente;
 
     NwavDocumentoPdf(Path nwavRuta, PDDocument nwavDocumento, String nwavContrasena) {
@@ -72,7 +59,6 @@ public class NwavDocumentoPdf implements AutoCloseable {
         return ((nwavPagina.getRotation() % 360) + 360) % 360;
     }
 
-    /** Recalcula los tamanos tras un cambio de paginas. Llamar dentro de {@code synchronized (this)}. */
     void nwavActualizarEstructura() {
         List<NwavTamanoPagina> nwavLista = new ArrayList<>(nwavDocumento.getNumberOfPages());
         for (PDPage nwavPagina : nwavDocumento.getPages()) {
@@ -109,7 +95,6 @@ public class NwavDocumentoPdf implements AutoCloseable {
         return nwavCerrado;
     }
 
-    /** Historial de cambios en memoria (deshacer/rehacer) de este documento. */
     public NwavGestorComandos getNwavGestor() {
         return nwavGestor;
     }
@@ -118,7 +103,6 @@ public class NwavDocumentoPdf implements AutoCloseable {
         return nwavGestor.nwavHayCambiosSinGuardar();
     }
 
-    /** Solo para los servicios del paquete, siempre dentro de {@code synchronized (this)}. */
     PDDocument nwavPdDocument() {
         return nwavDocumento;
     }
@@ -151,7 +135,6 @@ public class NwavDocumentoPdf implements AutoCloseable {
         return nwavVersiones.getOrDefault(nwavPagina, 0);
     }
 
-    /** Invalida las imagenes en cache de la pagina (su contenido cambio). */
     void nwavMarcarModificada(Object nwavPagina) {
         nwavVersiones.merge(nwavPagina, 1, Integer::sum);
     }
@@ -166,7 +149,6 @@ public class NwavDocumentoPdf implements AutoCloseable {
         }
     }
 
-    /** Libera la memoria de las caches sin cerrar el documento. */
     public void nwavLiberarCaches() {
         nwavCachePaginas.nwavLimpiar();
         nwavCacheMiniaturas.nwavLimpiar();
@@ -174,7 +156,6 @@ public class NwavDocumentoPdf implements AutoCloseable {
 
     @Override
     public void close() {
-        // Espera a que termine cualquier renderizado o edicion en curso antes de cerrar.
         synchronized (this) {
             if (nwavCerrado) {
                 return;

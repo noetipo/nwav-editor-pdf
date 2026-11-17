@@ -34,9 +34,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Base comun de las herramientas: lotes, historial, cancelacion, opciones y catalogo. */
 class NwavHerramientasBaseTest extends NwavPruebaConBaseDatos {
-
     @Autowired private NwavEjecutorHerramientasService nwavEjecutor;
     @Autowired private NwavOpcionesHerramientaService nwavOpciones;
     @Autowired private NwavHistorialOperacionRepository nwavHistorial;

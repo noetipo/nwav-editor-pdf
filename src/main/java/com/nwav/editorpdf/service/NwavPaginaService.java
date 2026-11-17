@@ -21,21 +21,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Operaciones de pagina sobre el documento abierto, en memoria (no escriben disco).
- * Son las primitivas que usan los comandos de deshacer/rehacer. Todas reconstruyen el
- * arbol de paginas con un orden explicito, lo que hace triviales deshacer y rehacer.
- */
 @Service
 @RequiredArgsConstructor
 public class NwavPaginaService {
-
-    /** Margen alrededor de una imagen insertada como pagina, en puntos. */
     public static final float NWAV_MARGEN_IMAGEN = 24f;
 
     private final NwavPdfDocumentoService nwavDocumentos;
-
-    // ------------------------------------------------------------------ orden
 
     public NwavOrdenPaginas nwavCapturarOrden(NwavDocumentoPdf nwavDocumento) {
         synchronized (nwavDocumento) {
@@ -51,9 +42,6 @@ public class NwavPaginaService {
         }
     }
 
-    // -------------------------------------------------------------- rotacion
-
-    /** Suma {@code nwavGrados} (multiplo de 90, puede ser negativo) a la rotacion de cada pagina. */
     public void nwavRotar(NwavDocumentoPdf nwavDocumento, List<Integer> nwavIndices, int nwavGrados) {
         if (nwavGrados % 90 != 0) {
             throw new IllegalArgumentException("La rotación debe ser múltiplo de 90°");
@@ -68,8 +56,6 @@ public class NwavPaginaService {
             nwavDocumento.nwavActualizarEstructura();
         }
     }
-
-    // ----------------------------------------------------- operaciones de orden
 
     public void nwavEliminar(NwavDocumentoPdf nwavDocumento, List<Integer> nwavIndices) {
         synchronized (nwavDocumento) {
@@ -89,7 +75,6 @@ public class NwavPaginaService {
         }
     }
 
-    /** Inserta una copia justo despues de cada pagina. Devuelve el indice de la primera copia. */
     public int nwavDuplicar(NwavDocumentoPdf nwavDocumento, List<Integer> nwavIndices) {
         synchronized (nwavDocumento) {
             nwavDocumento.nwavVerificarAbierto();
@@ -112,11 +97,6 @@ public class NwavPaginaService {
         }
     }
 
-    /**
-     * Mueve las paginas indicadas, como bloque y en su orden, para que queden antes de la
-     * pagina que ahora ocupa {@code nwavDestino} ({@code nwavDestino == total} = al final).
-     * Devuelve el nuevo indice de la primera pagina movida.
-     */
     public int nwavMover(NwavDocumentoPdf nwavDocumento, List<Integer> nwavIndices, int nwavDestino) {
         synchronized (nwavDocumento) {
             nwavDocumento.nwavVerificarAbierto();
@@ -138,13 +118,6 @@ public class NwavPaginaService {
         }
     }
 
-    /**
-     * Inserta paginas de otro PDF en {@code nwavPosicion}. El PDF de origen queda abierto
-     * (las paginas importadas lo referencian) hasta que se guarde o cierre el documento.
-     *
-     * @param nwavRangos paginas del origen ("1-3, 5"); vacio o {@code null} = todas.
-     * @return indice de la primera pagina insertada.
-     */
     public int nwavInsertarPdf(NwavDocumentoPdf nwavDocumento, Path nwavOrigen, String nwavContrasena,
                                String nwavRangos, int nwavPosicion) {
         PDDocument nwavOtro = nwavDocumentos.nwavCargarDocumento(nwavOrigen, nwavContrasena);
@@ -171,7 +144,7 @@ public class NwavPaginaService {
                 return nwavDonde;
             } catch (IOException | RuntimeException nwavError) {
                 if (nwavAntes != null) {
-                    nwavEstablecerOrden(nwavDocumento, nwavAntes); // deja el documento como estaba
+                    nwavEstablecerOrden(nwavDocumento, nwavAntes);
                 }
                 nwavCerrarSilencioso(nwavOtro);
                 throw NwavTraductorErrores.nwavTraducir(nwavError, String.valueOf(nwavOrigen.getFileName()));
@@ -179,12 +152,6 @@ public class NwavPaginaService {
         }
     }
 
-    /**
-     * Inserta cada imagen como una pagina A4 (vertical u horizontal segun la imagen),
-     * centrada y sin agrandarla mas alla de su tamano natural.
-     *
-     * @return indice de la primera pagina insertada.
-     */
     public int nwavInsertarImagenes(NwavDocumentoPdf nwavDocumento, List<Path> nwavImagenes, int nwavPosicion) {
         if (nwavImagenes == null || nwavImagenes.isEmpty()) {
             throw new NwavEditorException("Elige al menos una imagen.");
@@ -205,13 +172,6 @@ public class NwavPaginaService {
         }
     }
 
-    // ---------------------------------------------------------------- recortar
-
-    /**
-     * Recorta (CropBox) las paginas indicadas al area visual dada (medida sobre como se ve
-     * la pagina). Cambia el tamano visible, asi que es un cambio estructural. Deshacer
-     * restaura la CropBox anterior de cada pagina.
-     */
     public com.nwav.editorpdf.service.comando.NwavComando nwavComandoRecortar(NwavDocumentoPdf nwavDocumento,
                                                                              List<Integer> nwavIndices,
                                                                              com.nwav.editorpdf.model.NwavRectangulo nwavZona) {
@@ -270,9 +230,6 @@ public class NwavPaginaService {
         };
     }
 
-    // --------------------------------------------------------------- internos
-
-    /** Carga una imagen (PNG, JPG, GIF, BMP…) para usarla en el documento. */
     static PDImageXObject nwavCargarImagen(PDDocument nwavPd, Path nwavRuta) {
         String nwavNombre = String.valueOf(nwavRuta.getFileName());
         if (!java.nio.file.Files.isRegularFile(nwavRuta)) {
@@ -327,10 +284,6 @@ public class NwavPaginaService {
         return nwavLista;
     }
 
-    /**
-     * Reconstruye el arbol de paginas como una lista plana con el orden dado. Antes copia
-     * a cada pagina los atributos que heredaba de nodos intermedios, que dejan de existir.
-     */
     private static void nwavEstablecerOrden(NwavDocumentoPdf nwavDocumento, List<PDPage> nwavOrden) {
         PDDocument nwavPd = nwavDocumento.nwavPdDocument();
         COSDictionary nwavRaiz = nwavPd.getDocumentCatalog().getPages().getCOSObject();
@@ -347,7 +300,6 @@ public class NwavPaginaService {
         nwavDocumento.nwavActualizarEstructura();
     }
 
-    /** Copia en la propia pagina los atributos heredables (recursos, cajas y rotacion). */
     static void nwavMaterializar(PDPage nwavPagina) {
         COSDictionary nwavDiccionario = nwavPagina.getCOSObject();
         if (!nwavDiccionario.containsKey(COSName.RESOURCES)) {
@@ -364,10 +316,6 @@ public class NwavPaginaService {
         }
     }
 
-    /**
-     * Copia superficial de la pagina: comparte contenido y recursos (no se modifican), pero
-     * tiene su propio diccionario y su propia lista de anotaciones.
-     */
     private static PDPage nwavCopiar(PDPage nwavOriginal) {
         nwavMaterializar(nwavOriginal);
         COSDictionary nwavCopia = new COSDictionary(nwavOriginal.getCOSObject());
@@ -398,7 +346,6 @@ public class NwavPaginaService {
         try {
             nwavPd.close();
         } catch (IOException nwavError) {
-            // ya se informa el error original
         }
     }
 }

@@ -11,8 +11,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NwavGestorComandosTest {
-
-    /** Comando de prueba que anota en una lista lo que hace. */
     private record NwavComandoFalso(String nwavNombre, List<String> nwavBitacora) implements NwavComando {
         @Override
         public void nwavEjecutar() {
@@ -77,7 +75,6 @@ class NwavGestorComandosTest {
         nwavGestor.nwavDeshacer();
         assertThat(nwavGestor.nwavHayCambiosSinGuardar()).isTrue();
 
-        // Si el estado guardado queda en la pila de rehacer y se descarta, ya no se puede volver.
         nwavGestor.nwavEjecutar(nwavComando("c"));
         nwavGestor.nwavDeshacer();
         assertThat(nwavGestor.nwavHayCambiosSinGuardar()).isTrue();

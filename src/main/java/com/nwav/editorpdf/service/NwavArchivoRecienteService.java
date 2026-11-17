@@ -14,15 +14,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-/** Lista de archivos recientes y la posicion (pagina y zoom) de cada uno. */
 @Service
 @RequiredArgsConstructor
 public class NwavArchivoRecienteService {
-
     private final NwavArchivoRecienteRepository nwavRepositorio;
     private final NwavConfiguracionService nwavConfiguracion;
 
-    /** Reciente tal como se muestra: con la marca de si sigue existiendo en disco. */
     public record NwavRecienteVista(NwavArchivoReciente nwavArchivo, boolean nwavDisponible) {
     }
 
@@ -35,10 +32,6 @@ public class NwavArchivoRecienteService {
         return nwavRepositorio.findByNwavRuta(nwavNormalizar(nwavRuta));
     }
 
-    /**
-     * Anota que el archivo se acaba de abrir. Si es nuevo en la lista, empieza en la
-     * primera pagina con el zoom por defecto. Despues recorta la lista al maximo configurado.
-     */
     @Transactional
     public NwavArchivoReciente nwavRegistrarApertura(Path nwavRuta) {
         String nwavClave = nwavNormalizar(nwavRuta);
@@ -58,7 +51,6 @@ public class NwavArchivoRecienteService {
         return nwavGuardado;
     }
 
-    /** Guarda la pagina y el zoom con los que se dejo el archivo. */
     @Transactional
     public void nwavGuardarEstado(Path nwavRuta, int nwavPagina, NwavModoZoom nwavModo, double nwavZoom) {
         nwavRepositorio.findByNwavRuta(nwavNormalizar(nwavRuta)).ifPresent(nwavReciente -> {
@@ -69,7 +61,6 @@ public class NwavArchivoRecienteService {
         });
     }
 
-    /** Recientes, del mas nuevo al mas antiguo, limitados al maximo configurado. */
     @Transactional(readOnly = true)
     public List<NwavRecienteVista> nwavListar() {
         return nwavRepositorio.findAllByOrderByNwavUltimaAperturaDesc().stream()
@@ -84,7 +75,6 @@ public class NwavArchivoRecienteService {
         nwavRepositorio.deleteById(nwavId);
     }
 
-    /** Elimina de la lista los archivos que ya no existen. Devuelve cuantos quito. */
     @Transactional
     public int nwavQuitarNoDisponibles() {
         List<NwavArchivoReciente> nwavFaltantes = nwavRepositorio.findAll().stream()

@@ -20,9 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
-/** Fase B: herramientas de organizar por archivo. */
 class NwavOrganizarTest {
-
     private final NwavPdfDocumentoService nwavDocumentos = new NwavPdfDocumentoService();
     private final NwavOrganizarService nwavOrganizar = new NwavOrganizarService(nwavDocumentos);
 
@@ -65,7 +63,7 @@ class NwavOrganizarTest {
     @Test
     void nwavDividirPorTamanoRespetaElLimite() throws Exception {
         Path nwavPesado = NwavPdfConImagenes.nwavCrearPesado(nwavCarpeta, "pesado.pdf");
-        long nwavLimite = Files.size(nwavPesado) * 6 / 10; // mas de media pagina, menos que el total
+        long nwavLimite = Files.size(nwavPesado) * 6 / 10;
 
         List<Path> nwavPartes = nwavOrganizar.nwavDividirPorTamano(nwavPesado, null, nwavLimite, null,
                 NwavAvance.NWAV_NINGUNO, NwavCancelacion.NWAV_NUNCA);
@@ -129,11 +127,9 @@ class NwavOrganizarTest {
 
         try (PDDocument nwavPd = Loader.loadPDF(nwavRecortado.toFile())) {
             double nwavMm = NwavOrganizarService.NWAV_PUNTOS_POR_MM;
-            // Pagina 1 (sin giro): ancho y alto visibles reducidos por los margenes.
             NwavDocumentoPdf.NwavTamanoPagina nwavPrimera = NwavDocumentoPdf.nwavCalcularTamano(nwavPd.getPage(0));
             assertThat((double) nwavPrimera.nwavAncho()).isCloseTo(595.27 - 10 * nwavMm, within(0.5));
             assertThat((double) nwavPrimera.nwavAlto()).isCloseTo(841.89 - 20 * nwavMm, within(0.5));
-            // Pagina 2 (girada 90): se ve apaisada; el margen "superior" recorta su alto visible.
             NwavDocumentoPdf.NwavTamanoPagina nwavSegunda = NwavDocumentoPdf.nwavCalcularTamano(nwavPd.getPage(1));
             assertThat((double) nwavSegunda.nwavAncho()).isCloseTo(841.89 - 10 * nwavMm, within(0.5));
             assertThat((double) nwavSegunda.nwavAlto()).isCloseTo(595.27 - 20 * nwavMm, within(0.5));

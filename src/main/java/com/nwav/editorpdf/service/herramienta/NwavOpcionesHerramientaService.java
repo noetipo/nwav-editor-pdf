@@ -13,12 +13,10 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/** Recuerda las ultimas opciones de cada herramienta ({@code nwav_opcion_herramienta}). */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NwavOpcionesHerramientaService {
-
     private static final int NWAV_LARGO_VALOR = 2048;
 
     private final NwavOpcionHerramientaRepository nwavRepositorio;
@@ -31,7 +29,6 @@ public class NwavOpcionesHerramientaService {
         return nwavValores;
     }
 
-    /** Guarda (o actualiza) las opciones. Un fallo de la base no impide usar la herramienta. */
     @Transactional
     public void nwavGuardar(String nwavHerramienta, Map<String, String> nwavValores) {
         try {

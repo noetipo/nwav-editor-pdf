@@ -36,9 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
-/** Fase E: marca de agua con posicion y mosaico, lotes, crear campos y comparar. */
 class NwavEditarAvanzadoTest {
-
     @TempDir
     Path nwavCarpeta;
 
@@ -68,7 +66,6 @@ class NwavEditarAvanzadoTest {
             assertThat(nwavC[1] - 12).as(nwavPosicion + " y").isGreaterThanOrEqualTo(0);
             assertThat(nwavC[1] + 12).isLessThanOrEqualTo(842);
         }
-        // arriba-izquierda: Y hacia arriba, asi que su centro esta cerca del borde superior
         float[] nwavArriba = NwavSelloService.nwavCentros(NwavPosicionMarca.NWAV_ARRIBA_IZQUIERDA, 595, 842, 120, 24, 0).get(0);
         assertThat(nwavArriba[0]).isCloseTo(28 + 60, within(0.1f));
         assertThat(nwavArriba[1]).isCloseTo(842 - 28 - 12, within(0.1f));
@@ -84,7 +81,7 @@ class NwavEditarAvanzadoTest {
         try (PDDocument nwavPd = Loader.loadPDF(nwavConMarca.toFile())) {
             String nwavTexto = new PDFTextStripper().getText(nwavPd);
             int nwavVeces = nwavTexto.split("BORRADOR", -1).length - 1;
-            assertThat(nwavVeces).isGreaterThan(2 * 10); // repetida en las dos paginas
+            assertThat(nwavVeces).isGreaterThan(2 * 10);
         }
 
         Path nwavNumerado = nwavLote.nwavEncabezado(nwavOriginal, null, new NwavOpcionesEncabezado("", null,
@@ -108,10 +105,8 @@ class NwavEditarAvanzadoTest {
                             false, false)));
             nwavGestor.nwavEjecutar(nwavCampos.nwavComandoCrear(nwavDocumento, 0, new NwavRectangulo(72, 200, 150, 60),
                     new NwavCampoNuevo(NwavTipoCampo.NWAV_OPCION, "talla", List.of("S", "M", "L"), "M", false, false)));
-            // la pagina 2 esta girada 90 grados
             nwavGestor.nwavEjecutar(nwavCampos.nwavComandoCrear(nwavDocumento, 1, new NwavRectangulo(72, 300, 200, 60),
                     new NwavCampoNuevo(NwavTipoCampo.NWAV_FIRMA_DIGITAL, "firma", null, null, false, false)));
-            // nombre repetido: se numera
             nwavGestor.nwavEjecutar(nwavCampos.nwavComandoCrear(nwavDocumento, 0, new NwavRectangulo(72, 300, 200, 22),
                     new NwavCampoNuevo(NwavTipoCampo.NWAV_TEXTO, "nombre", null, "", true, false)));
 
@@ -141,7 +136,7 @@ class NwavEditarAvanzadoTest {
                 assertThat(nwavTalla.getValue()).isEqualTo("M");
                 assertThat(nwavForm.getField("firma")).isInstanceOf(PDSignatureField.class);
                 assertThat(nwavPd.getPage(1).getAnnotations()).hasSize(1);
-                assertThat(nwavPd.getPage(0).getAnnotations()).hasSize(7); // 2 textos, casilla, lista y 3 opciones
+                assertThat(nwavPd.getPage(0).getAnnotations()).hasSize(7);
             }
 
             for (int nwavPaso = 0; nwavPaso < 6; nwavPaso++) {
@@ -182,10 +177,10 @@ class NwavEditarAvanzadoTest {
         try (NwavComparacionService.NwavSesion nwavSesion = nwavComparacion.nwavComparar(nwavA, null, nwavB, null,
                 NwavAvance.NWAV_NINGUNO, NwavCancelacion.NWAV_NUNCA)) {
             assertThat(nwavSesion.nwavIguales()).isFalse();
-            assertThat(nwavSesion.nwavQuitadas()).isEqualTo(1); // "marzo"
-            assertThat(nwavSesion.nwavAnadidas()).isEqualTo(3); // "abril", "Cláusula", "nueva"
+            assertThat(nwavSesion.nwavQuitadas()).isEqualTo(1);
+            assertThat(nwavSesion.nwavAnadidas()).isEqualTo(3);
             NwavRectangulo nwavMarzo = nwavSesion.nwavMarcasA(0).nwavQuitadas().get(0);
-            assertThat(nwavMarzo.nwavY()).isBetween(70.0, 90.0); // primera linea (y visual ~82)
+            assertThat(nwavMarzo.nwavY()).isBetween(70.0, 90.0);
             assertThat(nwavMarzo.nwavX()).isGreaterThan(150);
 
             NwavComparacionService.NwavSuperposicion nwavVisual = nwavSesion.nwavSuperponer(0, 1f);

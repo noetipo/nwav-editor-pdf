@@ -29,14 +29,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Formularios AcroForm: listar los campos y rellenarlos (con deshacer). Al cambiar un
- * valor se regenera su apariencia para que se vea en cualquier lector.
- */
 @Service
 @Slf4j
 public class NwavFormularioService {
-
     public List<NwavCampoFormulario> nwavListar(NwavDocumentoPdf nwavDocumento) {
         synchronized (nwavDocumento) {
             nwavDocumento.nwavVerificarAbierto();
@@ -82,7 +77,6 @@ public class NwavFormularioService {
         }
     }
 
-    /** Asigna varios valores a la vez (un solo paso de deshacer). Clave: nombre completo del campo. */
     public NwavComando nwavComandoRellenar(NwavDocumentoPdf nwavDocumento, Map<String, String> nwavValores) {
         if (nwavValores == null || nwavValores.isEmpty()) {
             throw new NwavEditorException("No hay cambios en el formulario.");
@@ -133,8 +127,6 @@ public class NwavFormularioService {
         };
     }
 
-    // ---------------------------------------------------------------- internos
-
     private static PDAcroForm nwavFormulario(NwavDocumentoPdf nwavDocumento) {
         nwavDocumento.nwavVerificarAbierto();
         PDAcroForm nwavFormulario = nwavDocumento.nwavPdDocument().getDocumentCatalog().getAcroForm();
@@ -152,10 +144,6 @@ public class NwavFormularioService {
         return nwavCampo;
     }
 
-    /**
-     * Asigna los valores; si uno falla, deja los ya cambiados como estaban
-     * ({@code nwavRespaldo}) para no quedar a medias.
-     */
     private static void nwavAsignarTodos(NwavDocumentoPdf nwavDocumento, PDAcroForm nwavFormulario,
                                          Map<String, String> nwavValores, Map<String, String> nwavRespaldo) {
         List<String> nwavHechos = new ArrayList<>();
@@ -212,10 +200,6 @@ public class NwavFormularioService {
         }
     }
 
-    /**
-     * Los campos de texto con fuentes sin todos los caracteres hacen fallar la apariencia:
-     * en ese caso se guarda el valor y se pide al lector que la genere (NeedAppearances).
-     */
     private static void nwavAsignarTexto(PDAcroForm nwavFormulario, PDTextField nwavCampo, String nwavTexto)
             throws IOException {
         if (nwavCampo.getMaxLen() > 0 && nwavTexto.length() > nwavCampo.getMaxLen()) {
@@ -272,7 +256,6 @@ public class NwavFormularioService {
                 return nwavIndice;
             }
         }
-        // Sin /P: se busca el widget en las anotaciones de cada pagina.
         for (int nwavIndice = 0; nwavIndice < nwavPd.getNumberOfPages(); nwavIndice++) {
             try {
                 for (PDAnnotation nwavAnotacion : nwavPd.getPage(nwavIndice).getAnnotations()) {

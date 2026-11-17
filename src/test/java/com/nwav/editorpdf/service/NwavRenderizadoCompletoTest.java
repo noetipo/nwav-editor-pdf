@@ -25,13 +25,7 @@ import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Regresion del aviso "No se pudo dibujar la página": renderiza TODAS las paginas (y sus
- * miniaturas) de un PDF grande y variado, tambien despues de editarlo y desde dos hilos a
- * la vez, como hace el visor. Ninguna pagina debe fallar.
- */
 class NwavRenderizadoCompletoTest {
-
     private static final int NWAV_PAGINAS = 120;
 
     private final NwavPdfDocumentoService nwavDocumentos = new NwavPdfDocumentoService();
@@ -42,7 +36,6 @@ class NwavRenderizadoCompletoTest {
     @TempDir
     Path nwavCarpeta;
 
-    /** Mezcla A4 vertical, apaisado, carta, paginas giradas y una CropBox desplazada. */
     private Path nwavCrearPdfVariado() throws Exception {
         Path nwavRuta = nwavCarpeta.resolve("variado.pdf");
         try (PDDocument nwavPd = new PDDocument()) {
@@ -72,7 +65,6 @@ class NwavRenderizadoCompletoTest {
         return nwavRuta;
     }
 
-    /** Renderiza todo y comprueba que cada imagen tiene la orientacion esperada. */
     private void nwavRenderizarTodo(NwavDocumentoPdf nwavDocumento) {
         for (int nwavIndice = 0; nwavIndice < nwavDocumento.getNwavNumeroPaginas(); nwavIndice++) {
             BufferedImage nwavPagina = nwavRender.nwavRenderizarPagina(nwavDocumento, nwavIndice, 0.5f);
@@ -101,7 +93,6 @@ class NwavRenderizadoCompletoTest {
             nwavRenderizarTodo(nwavDocumento);
 
             while (nwavGestor.nwavDeshacer().isPresent()) {
-                // deshacer todo
             }
             nwavRenderizarTodo(nwavDocumento);
         }
@@ -111,7 +102,6 @@ class NwavRenderizadoCompletoTest {
     void nwavDosHilosDibujandoALaVezNoFallan() throws Exception {
         ExecutorService nwavHilos = Executors.newFixedThreadPool(2);
         try (NwavDocumentoPdf nwavDocumento = nwavDocumentos.nwavAbrir(nwavCrearPdfVariado(), null)) {
-            // Como el visor: un hilo para paginas y otro para miniaturas.
             Future<?> nwavPaginasFuturo = nwavHilos.submit(() -> {
                 for (int nwavIndice = 0; nwavIndice < NWAV_PAGINAS; nwavIndice++) {
                     nwavRender.nwavRenderizarPagina(nwavDocumento, nwavIndice, 0.4f);

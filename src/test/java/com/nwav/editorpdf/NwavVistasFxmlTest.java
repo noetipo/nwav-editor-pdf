@@ -20,14 +20,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Comprueba, sin arrancar JavaFX, que cada FXML encaja con su controlador: todo fx:id
- * tiene un campo @FXML con ese nombre y todo manejador "#metodo" existe. Asi un error de
- * nombre se detecta al compilar las pruebas y no al abrir la ventana. Tambien verifica la
- * convencion de nombres (prefijo nwav) en archivos, fx:id y manejadores.
- */
 class NwavVistasFxmlTest {
-
     private static final Path NWAV_CARPETA_VISTAS = Path.of("src/main/resources/view");
 
     @Test

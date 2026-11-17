@@ -1,11 +1,6 @@
 package com.nwav.editorpdf.model;
 
-/**
- * Rectangulo en coordenadas visuales de una pagina (ver {@link NwavPunto}).
- * Se normaliza: el ancho y el alto nunca son negativos.
- */
 public record NwavRectangulo(double nwavX, double nwavY, double nwavAncho, double nwavAlto) {
-
     public NwavRectangulo {
         if (nwavAncho < 0) {
             nwavX += nwavAncho;

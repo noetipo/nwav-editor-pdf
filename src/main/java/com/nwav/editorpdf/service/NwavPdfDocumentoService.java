@@ -20,19 +20,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
-/** Abre documentos PDF y traduce los fallos de apertura a errores comprensibles. */
 @Service
 @Slf4j
 public class NwavPdfDocumentoService {
-
-    /**
-     * Abre el PDF para visualizarlo. El llamador es dueno del resultado y debe cerrarlo.
-     *
-     * @param nwavContrasena contrasena de usuario; {@code null} para intentar sin ella.
-     * @throws NwavContrasenaRequeridaException  si esta cifrado y no se dio contrasena
-     * @throws NwavContrasenaIncorrectaException si la contrasena no es valida
-     * @throws NwavPdfCorruptoException          si no es un PDF legible o no tiene paginas
-     */
     public NwavDocumentoPdf nwavAbrir(Path nwavRuta, String nwavContrasena) {
         Path nwavAbsoluta = nwavRuta.toAbsolutePath().normalize();
         String nwavNombre = String.valueOf(nwavAbsoluta.getFileName());
@@ -56,10 +46,6 @@ public class NwavPdfDocumentoService {
         }
     }
 
-    /**
-     * Carga un PDF auxiliar (para insertar o unir) con las mismas validaciones y errores
-     * que {@link #nwavAbrir}. El llamador debe cerrarlo.
-     */
     public PDDocument nwavCargarDocumento(Path nwavRuta, String nwavContrasena) {
         Path nwavAbsoluta = nwavRuta.toAbsolutePath().normalize();
         String nwavNombre = String.valueOf(nwavAbsoluta.getFileName());
@@ -72,7 +58,6 @@ public class NwavPdfDocumentoService {
         return nwavDocumento;
     }
 
-    /** Indica si el archivo necesita contrasena de usuario para abrirse. */
     public boolean nwavRequiereContrasena(Path nwavRuta) {
         try (NwavDocumentoPdf nwavDocumento = nwavAbrir(nwavRuta, null)) {
             return false;
@@ -104,7 +89,6 @@ public class NwavPdfDocumentoService {
         } catch (AccessDeniedException nwavError) {
             throw new NwavSinPermisoException(nwavNombre, nwavError);
         } catch (FileNotFoundException nwavError) {
-            // RandomAccessFile informa asi tanto permisos como bloqueos de otro proceso.
             String nwavMotivo = String.valueOf(nwavError.getMessage()).toLowerCase(Locale.ROOT);
             if (NwavTraductorErrores.nwavEsArchivoEnUso(nwavMotivo)) {
                 throw new NwavArchivoEnUsoException(nwavNombre, nwavError);

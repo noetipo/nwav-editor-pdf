@@ -10,7 +10,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NwavRangosPaginasTest {
-
     @Test
     void nwavInterpretaRangosSueltosYAbiertos() {
         assertThat(NwavRangosPaginas.nwavInterpretar(" 1-3, 5 ; 8- ,-2", 10)).containsExactly(

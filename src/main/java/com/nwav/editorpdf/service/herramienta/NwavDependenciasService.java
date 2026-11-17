@@ -22,22 +22,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-/**
- * Detecta las dependencias externas opcionales: el motor de OCR (Tesseract) y LibreOffice.
- * Si faltan, solo se deshabilitan las herramientas que las usan; el resto de la app
- * funciona igual. Las rutas se pueden indicar en Preferencias.
- */
 @Service
 @Slf4j
 public class NwavDependenciasService {
-
     public static final String NWAV_CLAVE_RUTA_TESSERACT = "nwav.ocr.ruta.libreria";
     public static final String NWAV_CLAVE_RUTA_TESSDATA = "nwav.ocr.ruta.idiomas";
     public static final String NWAV_CLAVE_RUTA_LIBREOFFICE = "nwav.office.ruta";
-    /** Idiomas incluidos en la aplicacion (modelos rapidos, licencia Apache 2.0). */
     public static final List<String> NWAV_IDIOMAS_INCLUIDOS = List.of("spa", "eng");
 
-    /** Estado de una dependencia. */
     public record NwavEstado(boolean nwavDisponible, String nwavDetalle, String nwavInstrucciones) {
     }
 
@@ -52,7 +44,6 @@ public class NwavDependenciasService {
             "C:\\Program Files\\LibreOffice\\program\\soffice.exe",
             "C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe");
 
-    /** La ruta dentro de las carpetas de programas de Windows (%ProgramFiles%, etc.). */
     public static List<String> nwavEnCarpetasDeProgramas(String nwavRelativa) {
         List<String> nwavRutas = new ArrayList<>();
         for (String nwavVariable : List.of("ProgramFiles", "ProgramW6432", "ProgramFiles(x86)", "LOCALAPPDATA")) {
@@ -73,7 +64,6 @@ public class NwavDependenciasService {
                                    @Value("${nwav.datos.carpeta}") String nwavCarpetaDatos) {
         this.nwavConfiguracion = nwavConfiguracion;
         this.nwavCarpetaIdiomas = Path.of(nwavCarpetaDatos).toAbsolutePath().resolve("tessdata");
-        // JNA busca la libreria nativa en jna.library.path: debe fijarse antes del primer uso.
         Set<String> nwavRutas = new LinkedHashSet<>();
         nwavConfiguracion.nwavObtener(NWAV_CLAVE_RUTA_TESSERACT).ifPresent(nwavRutas::add);
         nwavRutas.addAll(NWAV_LIBRERIAS_TESSERACT);
@@ -82,7 +72,6 @@ public class NwavDependenciasService {
             nwavRutas.add(nwavActual);
         }
         System.setProperty("jna.library.path", String.join(java.io.File.pathSeparator, nwavRutas));
-        // La comprobacion de Tesseract puede tardar: se hace en segundo plano al arrancar.
         Thread nwavComprobacion = new Thread(() -> {
             nwavTesseract();
             nwavLibreOffice();
@@ -91,14 +80,10 @@ public class NwavDependenciasService {
         nwavComprobacion.start();
     }
 
-    /** {@code true} cuando ya se sabe si las dependencias estan (para no bloquear la interfaz). */
     public boolean nwavComprobado() {
         return nwavTesseract != null && nwavLibreOffice != null;
     }
 
-    // ================================================================ Tesseract
-
-    /** Estado del OCR (se comprueba una vez; {@link #nwavRefrescar()} lo repite). */
     public NwavEstado nwavTesseract() {
         NwavEstado nwavEstado = nwavTesseract;
         if (nwavEstado == null) {
@@ -131,7 +116,6 @@ public class NwavDependenciasService {
             return new NwavEstado(true, "Tesseract disponible · idiomas: " + String.join(", ", nwavIdiomasDisponibles()),
                     nwavInstrucciones);
         } catch (Throwable nwavError) {
-            // UnsatisfiedLinkError / NoClassDefFoundError cuando falta la libreria nativa.
             nwavLog.info("OCR no disponible: {}", nwavError.toString());
             return new NwavEstado(false, "No se encontró el motor de OCR (Tesseract).", nwavInstrucciones);
         }
@@ -150,10 +134,6 @@ public class NwavDependenciasService {
         return "Instala Tesseract (p. ej. «sudo apt install tesseract-ocr») y reinicia la aplicación.";
     }
 
-    /**
-     * Carpeta de idiomas del OCR en los datos del usuario. Copia alli los idiomas incluidos
-     * en la aplicacion (espanol e ingles) la primera vez.
-     */
     public Path nwavCarpetaIdiomasPreparada() throws IOException {
         Files.createDirectories(nwavCarpetaIdiomas);
         for (String nwavIdioma : NWAV_IDIOMAS_INCLUIDOS) {
@@ -169,7 +149,6 @@ public class NwavDependenciasService {
         return nwavCarpetaIdiomas;
     }
 
-    /** Carpetas donde buscar idiomas adicionales (la de Preferencias y las del sistema). */
     public List<Path> nwavCarpetasIdiomasSistema() {
         List<Path> nwavCarpetas = new ArrayList<>();
         nwavConfiguracion.nwavObtener(NWAV_CLAVE_RUTA_TESSDATA).map(Path::of).ifPresent(nwavCarpetas::add);
@@ -177,7 +156,6 @@ public class NwavDependenciasService {
         return nwavCarpetas.stream().filter(Files::isDirectory).toList();
     }
 
-    /** Codigos de idioma disponibles (incluidos + sistema), sin "osd" ni "equ". */
     public List<String> nwavIdiomasDisponibles() {
         Set<String> nwavCodigos = new java.util.TreeSet<>(NWAV_IDIOMAS_INCLUIDOS);
         List<Path> nwavCarpetas = new ArrayList<>(nwavCarpetasIdiomasSistema());
@@ -196,10 +174,6 @@ public class NwavDependenciasService {
         return List.copyOf(nwavCodigos);
     }
 
-    /**
-     * Garantiza que los idiomas elegidos esten en la carpeta de datos (copia los que solo
-     * existan en el sistema) y la devuelve para usarla como datapath.
-     */
     public Path nwavPrepararIdiomas(List<String> nwavIdiomas) throws IOException {
         Path nwavCarpeta = nwavCarpetaIdiomasPreparada();
         for (String nwavIdioma : nwavIdiomas) {
@@ -219,8 +193,6 @@ public class NwavDependenciasService {
         return nwavCarpeta;
     }
 
-    // =============================================================== LibreOffice
-
     public NwavEstado nwavLibreOffice() {
         NwavEstado nwavEstado = nwavLibreOffice;
         if (nwavEstado == null) {
@@ -234,27 +206,21 @@ public class NwavDependenciasService {
         return nwavEstado;
     }
 
-    /** Ejecutable "soffice": el de Preferencias o el de una ubicacion habitual. */
     public Optional<Path> nwavRutaLibreOffice() {
         List<String> nwavCandidatos = new ArrayList<>();
         nwavConfiguracion.nwavObtener(NWAV_CLAVE_RUTA_LIBREOFFICE).ifPresent(nwavCandidatos::add);
         nwavCandidatos.addAll(NWAV_RUTAS_LIBREOFFICE);
-        // Windows instalado en otra unidad o carpeta de programas.
         nwavCandidatos.addAll(nwavEnCarpetasDeProgramas("LibreOffice\\program\\soffice.exe"));
         return nwavCandidatos.stream().map(Path::of).filter(Files::isRegularFile).filter(Files::isExecutable).findFirst();
     }
 
-    /** Carpeta raiz de LibreOffice (la que espera JODConverter). */
     public Optional<Path> nwavCarpetaLibreOffice() {
         return nwavRutaLibreOffice().map(nwavSoffice -> {
             Path nwavPadre = nwavSoffice.getParent();
-            // macOS: .../LibreOffice.app/Contents/MacOS/soffice -> .../LibreOffice.app/Contents
-            // Windows/Linux: .../program/soffice -> carpeta de instalacion
             return nwavPadre != null && nwavPadre.getParent() != null ? nwavPadre.getParent() : nwavPadre;
         });
     }
 
-    /** Vuelve a comprobar (tras cambiar rutas en Preferencias). La libreria nativa exige reiniciar. */
     public void nwavRefrescar() {
         nwavLibreOffice = null;
         if (nwavTesseract != null && !nwavTesseract.nwavDisponible()) {

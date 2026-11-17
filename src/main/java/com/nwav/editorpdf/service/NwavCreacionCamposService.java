@@ -38,22 +38,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Crea campos de formulario rellenables (texto, casilla, lista desplegable, grupo de
- * opciones y firma) en una zona de la pagina. Cada campo es un paso que se puede deshacer.
- */
 @Service
 public class NwavCreacionCamposService {
-
     private static final String NWAV_FUENTE_FORMULARIO = "Helv";
 
-    /**
-     * Opciones del campo nuevo.
-     *
-     * @param nwavOpciones   valores para lista y grupo de opciones (al menos dos)
-     * @param nwavMultilinea solo texto
-     * @param nwavObligatorio marca el campo como requerido
-     */
     public record NwavCampoNuevo(NwavTipoCampo nwavTipo, String nwavNombre, List<String> nwavOpciones, String nwavValor,
                                  boolean nwavMultilinea, boolean nwavObligatorio) {
         public NwavCampoNuevo {
@@ -116,7 +104,6 @@ public class NwavCreacionCamposService {
                     PDDocument nwavPd = nwavDocumento.nwavPdDocument();
                     PDAcroForm nwavFormulario = nwavPd.getDocumentCatalog().getAcroForm();
                     try {
-                        // removeIf sobre la lista de PDFBox no actualiza el array del PDF: se reasigna.
                         List<org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation> nwavQuedan =
                                 new ArrayList<>(nwavPagina.getAnnotations());
                         nwavQuedan.removeIf(nwavA -> nwavWidgets.stream()
@@ -159,7 +146,6 @@ public class NwavCreacionCamposService {
         };
     }
 
-    /** Nombre libre basado en el sugerido (campo, campo_2...). */
     static String nwavNombreLibre(PDAcroForm nwavFormulario, String nwavSugerido, String nwavBase) {
         String nwavLimpio = nwavSugerido == null ? "" : nwavSugerido.strip().replaceAll("[.\\s]+", "_");
         if (nwavLimpio.isEmpty()) {
@@ -206,13 +192,12 @@ public class NwavCreacionCamposService {
             case NWAV_CASILLA -> {
                 PDCheckBox nwavCasilla = new PDCheckBox(nwavFormulario);
                 nwavCasilla.setPartialName(nwavNombreLibre(nwavFormulario, nwavCampo.nwavNombre(), "casilla"));
-                // casilla cuadrada en la esquina de la zona
                 float nwavLado = (float) Math.min(nwavZona.nwavAncho(), nwavZona.nwavAlto());
                 PDRectangle nwavCuadro = nwavGeometria.nwavRectanguloPdf(
                         new NwavRectangulo(nwavZona.nwavX(), nwavZona.nwavY(), nwavLado, nwavLado));
                 PDAnnotationWidget nwavWidget = nwavCasilla.getWidgets().get(0);
                 nwavWidgetBasico(nwavWidget, nwavPagina, nwavCuadro, nwavRotacion);
-                nwavWidget.getAppearanceCharacteristics().setNormalCaption("4"); // marca de ZapfDingbats
+                nwavWidget.getAppearanceCharacteristics().setNormalCaption("4");
                 nwavWidget.setAppearance(nwavAparienciaCasilla(nwavPd, nwavCuadro, "Si", false));
                 nwavWidget.setAppearanceState("Off");
                 nwavCasilla.setRequired(nwavCampo.nwavObligatorio());
@@ -228,7 +213,6 @@ public class NwavCreacionCamposService {
                 double nwavAltoFila = nwavZona.nwavAlto() / nwavOpciones.size();
                 List<PDAnnotationWidget> nwavWidgets = new ArrayList<>();
                 for (int nwavIndice = 0; nwavIndice < nwavOpciones.size(); nwavIndice++) {
-                    // cada opcion es una fila con su circulo y su etiqueta (dentro de la apariencia)
                     PDRectangle nwavFila = nwavGeometria.nwavRectanguloPdf(new NwavRectangulo(nwavZona.nwavX(),
                             nwavZona.nwavY() + nwavIndice * nwavAltoFila, nwavZona.nwavAncho(), nwavAltoFila));
                     PDAnnotationWidget nwavWidget = new PDAnnotationWidget();
@@ -277,7 +261,6 @@ public class NwavCreacionCamposService {
                 nwavTexto.setMultiline(nwavCampo.nwavMultilinea());
                 nwavTexto.setRequired(nwavCampo.nwavObligatorio());
                 nwavWidgetBasico(nwavTexto.getWidgets().get(0), nwavPagina, nwavCaja, nwavRotacion);
-                // setValue genera la apariencia aunque el valor este vacio
                 nwavTexto.setValue(nwavCampo.nwavValor() == null ? "" : nwavCampo.nwavValor());
                 return nwavTexto;
             }
@@ -314,7 +297,6 @@ public class NwavCreacionCamposService {
         PDAppearanceStream nwavEncendida = nwavFlujoVacio(nwavPd, nwavLado, nwavCaja.getHeight(), false);
         try (PDPageContentStream nwavFlujo = new PDPageContentStream(nwavPd, nwavEncendida)) {
             nwavMarco(nwavFlujo, nwavLado, nwavCaja.getHeight());
-            // marca de verificacion
             nwavFlujo.setStrokingColor(0.1f, 0.25f, 0.6f);
             nwavFlujo.setLineWidth(Math.max(1, nwavLado / 9));
             nwavFlujo.moveTo(nwavLado * 0.2f, nwavCaja.getHeight() * 0.52f);
@@ -416,7 +398,6 @@ public class NwavCreacionCamposService {
         return nwavApariencia;
     }
 
-    /** Recorta la etiqueta para que quepa (y quita lo que la fuente no puede escribir). */
     private static String nwavRecortarPara(PDType1Font nwavFuente, float nwavTamano, String nwavTexto, float nwavMaximo) {
         StringBuilder nwavValido = new StringBuilder();
         for (char nwavCaracter : nwavTexto.toCharArray()) {
@@ -438,7 +419,6 @@ public class NwavCreacionCamposService {
         return nwavResultado;
     }
 
-    /** Para pruebas: entrada de apariencia normal. */
     static PDAppearanceEntry nwavNormal(PDAnnotationWidget nwavWidget) {
         return nwavWidget.getAppearance().getNormalAppearance();
     }

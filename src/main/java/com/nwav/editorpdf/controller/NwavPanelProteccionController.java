@@ -20,14 +20,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * Panel "Protección": proteger con contraseña o quitar la protección. Los cambios quedan
- * pendientes y se aplican al guardar (se pueden deshacer).
- */
 @Component
 @RequiredArgsConstructor
 public class NwavPanelProteccionController implements NwavPanel {
-
     private final NwavVisorController nwavVisor;
     private final NwavEdicionService nwavEdicion;
     private final NwavSeguridadService nwavSeguridad;

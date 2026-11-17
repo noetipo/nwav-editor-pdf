@@ -1,6 +1,5 @@
 package com.nwav.editorpdf.model;
 
-/** Operaciones que quedan registradas en {@code nwav_historial_operacion}. */
 public enum NwavTipoOperacion {
     NWAV_ROTAR("Rotar páginas"),
     NWAV_ELIMINAR("Eliminar páginas"),

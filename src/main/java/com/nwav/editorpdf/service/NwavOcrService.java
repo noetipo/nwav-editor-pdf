@@ -40,18 +40,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * OCR con Tesseract (Tess4J). La imagen de cada pagina queda visible y el texto reconocido
- * se agrega como capa invisible, alineada con cada palabra, de modo que el PDF se puede
- * seleccionar y buscar. Las paginas que ya tienen texto se saltan (salvo que se fuerce).
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NwavOcrService {
-
     public static final int NWAV_DPI_OCR = 300;
-    /** Una pagina con menos caracteres que estos se considera sin texto. */
     public static final int NWAV_CARACTERES_MINIMOS = 25;
     private static final double NWAV_UMBRAL_INCLINACION = 0.3;
     private static final List<String> NWAV_FUENTES_UNICODE = List.of(
@@ -59,23 +52,19 @@ public class NwavOcrService {
             "C:\\Windows\\Fonts\\arialuni.ttf", "C:\\Windows\\Fonts\\arial.ttf",
             "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/dejavu/DejaVuSans.ttf",
             "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
-            // Windows instalado en otra unidad
             System.getenv("WINDIR") == null ? "" : System.getenv("WINDIR") + "\\Fonts\\arial.ttf",
             System.getenv("WINDIR") == null ? "" : System.getenv("WINDIR") + "\\Fonts\\segoeui.ttf");
 
     private final NwavDependenciasService nwavDependencias;
     private final NwavPdfDocumentoService nwavDocumentos;
 
-    /** Opciones del OCR. */
     public record NwavOpcionesOcr(List<String> nwavIdiomas, boolean nwavForzar, boolean nwavEnderezar,
                                   boolean nwavGrises, boolean nwavContraste, boolean nwavSalidaPdf,
                                   boolean nwavSalidaTexto) {
     }
 
-    /** Resultado del OCR. */
     public record NwavResultadoOcr(Path nwavPdf, Path nwavTexto, int nwavPaginasReconocidas, int nwavPaginasConTexto,
                                    int nwavPalabras, String nwavIdiomas) {
-
         public String nwavResumen() {
             return nwavPaginasReconocidas + (nwavPaginasReconocidas == 1 ? " página reconocida" : " páginas reconocidas")
                     + (nwavPaginasConTexto > 0 ? " · " + nwavPaginasConTexto + " ya tenían texto" : "")
@@ -83,11 +72,9 @@ public class NwavOcrService {
         }
     }
 
-    /** Palabra reconocida en coordenadas de la imagen renderizada. */
     record NwavPalabra(String nwavTexto, Rectangle nwavCaja) {
     }
 
-    /** Resultado de una pagina. */
     record NwavPaginaReconocida(int nwavIndice, int nwavAnchoPx, int nwavAltoPx, List<NwavPalabra> nwavPalabras) {
     }
 
@@ -177,12 +164,6 @@ public class NwavOcrService {
         }
     }
 
-    // ============================================================ reconocimiento
-
-    /**
-     * Renderiza las paginas (de una en una: PDFBox no es seguro entre hilos) y las reconoce
-     * en paralelo, una instancia de Tesseract por hilo.
-     */
     private List<NwavPaginaReconocida> nwavReconocer(PDDocument nwavPd, List<Integer> nwavPaginas, Path nwavDatos,
                                                      String nwavIdiomas, NwavOpcionesOcr nwavOpciones,
                                                      NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) {
@@ -279,7 +260,6 @@ public class NwavOcrService {
             }
             Rectangle nwavCaja = new Rectangle(nwavPalabra.getBoundingBox());
             if (nwavAngulo != 0) {
-                // La imagen se giro para reconocerla: el centro de la palabra vuelve a su sitio.
                 double nwavDx = nwavCaja.getCenterX() - nwavCentroX;
                 double nwavDy = nwavCaja.getCenterY() - nwavCentroY;
                 double nwavX = nwavCentroX + nwavDx * Math.cos(nwavRadianes) - nwavDy * Math.sin(nwavRadianes);
@@ -292,7 +272,6 @@ public class NwavOcrService {
         return new NwavPaginaReconocida(nwavIndice, nwavOriginal.getWidth(), nwavOriginal.getHeight(), nwavResultado);
     }
 
-    /** Lleva los niveles de gris del 1 % al 99 % a todo el rango (mas contraste). */
     static BufferedImage nwavEstirarContraste(BufferedImage nwavGris) {
         int[] nwavHistograma = new int[256];
         int nwavAncho = nwavGris.getWidth();
@@ -331,12 +310,6 @@ public class NwavOcrService {
         return nwavSalida;
     }
 
-    // ============================================================= capa de texto
-
-    /**
-     * Escribe las palabras como texto invisible (modo de render 3) sobre la pagina,
-     * ajustando tamano y escala horizontal para que cada palabra ocupe su caja.
-     */
     static void nwavAgregarCapaDeTexto(PDDocument nwavPd, NwavPaginaReconocida nwavPagina, PDFont nwavFuente)
             throws IOException {
         if (nwavPagina.nwavPalabras().isEmpty()) {
@@ -375,10 +348,6 @@ public class NwavOcrService {
         }
     }
 
-    /**
-     * Helvetica (WinAnsi) cubre espanol, ingles y la mayoria de idiomas europeos. Si el texto
-     * tiene otros caracteres, se incrusta una fuente Unicode del sistema si existe.
-     */
     private static PDFont nwavFuenteParaTexto(PDDocument nwavPd, List<NwavPaginaReconocida> nwavPaginas) {
         PDType1Font nwavHelvetica = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
         boolean nwavTodoLatino = nwavPaginas.stream().flatMap(nwavPagina -> nwavPagina.nwavPalabras().stream())
@@ -396,7 +365,7 @@ public class NwavOcrService {
                 }
             }
         }
-        return nwavHelvetica; // los caracteres sin soporte se sustituyen por "?"
+        return nwavHelvetica;
     }
 
     private static boolean nwavSeCodifica(PDFont nwavFuente, String nwavTexto) {
@@ -420,8 +389,6 @@ public class NwavOcrService {
         return nwavSalida.toString();
     }
 
-    // ================================================================== texto
-
     private static String nwavTextoDePagina(PDDocument nwavPd, int nwavIndice) {
         try {
             PDFTextStripper nwavExtractor = new PDFTextStripper();
@@ -433,7 +400,6 @@ public class NwavOcrService {
         }
     }
 
-    /** Texto del documento: el reconocido (reconstruyendo lineas) o el que ya tenia. */
     private static String nwavTextoCompleto(int nwavTotal, String[] nwavExistente, List<NwavPaginaReconocida> nwavPaginas) {
         Map<Integer, NwavPaginaReconocida> nwavPorIndice = new java.util.HashMap<>();
         nwavPaginas.forEach(nwavPagina -> nwavPorIndice.put(nwavPagina.nwavIndice(), nwavPagina));
@@ -449,7 +415,6 @@ public class NwavOcrService {
         return nwavTexto.append('\n').toString();
     }
 
-    /** Agrupa las palabras en lineas segun su posicion vertical. */
     static String nwavLineas(List<NwavPalabra> nwavPalabras) {
         List<NwavPalabra> nwavOrdenadas = new ArrayList<>(nwavPalabras);
         nwavOrdenadas.sort(Comparator.comparingDouble((NwavPalabra nwavP) -> nwavP.nwavCaja().getCenterY())

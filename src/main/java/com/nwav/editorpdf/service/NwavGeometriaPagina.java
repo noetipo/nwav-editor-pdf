@@ -6,17 +6,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.util.Matrix;
 
-/**
- * Traduce coordenadas "visuales" (como se ve la pagina en pantalla: puntos PDF, origen
- * arriba a la izquierda, rotacion ya aplicada) al espacio de usuario del PDF, que tiene el
- * origen abajo a la izquierda de la CropBox y no conoce la rotacion de la pagina.
- * <p>
- * Para dibujar contenido se usa {@link #nwavMatrizVisual()}: tras aplicarla, se dibuja con
- * coordenadas visuales con el eje Y hacia arriba ({@code yArriba = altoVisual - yVisual}) y
- * el resultado aparece derecho en pantalla aunque la pagina este rotada.
- */
 final class NwavGeometriaPagina {
-
     private final float nwavIzquierda;
     private final float nwavAbajo;
     private final float nwavAncho;
@@ -44,7 +34,6 @@ final class NwavGeometriaPagina {
         return nwavRotacion == 90 || nwavRotacion == 270 ? nwavAncho : nwavAlto;
     }
 
-    /** Matriz de (x visual, y visual hacia arriba) a espacio PDF. */
     Matrix nwavMatrizVisual() {
         return switch (nwavRotacion) {
             case 90 -> new Matrix(0, 1, -1, 0, nwavIzquierda + nwavAncho, nwavAbajo);
@@ -54,7 +43,6 @@ final class NwavGeometriaPagina {
         };
     }
 
-    /** Punto visual (Y hacia abajo) en espacio PDF: {x, y}. */
     float[] nwavAPdf(double nwavX, double nwavY) {
         Matrix nwavMatriz = nwavMatrizVisual();
         float nwavXv = (float) nwavX;
@@ -68,7 +56,6 @@ final class NwavGeometriaPagina {
         return nwavAPdf(nwavPunto.nwavX(), nwavPunto.nwavY());
     }
 
-    /** Rectangulo visual en espacio PDF (siempre alineado a los ejes: la rotacion es de 90°). */
     PDRectangle nwavRectanguloPdf(NwavRectangulo nwavZona) {
         float[] nwavA = nwavAPdf(nwavZona.nwavX(), nwavZona.nwavY());
         float[] nwavB = nwavAPdf(nwavZona.nwavDerecha(), nwavZona.nwavAbajo());
@@ -77,7 +64,6 @@ final class NwavGeometriaPagina {
         return new PDRectangle(nwavMinX, nwavMinY, Math.abs(nwavA[0] - nwavB[0]), Math.abs(nwavA[1] - nwavB[1]));
     }
 
-    /** Rectangulo en espacio PDF convertido a coordenadas visuales (Y hacia abajo). */
     NwavRectangulo nwavRectanguloVisual(PDRectangle nwavPdf) {
         try {
             java.awt.geom.AffineTransform nwavInversa = nwavMatrizVisual().createAffineTransform().createInverse();
@@ -94,10 +80,6 @@ final class NwavGeometriaPagina {
         }
     }
 
-    /**
-     * Cuatro esquinas de un rectangulo visual como QuadPoints de PDF, en el orden que usan
-     * los lectores: arriba-izquierda, arriba-derecha, abajo-izquierda, abajo-derecha (visual).
-     */
     float[] nwavQuadPoints(NwavRectangulo nwavZona) {
         float[] nwavAi = nwavAPdf(nwavZona.nwavX(), nwavZona.nwavY());
         float[] nwavAd = nwavAPdf(nwavZona.nwavDerecha(), nwavZona.nwavY());

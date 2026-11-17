@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-# Construye, desde macOS o Linux, la version PORTABLE para Windows (x64):
-#   target/NWAV-Editor-PDF-<version>-windows-x64.zip
-# Incluye su propio Java (Eclipse Temurin JRE 21, GPLv2 + Classpath Exception), asi que
-# en Windows basta con descomprimir y abrir "NWAV Editor PDF.cmd".
-#
-# Uso:  empaquetado/construir-windows.sh [--sin-pruebas]
 set -euo pipefail
 
 RAIZ="$(cd "$(dirname "$0")/.." && pwd)"
@@ -28,7 +22,6 @@ mkdir -p "$CARPETA/app/lib"
 ./mvnw -q -B -Djavafx.platform=win dependency:copy-dependencies \
   -DincludeScope=runtime -DexcludeArtifactIds=lombok -DoutputDirectory="$CARPETA/app/lib"
 cp "target/nwav-editor-pdf-${VERSION}.jar" "$CARPETA/app/lib/"
-# Solo JavaFX de Windows (nada de macOS/Linux)
 if ls "$CARPETA/app/lib" | grep -qE 'javafx-.*-(mac|linux)'; then
   echo "ERROR: se colaron librerias de JavaFX que no son de Windows" >&2; exit 1
 fi

@@ -5,17 +5,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Cache LRU de paginas renderizadas, limitada por memoria (bytes de pixeles), no por
- * cantidad de entradas. Es segura entre hilos.
- * <p>
- * La clave es la identidad de la pagina (su objeto PDF, no su numero), su rotacion, la
- * version de su contenido y la escala: reordenar no invalida las imagenes ya hechas, pero
- * editar el contenido de una pagina si.
- */
 public class NwavCacheRender {
-
-    /** {@code nwavPagina} se compara por identidad (los objetos COS no redefinen equals). */
     private record NwavClave(Object nwavPagina, int nwavRotacion, int nwavVersion, int nwavEscalaMilesimas) {
     }
 
@@ -36,7 +26,7 @@ public class NwavCacheRender {
                                          BufferedImage nwavImagen) {
         long nwavTamano = nwavBytes(nwavImagen);
         if (nwavTamano > nwavLimiteBytes) {
-            return; // Mas grande que toda la cache: no merece la pena guardarla.
+            return;
         }
         BufferedImage nwavAnterior = nwavEntradas.put(nwavClave(nwavPagina, nwavRotacion, nwavVersion, nwavEscala), nwavImagen);
         if (nwavAnterior != null) {

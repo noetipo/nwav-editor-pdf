@@ -23,14 +23,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-/**
- * Punto de entrada de las ediciones en memoria: crea el comando, lo ejecuta a traves del
- * gestor de deshacer/rehacer del documento y lo anota en el historial de operaciones.
- */
 @Service
 @RequiredArgsConstructor
 public class NwavEdicionService {
-
     private static final String NWAV_EN_MEMORIA = " (en memoria, sin guardar)";
 
     private final NwavPaginaService nwavPaginas;
@@ -43,7 +38,6 @@ public class NwavEdicionService {
     private final NwavCreacionCamposService nwavCreacionCampos;
     private final NwavRedaccionService nwavRedaccion;
 
-    /** Lo que la interfaz necesita saber tras una edicion. */
     public record NwavResultadoEdicion(String nwavDescripcion, int nwavPaginaDestacada, boolean nwavTuvoEfecto,
                                        boolean nwavEstructural) {
     }
@@ -75,8 +69,6 @@ public class NwavEdicionService {
         return nwavAplicar(nwavDocumento,
                 new NwavComandoInsertarImagenes(nwavPaginas, nwavDocumento, nwavImagenes, nwavPosicion));
     }
-
-    // ------------------------------------------------- contenido (Fase 3)
 
     public NwavResultadoEdicion nwavAgregarTexto(NwavDocumentoPdf nwavDocumento, int nwavPagina,
                                                  NwavRectangulo nwavZona, String nwavTexto, NwavEstiloTexto nwavEstilo) {
@@ -136,8 +128,6 @@ public class NwavEdicionService {
         return nwavAplicar(nwavDocumento, nwavPaginas.nwavComandoRecortar(nwavDocumento, nwavPaginasElegidas, nwavZona));
     }
 
-    // ---------------------------------------------------- herramientas (Fase 4)
-
     public NwavResultadoEdicion nwavRellenarFormulario(NwavDocumentoPdf nwavDocumento,
                                                        java.util.Map<String, String> nwavValores) {
         return nwavAplicar(nwavDocumento, nwavFormularios.nwavComandoRellenar(nwavDocumento, nwavValores));
@@ -174,7 +164,6 @@ public class NwavEdicionService {
         return nwavAplicar(nwavDocumento, nwavMetadatos.nwavComandoEditar(nwavDocumento, nwavNuevos));
     }
 
-    /** Ejecuta cualquier comando (tambien los de fases posteriores). */
     public NwavResultadoEdicion nwavAplicar(NwavDocumentoPdf nwavDocumento, NwavComando nwavComando) {
         try {
             boolean nwavApilado;
@@ -226,7 +215,6 @@ public class NwavEdicionService {
         }
     }
 
-    /** Para inserciones, el origen incluye tambien los archivos de donde vienen las paginas. */
     private static Object nwavOrigenes(NwavDocumentoPdf nwavDocumento, NwavComando nwavComando) {
         if (nwavComando instanceof NwavComandoInsertarPdf nwavInsercion) {
             return List.of(nwavDocumento.getNwavRuta(), nwavInsercion.getNwavOrigen());

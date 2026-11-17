@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Preferencia de la aplicacion en formato clave-valor. */
 @Entity
 @Table(name = "nwav_configuracion")
 @Getter
@@ -17,7 +16,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NwavConfiguracion {
-
     @Id
     @Column(name = "nwav_clave", length = 100)
     private String nwavClave;

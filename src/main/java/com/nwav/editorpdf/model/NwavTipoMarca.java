@@ -1,6 +1,5 @@
 package com.nwav.editorpdf.model;
 
-/** Marcas sobre texto (anotaciones de marcado). */
 public enum NwavTipoMarca {
     NWAV_RESALTADO("Resaltado"),
     NWAV_SUBRAYADO("Subrayado"),

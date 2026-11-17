@@ -19,13 +19,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Random;
 
-/** PDFs con imagenes para probar compresion y OCR. */
 public final class NwavPdfConImagenes {
-
     private NwavPdfConImagenes() {
     }
 
-    /** Imagen "fotografica" (degradado con ruido): se comprime mal sin perdida. */
     public static BufferedImage nwavFoto(int nwavAncho, int nwavAlto, boolean nwavConAlfa) {
         BufferedImage nwavImagen = new BufferedImage(nwavAncho, nwavAlto,
                 nwavConAlfa ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
@@ -48,10 +45,6 @@ public final class NwavPdfConImagenes {
         return nwavImagen;
     }
 
-    /**
-     * Dos paginas con texto, la misma foto grande (600 DPI) en ambas (duplicada al
-     * incrustarse dos veces), un PNG con transparencia y una imagen de 1 bit.
-     */
     public static Path nwavCrearPesado(Path nwavCarpeta, String nwavNombre) throws IOException {
         Path nwavDestino = nwavCarpeta.resolve(nwavNombre);
         try (PDDocument nwavPd = new PDDocument()) {
@@ -68,10 +61,9 @@ public final class NwavPdfConImagenes {
             for (int nwavIndice = 0; nwavIndice < 2; nwavIndice++) {
                 PDPage nwavPagina = new PDPage(PDRectangle.A4);
                 nwavPd.addPage(nwavPagina);
-                // Se crea cada vez: dos objetos con los mismos datos (duplicados).
                 PDImageXObject nwavImagen = LosslessFactory.createFromImage(nwavPd, nwavFoto);
                 try (PDPageContentStream nwavFlujo = new PDPageContentStream(nwavPd, nwavPagina)) {
-                    nwavFlujo.drawImage(nwavImagen, 72, 400, 216, 144); // 3 x 2 pulgadas -> 600 DPI
+                    nwavFlujo.drawImage(nwavImagen, 72, 400, 216, 144);
                     if (nwavIndice == 0) {
                         nwavFlujo.drawImage(LosslessFactory.createFromImage(nwavPd, nwavTransparente), 72, 200, 144, 96);
                         nwavFlujo.drawImage(LosslessFactory.createFromImage(nwavPd, nwavBinaria), 300, 200, 100, 50);
@@ -93,7 +85,6 @@ public final class NwavPdfConImagenes {
         return nwavDestino;
     }
 
-    /** PDF "escaneado": una pagina que solo contiene la imagen de un texto. */
     public static Path nwavCrearEscaneado(Path nwavCarpeta, String nwavNombre, String nwavTexto) throws IOException {
         Path nwavDestino = nwavCarpeta.resolve(nwavNombre);
         BufferedImage nwavImagen = new BufferedImage(2480, 1000, BufferedImage.TYPE_INT_RGB);
@@ -109,7 +100,6 @@ public final class NwavPdfConImagenes {
             PDPage nwavPagina = new PDPage(PDRectangle.A4);
             nwavPd.addPage(nwavPagina);
             try (PDPageContentStream nwavFlujo = new PDPageContentStream(nwavPd, nwavPagina)) {
-                // 2480 px en 595 pt = 300 DPI
                 nwavFlujo.drawImage(LosslessFactory.createFromImage(nwavPd, nwavImagen), 0, 500, 595.27f, 240);
             }
             nwavPd.save(nwavDestino.toFile());

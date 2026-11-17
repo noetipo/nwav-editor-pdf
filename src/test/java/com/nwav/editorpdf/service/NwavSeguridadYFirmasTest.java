@@ -34,9 +34,7 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Proteccion al guardar, firmas y plantillas de marca de agua (con SQLite temporal). */
 class NwavSeguridadYFirmasTest extends NwavPruebaConBaseDatos {
-
     @Autowired private NwavEdicionService nwavEdicion;
     @Autowired private NwavArchivoPdfService nwavArchivos;
     @Autowired private NwavPdfDocumentoService nwavDocumentos;
@@ -59,8 +57,6 @@ class NwavSeguridadYFirmasTest extends NwavPruebaConBaseDatos {
                                                          boolean nwavImprimir) {
         return new NwavOpcionesProteccion(nwavUsuario, nwavPropietario, nwavImprimir, false, false, false, false);
     }
-
-    // ================================================================ proteccion
 
     @Test
     void nwavProtegerSeAplicaAlGuardarConPermisos() throws Exception {
@@ -98,7 +94,6 @@ class NwavSeguridadYFirmasTest extends NwavPruebaConBaseDatos {
 
     @Test
     void nwavQuitarProteccionExigeLaContrasenaDePropietario() throws Exception {
-        // Se protege con permisos y se reabre solo con la contrasena de usuario.
         NwavDocumentoPdf nwavOriginal = nwavDocumentos.nwavAbrir(NwavPdfDePrueba.nwavCrear(nwavCarpeta, "q.pdf", 1), null);
         nwavEdicion.nwavProteger(nwavOriginal, nwavProteccion("abrir123", "duenio456", true));
         Path nwavProtegido = nwavCarpeta.resolve("q-protegido.pdf");
@@ -132,15 +127,13 @@ class NwavSeguridadYFirmasTest extends NwavPruebaConBaseDatos {
         }
     }
 
-    // ==================================================================== firmas
-
     private static byte[] nwavFirmaEscaneada() throws Exception {
         BufferedImage nwavImagen = new BufferedImage(400, 200, BufferedImage.TYPE_INT_RGB);
         Graphics2D nwavLienzo = nwavImagen.createGraphics();
         nwavLienzo.setColor(Color.WHITE);
         nwavLienzo.fillRect(0, 0, 400, 200);
         nwavLienzo.setColor(new Color(10, 20, 120));
-        nwavLienzo.fillRect(100, 80, 150, 30); // el "trazo"
+        nwavLienzo.fillRect(100, 80, 150, 30);
         nwavLienzo.dispose();
         ByteArrayOutputStream nwavSalida = new ByteArrayOutputStream();
         ImageIO.write(nwavImagen, "jpg", nwavSalida);
@@ -197,12 +190,9 @@ class NwavSeguridadYFirmasTest extends NwavPruebaConBaseDatos {
             BufferedImage nwavPagina = nwavRender.nwavRenderizarPagina(nwavDocumento, 0, 1f);
             Color nwavTrazo = new Color(nwavPagina.getRGB(380, 620));
             assertThat(nwavTrazo.getBlue()).isGreaterThan(nwavTrazo.getRed() + 50);
-            // El fondo de la firma es transparente: el borde de la zona sigue blanco.
             assertThat(new Color(nwavPagina.getRGB(302, 602))).isEqualTo(Color.WHITE);
         }
     }
-
-    // ===================================================== plantillas de marca
 
     @Test
     void nwavPlantillasDeMarcaDeAgua() throws Exception {

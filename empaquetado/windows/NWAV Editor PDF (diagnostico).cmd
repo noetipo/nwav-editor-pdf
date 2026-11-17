@@ -1,6 +1,4 @@
 @echo off
-rem Igual que "NWAV Editor PDF.cmd" pero con consola: muestra los mensajes de error.
-rem Usalo si la aplicacion no abre y comparte el texto que aparezca.
 setlocal
 set "NWAV_DIR=%~dp0"
 chcp 65001 >nul

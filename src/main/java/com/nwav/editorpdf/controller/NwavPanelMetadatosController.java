@@ -20,11 +20,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Objects;
 
-/** Panel "Propiedades del documento": metadatos editables e informacion del archivo. */
 @Component
 @RequiredArgsConstructor
 public class NwavPanelMetadatosController implements NwavPanel {
-
     private static final DateTimeFormatter NWAV_FORMATO = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final NwavVisorController nwavVisor;

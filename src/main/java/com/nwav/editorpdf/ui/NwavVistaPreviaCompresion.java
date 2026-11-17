@@ -20,12 +20,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.function.Function;
 
-/**
- * Vista previa de la compresion: la misma pagina antes y despues, con desplazamiento
- * sincronizado para comparar la calidad de cerca.
- */
 public class NwavVistaPreviaCompresion {
-
     private static final float NWAV_ESCALA = 1.5f;
 
     private final NwavCompresorService nwavCompresor;

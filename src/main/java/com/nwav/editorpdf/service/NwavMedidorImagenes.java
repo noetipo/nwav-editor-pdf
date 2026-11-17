@@ -19,13 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Recorre el contenido de las paginas y anota, para cada imagen, el mayor tamano (en
- * puntos) con el que se dibuja. Con eso se calcula su resolucion efectiva (DPI).
- */
 class NwavMedidorImagenes extends PDFStreamEngine {
-
-    /** Ancho y alto maximos (puntos) por imagen; clave = flujo de la imagen. */
     private final Map<COSBase, float[]> nwavTamanos = new HashMap<>();
 
     NwavMedidorImagenes() {
@@ -54,7 +48,6 @@ class NwavMedidorImagenes extends PDFStreamEngine {
         super.processOperator(nwavOperador, nwavOperandos);
     }
 
-    /** Tamano maximo dibujado (puntos) o null si la imagen no se dibuja en el contenido. */
     float[] nwavTamano(COSBase nwavImagen) {
         return nwavTamanos.get(nwavImagen);
     }

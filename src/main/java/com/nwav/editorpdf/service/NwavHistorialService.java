@@ -14,17 +14,10 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Registro de operaciones en {@code nwav_historial_operacion}. Registrar nunca hace
- * fallar la operacion original: si la base no responde, solo se anota en el log. Por eso
- * los metodos de registro no son transaccionales: un fallo dentro de una transaccion la
- * marcaria para revertir y el error saltaria igualmente al confirmarla.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NwavHistorialService {
-
     private static final int NWAV_LARGO_ORIGEN = 4096;
     private static final int NWAV_LARGO_DESTINO = 2048;
     private static final int NWAV_LARGO_DETALLE = 2048;
@@ -70,7 +63,6 @@ public class NwavHistorialService {
         return nwavCantidad;
     }
 
-    /** Admite una ruta, una lista de rutas (se unen con "; ") o texto. */
     private static String nwavTexto(Object nwavValor) {
         if (nwavValor == null) {
             return null;

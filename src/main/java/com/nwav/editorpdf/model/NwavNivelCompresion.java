@@ -1,9 +1,5 @@
 package com.nwav.editorpdf.model;
 
-/**
- * Niveles de compresion. {@code nwavDpi}: resolucion maxima de las imagenes;
- * {@code nwavCalidad}: calidad JPEG (0-1).
- */
 public enum NwavNivelCompresion {
     NWAV_BAJA("Baja compresión (máxima calidad)", 220, 0.85f),
     NWAV_RECOMENDADA("Recomendada", 150, 0.72f),

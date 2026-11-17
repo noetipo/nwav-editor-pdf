@@ -34,11 +34,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-/** Panel para rellenar formularios AcroForm campo a campo. */
 @Component
 @RequiredArgsConstructor
 public class NwavPanelFormularioController implements NwavPanel {
-
     private final NwavVisorController nwavVisor;
     private final NwavFormularioService nwavFormularios;
     private final NwavEdicionService nwavEdicion;
@@ -49,7 +47,6 @@ public class NwavPanelFormularioController implements NwavPanel {
     @FXML private VBox nwavListaCampos;
     @FXML private Button nwavBtnAplicar;
 
-    /** Valor original y lector del valor actual de cada campo editable. */
     private final Map<String, String> nwavOriginales = new LinkedHashMap<>();
     private final Map<String, Supplier<String>> nwavLectores = new LinkedHashMap<>();
 
@@ -121,7 +118,7 @@ public class NwavPanelFormularioController implements NwavPanel {
         } else if (nwavCampo.nwavTipo() == NwavTipoCampo.NWAV_OPCION || nwavCampo.nwavTipo() == NwavTipoCampo.NWAV_LISTA) {
             ComboBox<String> nwavLista = new ComboBox<>();
             if (nwavCampo.nwavTipo() == NwavTipoCampo.NWAV_OPCION) {
-                nwavLista.getItems().add(""); // ninguna opcion elegida
+                nwavLista.getItems().add("");
             }
             nwavLista.getItems().addAll(nwavCampo.nwavOpciones());
             nwavLista.setValue(nwavValor);

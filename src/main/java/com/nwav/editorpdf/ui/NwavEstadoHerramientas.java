@@ -17,12 +17,7 @@ import javafx.scene.text.FontWeight;
 import java.util.EnumMap;
 import java.util.Map;
 
-/**
- * Herramienta elegida y sus opciones (color, grosor, letra). Cada herramienta recuerda el
- * ultimo color usado con ella: cambiar de resaltar a tachar no arrastra el amarillo.
- */
 public class NwavEstadoHerramientas {
-
     private final ObjectProperty<NwavHerramienta> nwavHerramienta =
             new SimpleObjectProperty<>(NwavHerramienta.NWAV_NAVEGAR);
     private final ObjectProperty<Color> nwavColor = new SimpleObjectProperty<>(Color.BLACK);
@@ -89,7 +84,6 @@ public class NwavEstadoHerramientas {
                 nwavColorRgb());
     }
 
-    /** Fuente de pantalla equivalente, para que la vista previa se parezca al resultado. */
     public Font nwavFuentePantalla(double nwavEscala) {
         String nwavFamilia = switch (nwavFuente.get()) {
             case NWAV_TIMES -> "Times New Roman";

@@ -11,17 +11,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Lectura de las letras de una pagina con su posicion visual (puntos, origen arriba a la
- * izquierda, rotacion aplicada). La usan el marcado de texto y la busqueda.
- */
 @Slf4j
 final class NwavTextoPagina {
-
-    /** Caja de una letra. {@code nwavBase} es la linea base; {@code nwavTamano}, el cuerpo. */
     record NwavGlifo(String nwavTexto, double nwavX, double nwavArriba, double nwavDerecha, double nwavAbajo,
                      double nwavBase, double nwavTamano) {
-
         static NwavGlifo nwavDe(TextPosition nwavPosicion) {
             double nwavTamano = Math.max(nwavPosicion.getFontSizeInPt(), nwavPosicion.getHeight());
             double nwavBase = nwavPosicion.getY();
@@ -37,10 +30,6 @@ final class NwavTextoPagina {
     private NwavTextoPagina() {
     }
 
-    /**
-     * Letras de la pagina en orden de lectura. Entre palabras/fragmentos se inserta
-     * {@code null} como separador. Vacio si no hay texto o no se puede extraer.
-     */
     static List<NwavGlifo> nwavLetras(PDDocument nwavPd, int nwavPagina) {
         List<NwavGlifo> nwavLetras = new ArrayList<>();
         try {
@@ -60,13 +49,11 @@ final class NwavTextoPagina {
             nwavExtractor.setEndPage(nwavPagina + 1);
             nwavExtractor.getText(nwavPd);
         } catch (IOException | RuntimeException nwavError) {
-            // Sin permiso de extraccion o texto ilegible: el llamador decide que hacer.
             nwavLog.debug("No se pudo leer el texto de la pagina {}", nwavPagina + 1, nwavError);
         }
         return nwavLetras;
     }
 
-    /** Agrupa letras en lineas (misma linea base) y devuelve un rectangulo por linea. */
     static List<NwavRectangulo> nwavAgruparEnLineas(List<NwavGlifo> nwavGlifos) {
         List<NwavGlifo> nwavOrdenados = new ArrayList<>(nwavGlifos);
         nwavOrdenados.sort(Comparator.comparingDouble(NwavGlifo::nwavBase).thenComparingDouble(NwavGlifo::nwavX));

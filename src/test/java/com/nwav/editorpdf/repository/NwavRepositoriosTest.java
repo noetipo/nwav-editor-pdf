@@ -23,9 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Repositorios sobre una base SQLite temporal creada por las migraciones de Flyway. */
 class NwavRepositoriosTest extends NwavPruebaConBaseDatos {
-
     @Autowired private NwavArchivoRecienteRepository nwavRecientes;
     @Autowired private NwavConfiguracionRepository nwavConfiguraciones;
     @Autowired private NwavFirmaRepository nwavFirmas;

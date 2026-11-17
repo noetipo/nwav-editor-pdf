@@ -28,11 +28,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 
-/** Panel "Insertar páginas": desde otro PDF o desde imagenes, en la posicion elegida. */
 @Component
 @RequiredArgsConstructor
 public class NwavPanelInsertarController implements NwavPanel {
-
     private static final int NWAV_AL_PRINCIPIO = 0;
     private static final int NWAV_ANTES_DE_ACTUAL = 1;
     private static final int NWAV_DESPUES_DE_ACTUAL = 2;
@@ -62,7 +60,6 @@ public class NwavPanelInsertarController implements NwavPanel {
         nwavSeccionPdf.managedProperty().bind(nwavSeccionPdf.visibleProperty());
         nwavSeccionImagenes.visibleProperty().bind(nwavTglDesdeImagenes.selectedProperty());
         nwavSeccionImagenes.managedProperty().bind(nwavSeccionImagenes.visibleProperty());
-        // Siempre hay un origen elegido.
         nwavGrupoOrigen.selectedToggleProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
             if (nwavAhora == null) {
                 nwavGrupoOrigen.selectToggle(nwavAntes);
@@ -141,7 +138,7 @@ public class NwavPanelInsertarController implements NwavPanel {
             case NWAV_AL_PRINCIPIO -> 0;
             case NWAV_ANTES_DE_ACTUAL -> nwavActual;
             case NWAV_DESPUES_DE_ACTUAL -> nwavActual + 1;
-            default -> Integer.MAX_VALUE; // al final (el servicio lo acota)
+            default -> Integer.MAX_VALUE;
         };
     }
 
@@ -170,7 +167,6 @@ public class NwavPanelInsertarController implements NwavPanel {
         }
     }
 
-    /** Si el PDF de origen esta protegido, pide la contrasena y reintenta. */
     private void nwavErrorPdf(Path nwavOrigen, Throwable nwavError) {
         if (nwavError instanceof NwavContrasenaRequeridaException
                 || nwavError instanceof NwavContrasenaIncorrectaException) {

@@ -8,7 +8,6 @@ import com.nwav.editorpdf.service.NwavRangosPaginas;
 import java.util.List;
 
 public class NwavComandoRotar implements NwavComando {
-
     private final NwavPaginaService nwavServicio;
     private final NwavDocumentoPdf nwavDocumento;
     private final List<Integer> nwavIndices;

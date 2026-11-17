@@ -54,9 +54,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
-/** Fase F: firma digital, redaccion real, limpieza y proteccion por lotes. */
 class NwavSeguridadAvanzadaTest {
-
     @TempDir
     Path nwavCarpeta;
 
@@ -64,8 +62,6 @@ class NwavSeguridadAvanzadaTest {
     private final NwavFirmaDigitalService nwavFirmas = new NwavFirmaDigitalService(nwavDocumentos);
     private final NwavRedaccionService nwavRedaccion = new NwavRedaccionService(nwavDocumentos);
     private final NwavProteccionLoteService nwavProteccion = new NwavProteccionLoteService(nwavDocumentos);
-
-    // ============================================================ firma digital
 
     private Path nwavCertificado() {
         return nwavFirmas.nwavCrearCertificado("Ana Pérez", "Ejemplo S.L.", "ana@ejemplo.org", "secreta1".toCharArray(), 2,
@@ -90,7 +86,6 @@ class NwavSeguridadAvanzadaTest {
         assertThat(nwavFirma.nwavFirmante()).isEqualTo("Ana Pérez");
         assertThat(nwavFirma.nwavMotivo()).isEqualTo("Conforme");
 
-        // visible en la pagina 2 (girada) con imagen de firma manuscrita
         Path nwavGirado = NwavPdfDePrueba.nwavCrearConRotacion(nwavCarpeta, "girado.pdf", 2, 90);
         byte[] nwavRubrica = new NwavFirmaService(null).nwavFirmaEscrita("Ana", "Serif", null);
         Path nwavVisible = nwavFirmas.nwavFirmar(nwavGirado, null, nwavP12, "secreta1".toCharArray(),
@@ -111,12 +106,11 @@ class NwavSeguridadAvanzadaTest {
                 "secreta1".toCharArray(), new NwavOpcionesFirma(null, null, null, 0, null, null), nwavCarpeta.resolve("f.pdf"));
         byte[] nwavBytes = Files.readAllBytes(nwavFirmado);
 
-        // 1) se altera un byte del contenido firmado
         byte[] nwavAlterado = nwavBytes.clone();
         String nwavTexto = new String(nwavAlterado, StandardCharsets.ISO_8859_1);
         int nwavPos = nwavTexto.indexOf("/MediaBox");
         while (!Character.isDigit(nwavTexto.charAt(nwavPos)) || nwavTexto.charAt(nwavPos) == '0') {
-            nwavPos++; // primer digito distinto de 0 del MediaBox (dentro de lo firmado)
+            nwavPos++;
         }
         nwavAlterado[nwavPos] = (byte) (nwavAlterado[nwavPos] == '9' ? '8' : nwavAlterado[nwavPos] + 1);
         Path nwavManipulado = nwavCarpeta.resolve("manipulado.pdf");
@@ -124,7 +118,6 @@ class NwavSeguridadAvanzadaTest {
         assertThat(nwavFirmas.nwavVerificar(nwavManipulado, null)).singleElement()
                 .satisfies(nwavF -> assertThat(nwavF.nwavIntegra()).isFalse());
 
-        // 2) se anade una actualizacion incremental despues de firmar
         Path nwavAmpliado = nwavCarpeta.resolve("ampliado.pdf");
         try (PDDocument nwavPd = Loader.loadPDF(nwavFirmado.toFile());
              java.io.OutputStream nwavSalida = Files.newOutputStream(nwavAmpliado)) {
@@ -147,9 +140,6 @@ class NwavSeguridadAvanzadaTest {
                 nwavCarpeta.resolve("x.p12"))).hasMessageContaining("al menos 6");
     }
 
-    // ================================================================ redaccion
-
-    /** Una pagina: linea secreta, linea publica, imagen bajo la zona y texto dentro de un formulario XObject. */
     private Path nwavPdfConSecretos() throws Exception {
         Path nwavRuta = nwavCarpeta.resolve("secretos.pdf");
         try (PDDocument nwavPd = new PDDocument()) {
@@ -193,7 +183,6 @@ class NwavSeguridadAvanzadaTest {
         return nwavRuta;
     }
 
-    /** Todo el texto decodificado de todos los flujos del archivo (lo que vería un atacante). */
     private static String nwavTodoLoQueHayEnElArchivo(Path nwavPdf) throws IOException {
         StringBuilder nwavTodo = new StringBuilder();
         try (PDDocument nwavPd = Loader.loadPDF(nwavPdf.toFile())) {
@@ -204,7 +193,6 @@ class NwavSeguridadAvanzadaTest {
                     try (InputStream nwavEntrada = nwavFlujo.createInputStream()) {
                         nwavTodo.append(new String(nwavEntrada.readAllBytes(), StandardCharsets.ISO_8859_1));
                     } catch (IOException nwavError) {
-                        // flujo de imagen u otro no decodificable: se ignora
                     }
                 } else if (nwavValor != null) {
                     nwavTodo.append(nwavValor);
@@ -214,7 +202,6 @@ class NwavSeguridadAvanzadaTest {
         return nwavTodo.append(new String(Files.readAllBytes(nwavPdf), StandardCharsets.ISO_8859_1)).toString();
     }
 
-    /** El dato aparece en el archivo, en claro o como cadena hexadecimal. */
     private static boolean nwavAparece(String nwavTodo, String nwavDato) {
         StringBuilder nwavHex = new StringBuilder();
         for (byte nwavByte : nwavDato.getBytes(StandardCharsets.ISO_8859_1)) {
@@ -248,14 +235,13 @@ class NwavSeguridadAvanzadaTest {
         assertThat(nwavAparece(nwavAntes, "SECRETO")).isTrue();
         assertThat(nwavAparece(nwavAntes, "CLAVE9")).isTrue();
 
-        // zona 1: "SECRETO 123" (por busqueda); zona 2 a mano: sobre la imagen y el formulario
         Path nwavRedactado;
         try (PDDocument nwavPd = Loader.loadPDF(nwavOriginal.toFile())) {
             List<NwavZona> nwavZonas = new ArrayList<>(nwavRedaccion.nwavBuscar(nwavPd, List.of("secreto 123"), Set.of(),
                     NwavCancelacion.NWAV_NUNCA));
             assertThat(nwavZonas).hasSize(1);
-            nwavZonas.add(new NwavZona(0, new NwavRectangulo(100, 200, 80, 60)));     // dentro de la imagen
-            nwavZonas.add(new NwavZona(0, new NwavRectangulo(72, 420, 50, 20)));      // "CLAVE9" del formulario
+            nwavZonas.add(new NwavZona(0, new NwavRectangulo(100, 200, 80, 60)));
+            nwavZonas.add(new NwavZona(0, new NwavRectangulo(72, 420, 50, 20)));
             NwavRedaccionService.nwavAplicar(nwavPd, nwavZonas, NwavCancelacion.NWAV_NUNCA);
             nwavRedactado = NwavEscrituraSegura.nwavGuardarPdf(nwavPd, nwavCarpeta.resolve("redactado.pdf"));
         }
@@ -266,20 +252,16 @@ class NwavSeguridadAvanzadaTest {
         }
         assertThat(nwavExtraido).doesNotContain("SECRETO").doesNotContain("123 y").doesNotContain("CLAVE9")
                 .contains("texto público").contains("visible fuera").contains("Contacto");
-        // ni en el texto extraible ni en ningun flujo u objeto del archivo
         String nwavTodo = nwavTodoLoQueHayEnElArchivo(nwavRedactado);
         assertThat(nwavAparece(nwavTodo, "SECRETO")).isFalse();
         assertThat(nwavAparece(nwavTodo, "CLAVE9")).isFalse();
-        // el resto del texto no se ha movido
         assertThat(nwavXDe(nwavRedactado, "público")).isCloseTo(nwavXPublicoAntes, within(0.5f));
 
         try (PDDocument nwavPd = Loader.loadPDF(nwavRedactado.toFile())) {
             BufferedImage nwavRender = new PDFRenderer(nwavPd).renderImage(0, 1f);
-            // dentro de la zona de la imagen: negro; fuera de la zona, la imagen sigue amarilla
             assertThat(new Color(nwavRender.getRGB(140, 230)).getRed()).isLessThan(30);
             assertThat(new Color(nwavRender.getRGB(250, 260)).getBlue()).isLessThan(60);
             assertThat(new Color(nwavRender.getRGB(250, 260)).getRed()).isGreaterThan(200);
-            // la imagen guardada en el archivo tambien tiene esos pixeles en negro
             PDResources nwavRecursos = nwavPd.getPage(0).getResources();
             for (COSName nwavNombre : nwavRecursos.getXObjectNames()) {
                 if (nwavRecursos.getXObject(nwavNombre) instanceof PDImageXObject nwavImagen) {
@@ -294,7 +276,6 @@ class NwavSeguridadAvanzadaTest {
     void nwavPatronesDeDatosPersonalesYLimpiezaDeMetadatos() throws Exception {
         Path nwavOriginal = nwavPdfConSecretos();
         try (PDDocument nwavPd = Loader.loadPDF(nwavOriginal.toFile())) {
-            // adjunto oculto
             PDEmbeddedFile nwavAdjunto = new PDEmbeddedFile(nwavPd, new ByteArrayInputStream("oculto".getBytes()));
             PDComplexFileSpecification nwavEspec = new PDComplexFileSpecification();
             nwavEspec.setFile("nota.txt");
@@ -345,8 +326,6 @@ class NwavSeguridadAvanzadaTest {
             }
         }
     }
-
-    // =============================================================== proteccion
 
     @Test
     void nwavProtegerYDesbloquearPorLotes() throws Exception {

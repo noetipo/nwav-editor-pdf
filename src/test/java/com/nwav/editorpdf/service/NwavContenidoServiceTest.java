@@ -33,9 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
-/** Edicion de contenido y anotaciones, verificada leyendo y renderizando el PDF. */
 class NwavContenidoServiceTest {
-
     private static final NwavEstiloTexto NWAV_ESTILO =
             new NwavEstiloTexto(NwavFuente.NWAV_HELVETICA, 18, false, false, NwavColorRgb.NWAV_NEGRO);
 
@@ -85,13 +83,10 @@ class NwavContenidoServiceTest {
         return nwavColor.getRed() + nwavColor.getGreen() + nwavColor.getBlue() < 150;
     }
 
-    // ------------------------------------------------------------- geometria
-
     @ParameterizedTest
     @ValueSource(ints = {0, 90, 180, 270})
     void nwavLaCoberturaApareceDondeSeVeEnCualquierRotacion(int nwavRotacion) throws Exception {
         nwavAbrirPaginaEnBlanco(nwavRotacion);
-        // Esquina superior izquierda tal como se ve en pantalla.
         nwavEjecutar(nwavContenido.nwavComandoCubrir(nwavDocumento, 0, new NwavRectangulo(0, 0, 100, 60),
                 NwavColorRgb.NWAV_NEGRO));
 
@@ -102,8 +97,6 @@ class NwavContenidoServiceTest {
         assertThat(nwavOscuro(nwavImagen, 20, 70)).as("debajo del rectangulo").isFalse();
         assertThat(nwavOscuro(nwavImagen, nwavImagen.getWidth() - 10, nwavImagen.getHeight() - 10)).isFalse();
     }
-
-    // ----------------------------------------------------------------- texto
 
     @Test
     void nwavElTextoQuedaEnLaPaginaYSePuedeDeshacer() throws Exception {
@@ -158,8 +151,6 @@ class NwavContenidoServiceTest {
                 .isEqualTo("uno dos tres cuatro cinco seis siete ocho");
     }
 
-    // ---------------------------------------------------------- imagen y cubrir
-
     @Test
     void nwavLaImagenSeDibujaEnLaZonaElegida() throws Exception {
         nwavAbrirCon(1);
@@ -182,12 +173,9 @@ class NwavContenidoServiceTest {
         assertThat(NwavLectorPdf.nwavTextos(nwavDocumento.nwavPdDocument()).get(0)).isEqualTo("Pagina1");
     }
 
-    // ----------------------------------------------------------- marcas de texto
-
     @Test
     void nwavDetectaLasLineasDeTextoDeUnaZona() throws Exception {
         nwavAbrirCon(1);
-        // "Pagina 1" esta en x=72, linea base a 842-760 = ~82 pt desde arriba, cuerpo 28.
         List<NwavRectangulo> nwavLineas = nwavContenido.nwavLineasDeTexto(nwavDocumento, 0,
                 new NwavRectangulo(40, 40, 400, 70));
 
@@ -211,7 +199,7 @@ class NwavContenidoServiceTest {
         assertThat(nwavLista).singleElement().extracting(PDAnnotation::getSubtype).isEqualTo("Highlight");
         float[] nwavCuadros = ((PDAnnotationTextMarkup) nwavLista.get(0)).getQuadPoints();
         assertThat(nwavCuadros).hasSize(8);
-        assertThat(nwavCuadros[0]).isCloseTo(72f, within(3f)); // ajustado al texto, no a x=40
+        assertThat(nwavCuadros[0]).isCloseTo(72f, within(3f));
         assertThat(nwavLista.get(0).getAppearance()).isNotNull();
     }
 
@@ -226,8 +214,6 @@ class NwavContenidoServiceTest {
         assertThat(nwavCuadros[1]).isCloseTo(841.89f - 500f, within(0.1f));
         assertThat(nwavAnotaciones(0).get(0).getSubtype()).isEqualTo("StrikeOut");
     }
-
-    // ----------------------------------------------------- notas, dibujo y formas
 
     @Test
     void nwavNotasDibujoYFormasSonAnotacionesConApariencia() throws Exception {
@@ -251,7 +237,6 @@ class NwavContenidoServiceTest {
                 assertThat(nwavAnotacion.getNormalAppearanceStream()).isNotNull());
         assertThat(nwavLista.get(0).getContents()).isEqualTo("Revisar esta cifra");
 
-        // Se dibujan: el rectangulo deja pixeles rojos en su borde.
         BufferedImage nwavImagen = nwavRender.nwavRenderizarPagina(nwavDocumento, 0, 1f);
         Color nwavBorde = new Color(nwavImagen.getRGB(150, 100));
         assertThat(nwavBorde.getRed()).isGreaterThan(150);

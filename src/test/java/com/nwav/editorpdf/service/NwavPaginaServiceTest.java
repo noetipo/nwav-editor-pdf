@@ -22,9 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Operaciones de pagina en memoria y su deshacer/rehacer, sobre PDF generados aqui. */
 class NwavPaginaServiceTest {
-
     private final NwavPdfDocumentoService nwavDocumentos = new NwavPdfDocumentoService();
     private final NwavPaginaService nwavPaginas = new NwavPaginaService(nwavDocumentos);
     private final NwavPdfRenderService nwavRender = new NwavPdfRenderService();
@@ -104,7 +102,6 @@ class NwavPaginaServiceTest {
         assertThat(nwavTextos()).isEqualTo(nwavPaginasNumero(1, 2, 2, 3, 4, 5, 5));
         assertThat(nwavComando.nwavPaginaDestacada()).isEqualTo(2);
 
-        // La copia es independiente: rotarla no rota el original.
         nwavGestor.nwavEjecutar(new NwavComandoRotar(nwavPaginas, nwavDocumento, List.of(2), 90));
         assertThat(nwavDocumento.nwavPdDocument().getPage(1).getRotation()).isZero();
 
@@ -142,7 +139,6 @@ class NwavPaginaServiceTest {
     @Test
     void nwavInsertarPaginasDeOtroPdf() throws Exception {
         Path nwavOtro = NwavPdfDePrueba.nwavCrear(nwavCarpeta, "otro.pdf", 3);
-        // Las paginas del otro PDF dicen tambien "Pagina N": se insertan la 2 y la 3 tras la 1.
         nwavGestor.nwavEjecutar(new NwavComandoInsertarPdf(nwavPaginas, nwavDocumento, nwavOtro, null, "2-3", 1));
 
         assertThat(nwavTextos()).isEqualTo(nwavPaginasNumero(1, 2, 3, 2, 3, 4, 5));

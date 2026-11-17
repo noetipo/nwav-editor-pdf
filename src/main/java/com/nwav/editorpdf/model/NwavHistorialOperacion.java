@@ -14,14 +14,12 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/** Registro de una operacion sobre archivos PDF. Se llena a partir de la Fase 2. */
 @Entity
 @Table(name = "nwav_historial_operacion")
 @Getter
 @Setter
 @NoArgsConstructor
 public class NwavHistorialOperacion {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "nwav_id")

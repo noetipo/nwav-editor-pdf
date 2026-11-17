@@ -24,11 +24,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 
-/** Preferencias del usuario, guardadas en {@code nwav_configuracion}. */
 @Component
 @RequiredArgsConstructor
 public class NwavPreferenciasController implements NwavRefrescable {
-
     private static final String NWAV_OPCION_ANCHO = NwavModoZoom.NWAV_AJUSTAR_ANCHO.getNwavDescripcion();
     private static final String NWAV_OPCION_PAGINA = NwavModoZoom.NWAV_AJUSTAR_PAGINA.getNwavDescripcion();
     private static final List<Integer> NWAV_PORCENTAJES = List.of(50, 75, 100, 125, 150, 200);
@@ -68,7 +66,6 @@ public class NwavPreferenciasController implements NwavRefrescable {
                 nwavEntorno.getProperty("nwav.datos.archivo", "")).toString());
     }
 
-    /** Las preferencias ya estan en memoria en el servicio: se leen sin tocar la base. */
     @Override
     public void nwavRefrescar() {
         nwavCmbTema.setValue(nwavMain.nwavEsOscuro() ? NWAV_TEMA_OSCURO : NWAV_TEMA_CLARO);

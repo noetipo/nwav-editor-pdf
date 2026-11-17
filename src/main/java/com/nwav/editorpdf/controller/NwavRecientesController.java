@@ -35,11 +35,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 
-/** Lista de archivos recientes: abrir, quitar y limpiar los que ya no existen. */
 @Component
 @RequiredArgsConstructor
 public class NwavRecientesController implements NwavRefrescable {
-
     private static final DateTimeFormatter NWAV_FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final NwavArchivoRecienteService nwavRecientes;
@@ -144,9 +142,7 @@ public class NwavRecientesController implements NwavRefrescable {
                 : nwavArchivo.getNwavModoZoom().getNwavDescripcion().toLowerCase(Locale.ROOT);
     }
 
-    /** Fila de la lista: icono, nombre, ruta, ultima apertura y acciones. */
     private final class NwavCeldaReciente extends ListCell<NwavRecienteVista> {
-
         private final FontIcon nwavIcono = new FontIcon();
         private final StackPane nwavFondoIcono = new StackPane(nwavIcono);
         private final Label nwavNombre = new Label();

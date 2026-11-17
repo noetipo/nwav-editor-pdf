@@ -1,9 +1,7 @@
 package com.nwav.editorpdf.model;
 
-/** Aspecto de un cuadro de texto. {@code nwavTamano} en puntos. */
 public record NwavEstiloTexto(NwavFuente nwavFuente, double nwavTamano, boolean nwavNegrita, boolean nwavCursiva,
                               NwavColorRgb nwavColor) {
-
     public static final double NWAV_TAMANO_MINIMO = 4;
     public static final double NWAV_TAMANO_MAXIMO = 200;
 

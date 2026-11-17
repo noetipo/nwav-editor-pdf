@@ -15,17 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Ejecuta una herramienta sobre un lote: archivo a archivo (si un archivo falla, sigue con
- * los demas) o con todos a la vez. Registra cada resultado en el historial y respeta la
- * cancelacion.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NwavEjecutorHerramientasService {
-
-    /** Que hacer y como registrarlo. */
     public record NwavTrabajo(NwavTipoOperacion nwavTipo, boolean nwavPorArchivo, NwavProceso nwavProceso) {
     }
 
@@ -47,7 +40,6 @@ public class NwavEjecutorHerramientasService {
             Path nwavArchivo = nwavArchivos.get(nwavIndice);
             int nwavPosicion = nwavIndice;
             String nwavPrefijo = nwavTotal > 1 ? "[" + (nwavIndice + 1) + "/" + nwavTotal + "] " : "";
-            // El avance de cada archivo se reparte dentro de su tramo del total.
             NwavAvance nwavSubavance = (nwavHecho, nwavDeTotal, nwavMensaje) -> nwavAvance.nwavInformar(
                     nwavPosicion + (nwavDeTotal <= 0 ? 0 : Math.min(1, nwavHecho / nwavDeTotal)), nwavTotal,
                     nwavPrefijo + (nwavMensaje == null ? nwavArchivo.getFileName() : nwavMensaje));

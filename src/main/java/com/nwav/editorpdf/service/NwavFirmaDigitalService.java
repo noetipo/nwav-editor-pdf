@@ -77,18 +77,10 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Firma digital con certificado PKCS#12 (.p12/.pfx) y verificacion, con Bouncy Castle (MIT).
- * La firma es CMS separada (adbe.pkcs7.detached, SHA-256), compatible con los lectores
- * habituales. Tambien crea certificados personales autofirmados.
- */
 @Service
 @RequiredArgsConstructor
 public class NwavFirmaDigitalService {
-
     private final NwavPdfDocumentoService nwavDocumentos;
-
-    // ============================================================ certificados
 
     public record NwavCertificado(String nwavTitular, String nwavEmisor, Date nwavDesde, Date nwavHasta,
                                   boolean nwavAutofirmado) {
@@ -99,7 +91,6 @@ public class NwavFirmaDigitalService {
         }
     }
 
-    /** Crea un certificado personal autofirmado (RSA 2048, SHA-256) en un archivo .p12. */
     public Path nwavCrearCertificado(String nwavNombre, String nwavOrganizacion, String nwavCorreo, char[] nwavClave,
                                      int nwavAnios, Path nwavDestino) {
         if (nwavNombre == null || nwavNombre.isBlank()) {
@@ -146,7 +137,6 @@ public class NwavFirmaDigitalService {
         }
     }
 
-    /** Clave privada y cadena de un .p12. */
     record NwavIdentidad(PrivateKey nwavClave, Certificate[] nwavCadena) {
         X509Certificate nwavCertificado() {
             return (X509Certificate) nwavCadena[0];
@@ -204,13 +194,6 @@ public class NwavFirmaDigitalService {
         return nwavDn;
     }
 
-    // ================================================================ firmar
-
-    /**
-     * @param nwavPagina indice de pagina para la firma visible (-1 = ultima)
-     * @param nwavZona   zona visual de la firma; null = firma invisible
-     * @param nwavImagen PNG de la firma manuscrita para la apariencia (opcional)
-     */
     public record NwavOpcionesFirma(String nwavMotivo, String nwavLugar, String nwavContacto, int nwavPagina,
                                     NwavRectangulo nwavZona, byte[] nwavImagen) {
     }
@@ -300,7 +283,6 @@ public class NwavFirmaDigitalService {
         }
     }
 
-    /** Documento plantilla con el campo de firma y su apariencia (texto e imagen opcional). */
     private static InputStream nwavPlantillaVisible(PDDocument nwavOrigen, int nwavPagina, PDRectangle nwavCaja,
                                                     String nwavTitular, Calendar nwavFecha, NwavOpcionesFirma nwavOpciones)
             throws IOException {
@@ -330,7 +312,6 @@ public class NwavFirmaDigitalService {
             nwavForma.setResources(new PDResources());
             nwavForma.setFormType(1);
             nwavForma.setBBox(new PDRectangle(nwavCaja.getWidth(), nwavCaja.getHeight()));
-            // La apariencia se dibuja derecha aunque la pagina este girada.
             Matrix nwavMatriz = switch (nwavRotacion) {
                 case 90 -> new Matrix(0, 1, -1, 0, nwavCaja.getWidth(), 0);
                 case 180 -> new Matrix(-1, 0, 0, -1, nwavCaja.getWidth(), nwavCaja.getHeight());
@@ -411,8 +392,6 @@ public class NwavFirmaDigitalService {
         }
         return nwavValido.toString();
     }
-
-    // ============================================================= verificar
 
     public record NwavFirmaVerificada(String nwavFirmante, Date nwavFecha, String nwavMotivo, boolean nwavIntegra,
                                       boolean nwavCubreTodo, boolean nwavCertificadoVigente, boolean nwavAutofirmado,

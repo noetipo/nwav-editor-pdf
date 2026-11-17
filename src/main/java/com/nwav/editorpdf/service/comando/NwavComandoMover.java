@@ -8,11 +8,9 @@ import com.nwav.editorpdf.service.NwavRangosPaginas;
 import java.util.List;
 
 public class NwavComandoMover extends NwavComandoEstructural {
-
     private final List<Integer> nwavIndices;
     private final int nwavDestino;
 
-    /** @param nwavDestino posicion (en la numeracion actual) delante de la cual se dejan las paginas. */
     public NwavComandoMover(NwavPaginaService nwavServicio, NwavDocumentoPdf nwavDocumento,
                             List<Integer> nwavIndices, int nwavDestino) {
         super(nwavServicio, nwavDocumento);

@@ -58,15 +58,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Ventana principal: menu lateral, barra de menus, barra de estado y capas flotantes.
- * La navegacion entre vistas es la de la plantilla: cada opcion del menu lateral carga
- * su FXML una sola vez y lo reutiliza.
- */
 @Component
 @RequiredArgsConstructor
 public class NwavMainController {
-
     public static final String NWAV_TITULO_APP = "NWAV Editor PDF";
     public static final String NWAV_VISTA_INICIO = "nwav-inicio-view";
     public static final String NWAV_VISTA_HERRAMIENTA = "nwav-herramienta-view";
@@ -147,7 +141,6 @@ public class NwavMainController {
 
         nwavVisor.nwavConfigurarAcciones(() -> nwavIrA(NWAV_VISTA_RECIENTES), this::nwavActualizarMenuRecientes);
 
-        // Siempre debe haber una opcion seleccionada.
         nwavMenu.selectedToggleProperty().addListener((nwavObs, nwavAnterior, nwavActual) -> {
             if (nwavActual == null) {
                 nwavMenu.selectToggle(nwavAnterior);
@@ -159,11 +152,9 @@ public class NwavMainController {
             nwavMostrar((String) nwavActual.getUserData());
             nwavMoverIndicador(nwavActual);
         });
-        // El visor se carga primero (lo usan los menus); el arranque muestra el inicio.
         nwavMenu.selectToggle(nwavNavVisor);
         nwavMenu.selectToggle(nwavNavInicio);
         Platform.runLater(() -> nwavMoverIndicador(nwavNavInicio));
-        // Volver a pulsar "Inicio" desde una herramienta vuelve a la cuadricula.
         nwavNavInicio.setOnMouseClicked(nwavEvento -> {
             if (nwavMenu.getSelectedToggle() == nwavNavInicio) {
                 nwavMostrar(NWAV_VISTA_INICIO);
@@ -176,7 +167,6 @@ public class NwavMainController {
         nwavOscuro = nwavConfiguracion.nwavTemaOscuro();
         nwavAplicarTema(nwavOscuro, false);
 
-        // Estado del visor en la barra de estado y en los menus.
         nwavLblEstadoDocumento.textProperty().bind(nwavVisor.nwavEstadoProperty());
         nwavMnuCerrar.disableProperty().bind(nwavVisor.nwavHayDocumentoProperty().not());
         nwavMnuGuardar.disableProperty().bind(nwavVisor.nwavPuedeEditarProperty().not()
@@ -208,7 +198,6 @@ public class NwavMainController {
         nwavActualizarMenuRecientes();
     }
 
-    /** Titulo de la ventana: nombre del documento abierto + nombre de la aplicacion. */
     public StringExpression nwavTituloVentana() {
         return Bindings.createStringBinding(() -> {
             String nwavDocumento = nwavVisor.nwavTituloProperty().get();
@@ -218,9 +207,6 @@ public class NwavMainController {
         }, nwavVisor.nwavTituloProperty());
     }
 
-    // ----------------------------------------------------------- navegacion
-
-    /** Cambia a otra vista como si se hubiera pulsado su opcion en el menu lateral. */
     public void nwavIrA(String nwavNombreVista) {
         nwavBotonesMenu().stream()
                 .filter(nwavBoton -> nwavNombreVista.equals(nwavBoton.getUserData()))
@@ -228,10 +214,6 @@ public class NwavMainController {
                 .ifPresent(nwavMenu::selectToggle);
     }
 
-    /**
-     * Abre una herramienta de la pantalla de inicio: su pagina (lotes), el editor con la
-     * accion correspondiente, o su vista propia.
-     */
     public void nwavAbrirHerramienta(com.nwav.editorpdf.ui.NwavDefinicionHerramienta nwavDefinicion,
                                      List<Path> nwavArchivos) {
         switch (nwavDefinicion.getNwavModo()) {
@@ -267,7 +249,6 @@ public class NwavMainController {
         }
     }
 
-    /** Marca una opcion del menu lateral sin recargar su vista. */
     private void nwavSeleccionarSinMostrar(ToggleButton nwavBoton) {
         if (nwavMenu.getSelectedToggle() != nwavBoton) {
             nwavMostrandoHerramienta = true;
@@ -286,7 +267,6 @@ public class NwavMainController {
         return nwavElegido == null ? null : nwavElegido.toPath();
     }
 
-    /** Abre un PDF en el visor (desde recientes, menu o arrastrar y soltar). */
     public void nwavAbrirArchivo(Path nwavRuta) {
         nwavIrA(NWAV_VISTA_VISOR);
         nwavVisor.nwavAbrirArchivo(nwavRuta);
@@ -301,7 +281,6 @@ public class NwavMainController {
         Animations.fadeIn(nwavVista.nwavNodo(), Duration.millis(260)).play();
     }
 
-    /** Desliza el fondo resaltado hasta la opcion seleccionada. */
     private void nwavMoverIndicador(Toggle nwavToggle) {
         Node nwavBoton = (Node) nwavToggle;
         double nwavDestino = nwavBoton.getBoundsInParent().getMinY();
@@ -311,14 +290,11 @@ public class NwavMainController {
                 .play();
     }
 
-    // ------------------------------------------------------- menu archivo/ver
-
     @FXML
     private void nwavOnAbrir() {
         nwavAbrirConDialogo();
     }
 
-    /** Muestra el visor y el dialogo para elegir un PDF. */
     public void nwavAbrirConDialogo() {
         nwavIrA(NWAV_VISTA_VISOR);
         nwavVisor.nwavOnAbrir();
@@ -334,7 +310,6 @@ public class NwavMainController {
         nwavSalir();
     }
 
-    /** Sale de la aplicacion; si hay cambios sin guardar, pregunta antes. */
     public void nwavSalir() {
         nwavIrA(NWAV_VISTA_VISOR);
         nwavVisor.nwavConfirmarSiHayCambios(() -> {
@@ -523,7 +498,6 @@ public class NwavMainController {
         nwavVisor.nwavOnMetadatos();
     }
 
-    /** Recarga el submenu "Abrir reciente" en segundo plano. */
     public void nwavActualizarMenuRecientes() {
         nwavTareaFondo.nwavEjecutarSilencioso(nwavRecientes::nwavListar, this::nwavLlenarMenuRecientes);
     }
@@ -550,8 +524,6 @@ public class NwavMainController {
         nwavMnuRecientes.getItems().setAll(nwavItems);
     }
 
-    // -------------------------------------------------- arrastrar y soltar
-
     private void nwavConfigurarArrastrarSoltar() {
         nwavCapaArrastre.setVisible(false);
         nwavRaiz.addEventFilter(DragEvent.DRAG_OVER, nwavEvento -> {
@@ -571,7 +543,7 @@ public class NwavMainController {
         nwavRaiz.addEventFilter(DragEvent.DRAG_DROPPED, nwavEvento -> {
             nwavCapaArrastre.setVisible(false);
             if (!nwavEvento.getDragboard().hasFiles()) {
-                return; // arrastres internos (p. ej. reordenar miniaturas)
+                return;
             }
             com.nwav.editorpdf.ui.NwavReceptorArchivos nwavReceptor = nwavReceptorActual();
             if (nwavReceptor != null) {
@@ -595,7 +567,6 @@ public class NwavMainController {
         });
     }
 
-    /** La vista actual, si quiere recibir los archivos arrastrados (p. ej. una herramienta). */
     private com.nwav.editorpdf.ui.NwavReceptorArchivos nwavReceptorActual() {
         if (nwavContenido.getChildren().isEmpty()) {
             return null;
@@ -619,7 +590,6 @@ public class NwavMainController {
                 .toList();
     }
 
-    /** Atajos alternativos de zoom (teclado numerico y la tecla "=" de teclados ingleses). */
     private void nwavConfigurarAtajosExtra(Scene nwavEscena) {
         nwavEscena.addEventFilter(KeyEvent.KEY_PRESSED, nwavEvento -> {
             if (!nwavEvento.isShortcutDown() || !nwavVisor.nwavHayDocumentoProperty().get()) {
@@ -636,14 +606,11 @@ public class NwavMainController {
         });
     }
 
-    // ------------------------------------------------------------- tema/menu
-
     @FXML
     private void nwavOnCambiarTema() {
         nwavAplicarTema(!nwavOscuro, true);
     }
 
-    /** Aplica el tema claro u oscuro; si {@code nwavGuardar}, lo deja como preferencia. */
     public void nwavAplicarTema(boolean nwavModoOscuro, boolean nwavGuardar) {
         nwavOscuro = nwavModoOscuro;
         Application.setUserAgentStylesheet(nwavOscuro

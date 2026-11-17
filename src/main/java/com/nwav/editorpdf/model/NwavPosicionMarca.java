@@ -1,6 +1,5 @@
 package com.nwav.editorpdf.model;
 
-/** Donde se coloca la marca de agua en cada pagina (o repetida en mosaico). */
 public enum NwavPosicionMarca {
     NWAV_CENTRO("Centro", 0.5, 0.5),
     NWAV_ARRIBA_IZQUIERDA("Arriba a la izquierda", 0, 0),
@@ -27,12 +26,10 @@ public enum NwavPosicionMarca {
         return nwavDescripcion;
     }
 
-    /** 0 = izquierda, 0.5 = centro, 1 = derecha. */
     public double getNwavFraccionX() {
         return nwavFraccionX;
     }
 
-    /** 0 = arriba, 0.5 = centro, 1 = abajo (visual). */
     public double getNwavFraccionY() {
         return nwavFraccionY;
     }

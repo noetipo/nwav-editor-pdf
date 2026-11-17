@@ -13,16 +13,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Utilidades de las pruebas para comprobar el contenido de un PDF. */
 public final class NwavLectorPdf {
-
     private NwavLectorPdf() {
     }
 
-    /**
-     * Texto de cada pagina sin espacios ("Pagina1", "Pagina2"…). Se quitan los espacios
-     * porque el extractor parte en lineas el texto de las paginas rotadas.
-     */
     public static List<String> nwavTextos(PDDocument nwavDocumento) throws IOException {
         PDFTextStripper nwavExtractor = new PDFTextStripper();
         List<String> nwavTextos = new ArrayList<>();
@@ -46,7 +40,6 @@ public final class NwavLectorPdf {
         return nwavTextos(nwavArchivo, null);
     }
 
-    /** Crea una imagen PNG de un color, del tamano indicado. */
     public static Path nwavCrearPng(Path nwavCarpeta, String nwavNombre, int nwavAncho, int nwavAlto)
             throws IOException {
         BufferedImage nwavImagen = new BufferedImage(nwavAncho, nwavAlto, BufferedImage.TYPE_INT_RGB);

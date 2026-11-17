@@ -101,20 +101,10 @@ import java.util.function.Function;
 import java.util.function.IntSupplier;
 import java.util.stream.IntStream;
 
-/**
- * Visor y editor de paginas: scroll continuo, zoom, navegacion, panel de miniaturas
- * (que tambien sirve para seleccionar y reordenar) y las operaciones de pagina.
- * <p>
- * Solo coordina la interfaz: abrir, dibujar, editar y guardar lo hacen los servicios,
- * siempre en segundo plano. Las ediciones se aplican en memoria; el original solo se
- * reemplaza si el usuario lo confirma de forma explicita.
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class NwavVisorController {
-
-    /** 100 % = tamano real en una pantalla de 96 ppp. */
     public static final double NWAV_PIXELES_POR_PUNTO = 96.0 / 72.0;
     public static final double NWAV_ESPACIO_PAGINAS = 16;
     public static final double NWAV_MARGEN_DOCUMENTO = 24;
@@ -189,25 +179,20 @@ public class NwavVisorController {
     @FXML private Button nwavBtnResultadoAnterior;
     @FXML private Button nwavBtnResultadoSiguiente;
 
-    /** Pagina del visor: un marco con su imagen (o nada, si aun no se dibujo). */
     private static final class NwavNodoPagina {
         private final StackPane nwavMarco = new StackPane();
         private final ImageView nwavVista = new ImageView();
         private final Label nwavAviso = new Label();
-        /** Capa transparente donde actuan las herramientas de edicion. */
         private final Pane nwavCapa = new Pane();
-        /** Resaltado de los resultados de busqueda (no recibe el raton). */
         private final Pane nwavCapaBusqueda = new Pane();
         private float nwavEscalaMostrada;
         private float nwavEscalaPedida;
     }
 
-    /** Resultado de abrir un archivo en segundo plano. */
     private record NwavApertura(NwavDocumentoPdf nwavDocumento, Optional<NwavArchivoReciente> nwavPrevio,
                                 NwavZoomPreferido nwavZoomDefecto, boolean nwavRestaurar, String nwavAviso) {
     }
 
-    // Estado (solo se toca desde el hilo de JavaFX salvo los campos volatile).
     private NwavDocumentoPdf nwavDocumento;
     private int nwavGeneracion;
     private volatile int nwavGeneracionActiva;
@@ -246,13 +231,10 @@ public class NwavVisorController {
     private int nwavCoincidenciaActual = -1;
     private java.util.concurrent.atomic.AtomicBoolean nwavBusquedaCancelada = new java.util.concurrent.atomic.AtomicBoolean();
 
-    /** Accion a lanzar cuando termine de abrirse un archivo concreto (herramientas del inicio). */
     private Path nwavPendienteRuta;
     private Runnable nwavPendienteAccion;
     private Runnable nwavAccionVerRecientes = () -> { };
     private Runnable nwavAlCambiarRecientes = () -> { };
-
-    // =============================================================== inicio
 
     @FXML
     public void initialize() {
@@ -264,8 +246,6 @@ public class NwavVisorController {
 
         nwavContenedorPaginas.setPadding(new Insets(NWAV_MARGEN_DOCUMENTO));
         nwavContenedorPaginas.setSpacing(NWAV_ESPACIO_PAGINAS);
-        // El contenedor ocupa al menos el ancho visible para centrar las paginas,
-        // pero puede crecer y mostrar scroll horizontal con zooms grandes.
         nwavScroll.viewportBoundsProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
             nwavContenedorPaginas.setMinWidth(nwavAhora.getWidth());
             if (nwavAntes.getWidth() != nwavAhora.getWidth() || nwavAntes.getHeight() != nwavAhora.getHeight()) {
@@ -389,7 +369,6 @@ public class NwavVisorController {
                 nwavEvento.consume();
             }
         });
-        // Al arrastrar cerca de los bordes, la lista se desplaza sola.
         nwavListaMiniaturas.addEventHandler(DragEvent.DRAG_OVER, nwavEvento -> {
             VirtualFlow<?> nwavFlujo = (VirtualFlow<?>) nwavListaMiniaturas.lookup(".virtual-flow");
             if (nwavFlujo == null || !nwavEvento.getDragboard().hasContent(NwavCeldaMiniatura.NWAV_FORMATO_PAGINAS)) {
@@ -425,13 +404,10 @@ public class NwavVisorController {
         return nwavItem;
     }
 
-    /** El controlador principal conecta aqui la navegacion y el menu de recientes. */
     public void nwavConfigurarAcciones(Runnable nwavVerRecientes, Runnable nwavAlCambiarRecientes) {
         this.nwavAccionVerRecientes = nwavVerRecientes;
         this.nwavAlCambiarRecientes = nwavAlCambiarRecientes;
     }
-
-    // Propiedades que observan el menu principal y la ventana.
 
     public ReadOnlyBooleanProperty nwavHayDocumentoProperty() {
         return nwavHayDocumento;
@@ -473,8 +449,6 @@ public class NwavVisorController {
         return nwavEstado;
     }
 
-    // Estado que consultan los paneles de herramientas.
-
     public Optional<NwavDocumentoPdf> nwavDocumentoActual() {
         return Optional.ofNullable(nwavDocumento);
     }
@@ -483,7 +457,6 @@ public class NwavVisorController {
         return nwavPaginaActual;
     }
 
-    /** Paginas seleccionadas en las miniaturas (o la actual si no hay seleccion), ordenadas. */
     public List<Integer> nwavSeleccionPaginas() {
         List<Integer> nwavSeleccion = nwavListaMiniaturas.getSelectionModel().getSelectedIndices().stream()
                 .filter(nwavIndice -> nwavIndice >= 0 && nwavIndice < nwavNodos.size())
@@ -494,8 +467,6 @@ public class NwavVisorController {
     public Window nwavVentana() {
         return nwavScroll.getScene() == null ? null : nwavScroll.getScene().getWindow();
     }
-
-    // ============================================================ abrir/cerrar
 
     @FXML
     public void nwavOnAbrir() {
@@ -518,14 +489,12 @@ public class NwavVisorController {
         nwavAccionVerRecientes.run();
     }
 
-    /** Abre un PDF y, cuando este listo, ejecuta {@code nwavAccion} (p. ej. abrir un panel). */
     public void nwavAbrirYEjecutar(Path nwavRuta, Runnable nwavAccion) {
         nwavPendienteRuta = nwavRuta.toAbsolutePath().normalize();
         nwavPendienteAccion = nwavAccion;
         nwavAbrirArchivo(nwavRuta);
     }
 
-    /** Abre un PDF; si el actual tiene cambios sin guardar, pregunta antes. */
     public void nwavAbrirArchivo(Path nwavRuta) {
         nwavConfirmarSiHayCambios(() -> nwavAbrirArchivo(nwavRuta, null));
     }
@@ -538,7 +507,6 @@ public class NwavVisorController {
                 nwavError -> nwavErrorAlAbrir(nwavRuta, nwavError));
     }
 
-    /** Se ejecuta en segundo plano: abre el PDF y consulta/actualiza los recientes. */
     private NwavApertura nwavAbrirEnFondo(Path nwavRuta, String nwavContrasena) {
         NwavDocumentoPdf nwavNuevo = nwavPdfService.nwavAbrir(nwavRuta, nwavContrasena);
         try {
@@ -551,7 +519,6 @@ public class NwavVisorController {
             return new NwavApertura(nwavNuevo, nwavPrevio, nwavConfiguracion.nwavZoomPorDefecto(),
                     nwavConfiguracion.nwavRestaurarPosicion(), null);
         } catch (RuntimeException nwavError) {
-            // Sin base de datos el documento se puede ver igual; solo se avisa.
             nwavLog.warn("No se pudo registrar {} en recientes", nwavRuta, nwavError);
             return new NwavApertura(nwavNuevo, Optional.empty(), NwavZoomPreferido.NWAV_POR_DEFECTO, false,
                     "No se pudo guardar en recientes: " + NwavTraductorErrores.nwavMensaje(nwavError));
@@ -602,7 +569,6 @@ public class NwavVisorController {
         }
     }
 
-    /** Pone un documento en el visor con el zoom y la pagina indicados. */
     private void nwavInstalarDocumento(NwavDocumentoPdf nwavNuevo, NwavZoomPreferido nwavZoom, int nwavPagina) {
         nwavDocumento = nwavNuevo;
         nwavHayDocumento.set(true);
@@ -611,13 +577,9 @@ public class NwavVisorController {
         nwavRecargarEstructura(nwavPagina);
     }
 
-    /**
-     * Reconstruye paginas y miniaturas desde el documento (tras abrir, editar o guardar) y
-     * se situa en {@code nwavPagina}.
-     */
     private void nwavRecargarEstructura(int nwavPagina) {
         NwavDocumentoPdf nwavActual = nwavDocumento;
-        nwavLimpiarBusqueda(); // las posiciones ya no corresponden
+        nwavLimpiarBusqueda();
         nwavGeneracion++;
         nwavGeneracionActiva = nwavGeneracion;
         nwavMiniaturasFx.clear();
@@ -632,7 +594,6 @@ public class NwavVisorController {
         nwavLblTotalPaginas.setText("/ " + nwavTotal);
         nwavMostrarPaginaEnControles();
         nwavActualizarEstadoEdicion();
-        // Tras el layout el visor ya conoce su tamano para los modos de ajuste.
         Platform.runLater(() -> {
             if (nwavDocumento != nwavActual) {
                 return;
@@ -648,10 +609,6 @@ public class NwavVisorController {
         nwavConfirmarSiHayCambios(() -> nwavCerrarDocumentoActual(true));
     }
 
-    /**
-     * Si hay cambios sin guardar, pregunta si guardarlos (como copia) o descartarlos antes de
-     * continuar; si no, continua directamente.
-     */
     public void nwavConfirmarSiHayCambios(Runnable nwavContinuar) {
         if (nwavDocumento == null || !nwavDocumento.nwavHayCambiosSinGuardar()) {
             nwavContinuar.run();
@@ -667,7 +624,6 @@ public class NwavVisorController {
                 new NwavOpcion("Guardar como…", Styles.ACCENT, () -> nwavGuardarComo(nwavContinuar), true));
     }
 
-    /** Olvida los cambios en memoria (al salir o cerrar sin guardar). */
     public void nwavDescartarCambios() {
         if (nwavDocumento != null) {
             nwavDocumento.getNwavGestor().nwavMarcarGuardado();
@@ -675,10 +631,6 @@ public class NwavVisorController {
         }
     }
 
-    /**
-     * Cierra el documento actual: guarda su posicion, vacia la interfaz y libera el
-     * PDDocument y sus caches en segundo plano (espera a que acabe cualquier tarea).
-     */
     private void nwavCerrarDocumentoActual(boolean nwavGuardarEstado) {
         if (nwavDocumento == null) {
             return;
@@ -725,7 +677,6 @@ public class NwavVisorController {
         nwavActualizarEstadoEdicion();
     }
 
-    /** Al salir de la aplicacion: guarda la posicion y cierra, de forma sincrona. */
     public void nwavCerrarAlSalir() {
         NwavDocumentoPdf nwavAnterior = nwavDocumento;
         if (nwavAnterior == null) {
@@ -753,12 +704,6 @@ public class NwavVisorController {
                 nwavRecientes.nwavGuardarEstado(nwavRuta, nwavPagina, nwavModo, nwavFactor));
     }
 
-    // ================================================================ guardar
-
-    /**
-     * Ctrl/⌘+S. Por seguridad no sobrescribe directamente: pregunta, y la opcion por
-     * defecto es guardar una copia.
-     */
     @FXML
     public void nwavOnGuardar() {
         if (nwavDocumento == null) {
@@ -783,7 +728,6 @@ public class NwavVisorController {
         nwavGuardarComo(null);
     }
 
-    /** Pide destino y guarda; al terminar ejecuta {@code nwavDespues} (si no es nulo). */
     public void nwavGuardarComo(Runnable nwavDespues) {
         if (nwavDocumento == null) {
             return;
@@ -842,19 +786,12 @@ public class NwavVisorController {
             nwavEditando.set(false);
             nwavNotificador.nwavError(NwavTraductorErrores.nwavMensaje(nwavError));
             if (nwavActual.isNwavCerrado() && nwavDocumento == nwavActual) {
-                // Solo pasa si fallo el reemplazo del original tras cerrarlo: se vuelve a abrir.
                 nwavVaciarInterfaz();
                 nwavAbrirArchivo(nwavActual.getNwavRuta(), null);
             }
         });
     }
 
-    // ================================================================ edicion
-
-    /**
-     * Ejecuta una edicion sobre el documento abierto en el hilo de ediciones y refresca el
-     * visor al terminar. {@code nwavAlFallar} es opcional (por defecto, aviso de error).
-     */
     public void nwavEditar(String nwavMensaje, Function<NwavDocumentoPdf, NwavResultadoEdicion> nwavOperacion,
                            Consumer<NwavResultadoEdicion> nwavAlTerminar, Consumer<Throwable> nwavAlFallar) {
         NwavDocumentoPdf nwavActual = nwavDocumento;
@@ -988,7 +925,6 @@ public class NwavVisorController {
         nwavAbrirPanel(NWAV_PANEL_UNIR);
     }
 
-    /** Abre un panel lateral de herramientas, preparado con el estado actual. */
     public void nwavAbrirPanel(String nwavNombre) {
         NwavCargadorVistas.NwavVistaCargada nwavVista = nwavCargador.nwavObtener(nwavNombre);
         if (nwavVista.nwavControlador() instanceof NwavPanel nwavPanel) {
@@ -1011,7 +947,6 @@ public class NwavVisorController {
         nwavActualizandoControles = false;
     }
 
-    /** Refleja en la interfaz el estado de deshacer/rehacer y de cambios sin guardar. */
     private void nwavActualizarEstadoEdicion() {
         if (nwavDocumento == null) {
             nwavSinGuardar.set(false);
@@ -1038,8 +973,6 @@ public class NwavVisorController {
         nwavActualizarEstado();
     }
 
-    // ================================================================ paginas
-
     private void nwavConstruirPaginas() {
         nwavEditorInteractivo.nwavCancelarPendiente();
         nwavNodos.clear();
@@ -1061,7 +994,6 @@ public class NwavVisorController {
         nwavAplicarTamanos();
     }
 
-    /** Da a cada pagina su tamano segun el zoom y recalcula la posicion vertical de cada una. */
     private void nwavAplicarTamanos() {
         double nwavPx = nwavFactorZoom * NWAV_PIXELES_POR_PUNTO;
         nwavInicioY = new double[nwavNodos.size()];
@@ -1100,7 +1032,6 @@ public class NwavVisorController {
         nwavScroll.setVvalue(nwavMaximo <= 0 ? 0 : Math.max(0, Math.min(1, nwavY / nwavMaximo)));
     }
 
-    /** Ultima pagina cuyo borde superior queda por encima de {@code nwavY} (busqueda binaria). */
     private int nwavPaginaEn(double nwavY) {
         int nwavBajo = 0;
         int nwavAlto = nwavInicioY.length - 1;
@@ -1145,10 +1076,6 @@ public class NwavVisorController {
         nwavIrAPagina(nwavNodos.size() - 1);
     }
 
-    /**
-     * Calcula que paginas estan a la vista, pide las que faltan y suelta la imagen de
-     * las que quedaron lejos.
-     */
     private void nwavActualizarVisibles() {
         if (nwavDocumento == null || nwavNodos.isEmpty()) {
             return;
@@ -1199,7 +1126,6 @@ public class NwavVisorController {
         NwavDocumentoPdf nwavDoc = nwavDocumento;
         int nwavGen = nwavGeneracion;
         nwavTareaFondo.nwavRenderizarPagina(() -> {
-            // Si entretanto se cambio el documento o la pagina salio de la vista, no se dibuja.
             boolean nwavVigente = nwavGen == nwavGeneracionActiva
                     && nwavIndice >= nwavPrimeraVisible - NWAV_PAGINAS_ANTICIPADAS - 1
                     && nwavIndice <= nwavUltimaVisible + NWAV_PAGINAS_ANTICIPADAS + 1;
@@ -1240,7 +1166,6 @@ public class NwavVisorController {
         nwavPausaGuardado.playFromStart();
     }
 
-    /** Marca la pagina actual en las miniaturas, salvo que el usuario tenga varias seleccionadas. */
     private void nwavSincronizarMiniatura() {
         if (nwavListaMiniaturas.getItems().isEmpty()
                 || nwavListaMiniaturas.getSelectionModel().getSelectedIndices().size() > 1) {
@@ -1295,8 +1220,6 @@ public class NwavVisorController {
                 + (nwavSinGuardar.get() ? "  ·  Cambios sin guardar" : ""));
     }
 
-    // =================================================================== zoom
-
     @FXML
     public void nwavOnAcercar() {
         nwavAcercar();
@@ -1348,7 +1271,6 @@ public class NwavVisorController {
         }
     }
 
-    /** Cambia el zoom manteniendo a la vista el mismo punto de la pagina actual. */
     private void nwavEstablecerZoom(NwavModoZoom nwavModo, double nwavFactor) {
         if (nwavDocumento == null || nwavNodos.isEmpty()) {
             return;
@@ -1374,7 +1296,6 @@ public class NwavVisorController {
         nwavPausaGuardado.playFromStart();
     }
 
-    /** En los modos de ajuste, recalcula el zoom cuando cambia el tamano de la ventana. */
     private void nwavReaplicarAjuste() {
         if (nwavDocumento != null && nwavModoZoom != NwavModoZoom.NWAV_PORCENTAJE) {
             nwavEstablecerZoom(nwavModoZoom, nwavFactorZoom);
@@ -1413,8 +1334,6 @@ public class NwavVisorController {
     private static String nwavTextoPorcentaje(int nwavPorcentaje) {
         return String.format(Locale.ROOT, "%d %%", nwavPorcentaje);
     }
-
-    // ============================================================ miniaturas
 
     private NwavCeldaMiniatura.NwavProveedorMiniaturas nwavProveedorMiniaturas() {
         return new NwavCeldaMiniatura.NwavProveedorMiniaturas() {
@@ -1459,7 +1378,6 @@ public class NwavVisorController {
                 ? 1.0 : nwavScroll.getScene().getWindow().getOutputScaleX();
         int nwavAnchoPx = (int) Math.round(NWAV_ANCHO_MINIATURA * nwavPantalla);
         nwavTareaFondo.nwavRenderizarMiniatura(() -> {
-            // La celda pudo reutilizarse para otra pagina mientras esperaba turno.
             if (nwavGen != nwavGeneracionActiva || nwavIndiceDeseado.getAsInt() != nwavIndice) {
                 return null;
             }
@@ -1472,8 +1390,6 @@ public class NwavVisorController {
             nwavAlRecibir.accept(nwavImagen);
         }, nwavError -> nwavLog.debug("Fallo la miniatura {}", nwavIndice + 1, nwavError));
     }
-
-    // ================================================= edicion de contenido
 
     private void nwavConfigurarBarraEdicion() {
         nwavEditorInteractivo = new NwavEditorInteractivo(nwavHerramientas, nwavDestinoEdicion(),
@@ -1501,7 +1417,7 @@ public class NwavVisorController {
         nwavGrupo.selectToggle(nwavGrupo.getToggles().get(0));
         nwavGrupo.selectedToggleProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
             if (nwavAhora == null) {
-                nwavGrupo.selectToggle(nwavAntes); // siempre hay una herramienta
+                nwavGrupo.selectToggle(nwavAntes);
                 return;
             }
             nwavHerramientas.nwavHerramientaProperty().set((NwavHerramienta) nwavAhora.getUserData());
@@ -1551,11 +1467,6 @@ public class NwavVisorController {
         nwavNodo.setManaged(nwavVisible);
     }
 
-    /**
-     * Tras editar el contenido de una pagina (sin cambiar la estructura): vuelve a dibujar
-     * las paginas visibles y las miniaturas sin mover el scroll. Las imagenes actuales se
-     * mantienen hasta que llegan las nuevas.
-     */
     private void nwavRefrescarContenido() {
         nwavGeneracion++;
         nwavGeneracionActiva = nwavGeneracion;
@@ -1569,8 +1480,6 @@ public class NwavVisorController {
         nwavActualizarEstadoEdicion();
     }
 
-    /** Edicion pedida desde el editor interactivo: aviso de error y, si falla, el elemento vuelve. */
-    /** Pide el tipo y las opciones del campo de formulario nuevo. */
     private Optional<com.nwav.editorpdf.service.NwavCreacionCamposService.NwavCampoNuevo> nwavDialogoCampo() {
         javafx.scene.control.Dialog<com.nwav.editorpdf.service.NwavCreacionCamposService.NwavCampoNuevo> nwavDialogo =
                 new javafx.scene.control.Dialog<>();
@@ -1787,8 +1696,6 @@ public class NwavVisorController {
         return nwavHerramientas;
     }
 
-    // ========================================================= herramientas (Fase 4)
-
     @FXML
     public void nwavOnFormulario() {
         nwavAbrirPanel(NWAV_PANEL_FORMULARIO);
@@ -1829,22 +1736,16 @@ public class NwavVisorController {
         nwavAbrirPanel(NWAV_PANEL_METADATOS);
     }
 
-    /**
-     * Coloca una firma (PNG) en el centro de la pagina actual para moverla y redimensionarla
-     * antes de fijarla con ✓.
-     */
     public void nwavColocarFirma(byte[] nwavPng) {
         if (nwavDocumento == null || nwavNodos.isEmpty()) {
             return;
         }
-        // La capa solo recibe el raton con una herramienta activa.
         nwavHerramientas.nwavHerramientaProperty().set(NwavHerramienta.NWAV_IMAGEN);
         NwavNodoPagina nwavNodo = nwavNodos.get(nwavPaginaActual);
         nwavEditorInteractivo.nwavColocarImagen(nwavNodo.nwavCapa, nwavPaginaActual, nwavPng);
         nwavNotificador.nwavInfo("Mueve y ajusta la firma; después pulsa ✓ para fijarla.");
     }
 
-    /** Lleva la vista a una zona de una pagina (p. ej. un campo de formulario). */
     public void nwavIrAZona(int nwavPagina, NwavRectangulo nwavZona) {
         if (nwavDocumento == null || nwavPagina < 0 || nwavPagina >= nwavNodos.size()) {
             return;
@@ -1859,7 +1760,6 @@ public class NwavVisorController {
         }
     }
 
-    /** Marca una zona un instante para que el usuario la encuentre. */
     private void nwavDestellar(int nwavPagina, NwavRectangulo nwavZona) {
         double nwavEscala = nwavFactorZoom * NWAV_PIXELES_POR_PUNTO;
         javafx.scene.shape.Rectangle nwavMarca = new javafx.scene.shape.Rectangle(nwavZona.nwavX() * nwavEscala - 3,
@@ -1873,14 +1773,12 @@ public class NwavVisorController {
         nwavPausa.play();
     }
 
-    // ================================================================ busqueda
-
     private void nwavConfigurarBusqueda() {
         nwavBarraBusqueda.setVisible(false);
         nwavBarraBusqueda.setManaged(false);
         nwavTxtBuscar.setOnAction(nwavEvento -> {
             if (!nwavCoincidencias.isEmpty() && nwavTxtBuscar.getText().equals(nwavTxtBuscar.getUserData())) {
-                nwavOnResultadoSiguiente(); // Intro repetido: siguiente resultado
+                nwavOnResultadoSiguiente();
             } else {
                 nwavBuscar();
             }
@@ -1926,7 +1824,7 @@ public class NwavVisorController {
             nwavLimpiarBusqueda();
             return;
         }
-        nwavBusquedaCancelada.set(true); // detiene una busqueda anterior
+        nwavBusquedaCancelada.set(true);
         java.util.concurrent.atomic.AtomicBoolean nwavCancelada = new java.util.concurrent.atomic.AtomicBoolean();
         nwavBusquedaCancelada = nwavCancelada;
         boolean nwavMayusculas = nwavTglMayusculas.isSelected();
@@ -1944,7 +1842,6 @@ public class NwavVisorController {
                     if (nwavResultados.isEmpty()) {
                         nwavActualizarResultados();
                     } else {
-                        // Primer resultado a partir de la pagina actual.
                         int nwavInicio = 0;
                         for (int nwavIndice = 0; nwavIndice < nwavResultados.size(); nwavIndice++) {
                             if (nwavResultados.get(nwavIndice).nwavPagina() >= nwavPaginaActual) {
@@ -2011,7 +1908,6 @@ public class NwavVisorController {
         }
     }
 
-    /** Dibuja los resultados: amarillo, y el actual en naranja. */
     private void nwavPintarBusqueda() {
         nwavNodos.forEach(nwavNodo -> nwavNodo.nwavCapaBusqueda.getChildren().clear());
         double nwavEscala = nwavFactorZoom * NWAV_PIXELES_POR_PUNTO;
@@ -2032,7 +1928,6 @@ public class NwavVisorController {
         }
     }
 
-    /** Enlaza un boton o elemento a "se puede editar" (lo usan los paneles). */
     public void nwavDeshabilitarSinEdicion(javafx.scene.Node nwavNodo) {
         nwavNodo.disableProperty().bind(Bindings.not(nwavPuedeEditar));
     }

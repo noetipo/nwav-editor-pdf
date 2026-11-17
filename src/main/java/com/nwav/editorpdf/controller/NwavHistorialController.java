@@ -37,11 +37,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-/** Consulta del historial de operaciones ({@code nwav_historial_operacion}). */
 @Component
 @RequiredArgsConstructor
 public class NwavHistorialController implements NwavRefrescable {
-
     private static final DateTimeFormatter NWAV_FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
     private static final String NWAV_TODAS = "Todas las operaciones";
     private static final String NWAV_TODOS = "Todos los resultados";
@@ -186,7 +184,6 @@ public class NwavHistorialController implements NwavRefrescable {
                 + (nwavErrores > 0 ? " · " + nwavErrores + " con error" : ""));
     }
 
-    /** Doble clic: abre el PDF de destino si existe. */
     private void nwavAbrirDestino(NwavHistorialOperacion nwavFila) {
         String nwavDestino = nwavFila.getNwavArchivoDestino();
         if (nwavDestino == null || !nwavDestino.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
@@ -214,7 +211,6 @@ public class NwavHistorialController implements NwavRefrescable {
         return nwavVacio;
     }
 
-    /** Celda de texto largo: muestra el nombre del archivo y la ruta completa en un tooltip. */
     private static final class NwavCeldaRuta extends TableCell<NwavHistorialOperacion, String> {
         @Override
         protected void updateItem(String nwavTexto, boolean nwavVacia) {

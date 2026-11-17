@@ -6,6 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface NwavHistorialOperacionRepository extends JpaRepository<NwavHistorialOperacion, Long> {
-
     List<NwavHistorialOperacion> findAllByOrderByNwavFechaDescNwavIdDesc();
 }

@@ -4,13 +4,7 @@ import com.nwav.editorpdf.service.NwavDocumentoPdf;
 import com.nwav.editorpdf.service.NwavOrdenPaginas;
 import com.nwav.editorpdf.service.NwavPaginaService;
 
-/**
- * Comando que cambia el orden o el conjunto de paginas. La primera ejecucion aplica la
- * operacion y guarda una foto del orden antes y despues; deshacer y rehacer solo
- * restauran la foto correspondiente, sin repetir la operacion.
- */
 public abstract class NwavComandoEstructural implements NwavComando {
-
     protected final NwavPaginaService nwavServicio;
     protected final NwavDocumentoPdf nwavDocumento;
     private NwavOrdenPaginas nwavAntes;
@@ -22,7 +16,6 @@ public abstract class NwavComandoEstructural implements NwavComando {
         this.nwavDocumento = nwavDocumento;
     }
 
-    /** Aplica la operacion y devuelve la pagina a destacar. */
     protected abstract int nwavAplicar();
 
     @Override

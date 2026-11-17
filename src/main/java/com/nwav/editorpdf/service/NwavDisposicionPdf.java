@@ -38,21 +38,12 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Reconstruye la estructura de las paginas de un PDF (que solo guarda glifos posicionados):
- * lineas con su tamano y estilo, titulos, parrafos, listas, tablas, enlaces e imagenes con
- * su posicion. Es heuristico: sirve para Markdown, Word, Excel y PowerPoint, y el resultado
- * puede necesitar ajustes. Coordenadas "visuales" (origen arriba a la izquierda).
- */
 public final class NwavDisposicionPdf {
-
     private static final Pattern NWAV_VINETA = Pattern.compile("^([•●▪◦■□➢►‣∙·\\-–—*])\\s+(.*)$");
     private static final Pattern NWAV_NUMERADA = Pattern.compile("^((\\d{1,3}|[a-zA-Z])[.)])\\s+(.*)$");
 
     private NwavDisposicionPdf() {
     }
-
-    // ================================================================= modelo
 
     public record NwavPalabra(String nwavTexto, float nwavX, float nwavXFin, float nwavY, float nwavAlto, float nwavTamano,
                               boolean nwavNegrita, boolean nwavCursiva, int nwavColor) {
@@ -81,7 +72,6 @@ public final class NwavDisposicionPdf {
             return nwavPalabras.get(nwavPalabras.size() - 1).nwavXFin();
         }
 
-        /** Linea base (Y visual hacia abajo). */
         public float nwavY() {
             return nwavPalabras.get(0).nwavY();
         }
@@ -90,7 +80,6 @@ public final class NwavDisposicionPdf {
             return (float) nwavPalabras.stream().mapToDouble(NwavPalabra::nwavAlto).max().orElse(10);
         }
 
-        /** Tamano de letra dominante (el de mas caracteres). */
         public float nwavTamano() {
             Map<Float, Integer> nwavCuenta = new HashMap<>();
             nwavPalabras.forEach(nwavP -> nwavCuenta.merge(Math.round(nwavP.nwavTamano() * 2) / 2f,
@@ -110,7 +99,6 @@ public final class NwavDisposicionPdf {
             return nwavPalabras.get(0).nwavColor();
         }
 
-        /** Divide la linea en celdas donde hay un hueco grande entre palabras. */
         public List<NwavCelda> nwavCeldas() {
             List<NwavCelda> nwavCeldas = new ArrayList<>();
             StringBuilder nwavTexto = new StringBuilder();
@@ -144,21 +132,13 @@ public final class NwavDisposicionPdf {
                              List<NwavEnlace> nwavEnlaces, List<NwavImagenUbicada> nwavImagenes) {
     }
 
-    // ================================================================= bloques
-
     public enum NwavTipoBloque { NWAV_TITULO, NWAV_PARRAFO, NWAV_LISTA, NWAV_TABLA, NWAV_IMAGEN }
 
-    /**
-     * Bloque de contenido en orden de lectura. Segun el tipo: {@code nwavNivel} (titulo 1-3),
-     * {@code nwavOrdenada}/{@code nwavMarca} (lista), {@code nwavFilas} (tabla) o
-     * {@code nwavImagen}. {@code nwavLineas} son las lineas originales (para estilo y enlaces).
-     */
     public record NwavBloque(NwavTipoBloque nwavTipo, String nwavTexto, int nwavNivel, boolean nwavOrdenada, String nwavMarca,
                              List<List<String>> nwavFilas, NwavImagenUbicada nwavImagen, List<NwavLinea> nwavLineas,
                              float nwavY) {
     }
 
-    /** Estadisticas del documento para decidir que es titulo. */
     public record NwavEstilos(float nwavCuerpo, List<Float> nwavTitulos) {
         public int nwavNivel(NwavLinea nwavLinea) {
             float nwavTamano = nwavLinea.nwavTamano();
@@ -170,8 +150,6 @@ public final class NwavDisposicionPdf {
             return 0;
         }
     }
-
-    // ================================================================= analisis
 
     public static List<NwavPagina> nwavAnalizar(PDDocument nwavPd, List<Integer> nwavIndices, NwavCancelacion nwavCancelacion)
             throws IOException {
@@ -202,14 +180,12 @@ public final class NwavDisposicionPdf {
         return new NwavEstilos(nwavCuerpo, nwavTitulos);
     }
 
-    /** Agrupa las lineas de una pagina en bloques (titulos, parrafos, listas, tablas e imagenes). */
     public static List<NwavBloque> nwavBloques(NwavPagina nwavPagina, NwavEstilos nwavEstilos) {
         List<NwavBloque> nwavBloques = new ArrayList<>();
         List<NwavLinea> nwavLineas = nwavPagina.nwavLineas();
         int nwavIndice = 0;
         while (nwavIndice < nwavLineas.size()) {
             NwavLinea nwavLinea = nwavLineas.get(nwavIndice);
-            // Tabla: dos o mas lineas seguidas con las mismas columnas.
             int nwavFinTabla = nwavFinTabla(nwavLineas, nwavIndice);
             if (nwavFinTabla - nwavIndice >= 2) {
                 List<List<String>> nwavFilas = new ArrayList<>();
@@ -228,7 +204,6 @@ public final class NwavDisposicionPdf {
                 nwavNivel = Math.min(3, nwavEstilos.nwavTitulos().size() + 1);
             }
             if (nwavNivel > 0) {
-                // Un titulo puede ocupar dos lineas seguidas del mismo tamano.
                 List<NwavLinea> nwavPartes = new ArrayList<>(List.of(nwavLinea));
                 while (nwavIndice + 1 < nwavLineas.size() && nwavEstilos.nwavNivel(nwavLineas.get(nwavIndice + 1)) == nwavNivel
                         && nwavSeguida(nwavLinea, nwavLineas.get(nwavIndice + 1))) {
@@ -245,7 +220,6 @@ public final class NwavDisposicionPdf {
                 boolean nwavOrdenada = !nwavVineta.matches();
                 String nwavMarca = nwavOrdenada ? nwavNumero.group(1) : nwavVineta.group(1);
                 List<NwavLinea> nwavPartes = new ArrayList<>(List.of(nwavLinea));
-                // Lineas siguientes con sangria mayor = continuacion del elemento.
                 while (nwavIndice + 1 < nwavLineas.size()) {
                     NwavLinea nwavSiguiente = nwavLineas.get(nwavIndice + 1);
                     String nwavTextoSiguiente = nwavSiguiente.nwavTexto().strip();
@@ -265,7 +239,6 @@ public final class NwavDisposicionPdf {
                 nwavIndice++;
                 continue;
             }
-            // Parrafo: lineas seguidas del mismo estilo y con interlineado normal.
             List<NwavLinea> nwavPartes = new ArrayList<>(List.of(nwavLinea));
             while (nwavIndice + 1 < nwavLineas.size()) {
                 NwavLinea nwavSiguiente = nwavLineas.get(nwavIndice + 1);
@@ -286,7 +259,6 @@ public final class NwavDisposicionPdf {
                     nwavPartes, nwavLinea.nwavY()));
             nwavIndice++;
         }
-        // Las imagenes se intercalan por su posicion vertical.
         for (NwavImagenUbicada nwavImagen : nwavPagina.nwavImagenes()) {
             nwavBloques.add(new NwavBloque(NwavTipoBloque.NWAV_IMAGEN, null, 0, false, null, null, nwavImagen, List.of(),
                     (float) nwavImagen.nwavZona().nwavAbajo()));
@@ -295,7 +267,6 @@ public final class NwavDisposicionPdf {
         return nwavBloques;
     }
 
-    /** Une lineas en un texto, juntando las palabras cortadas con guion al final de linea. */
     public static String nwavUnir(List<NwavLinea> nwavLineas) {
         StringBuilder nwavTexto = new StringBuilder();
         for (NwavLinea nwavLinea : nwavLineas) {
@@ -321,7 +292,6 @@ public final class NwavDisposicionPdf {
         return nwavIndice + 1 >= nwavLineas.size() || !nwavLineas.get(nwavIndice + 1).nwavNegrita();
     }
 
-    /** Indice de fin (exclusivo) de una tabla que empieza en {@code nwavInicio}. */
     private static int nwavFinTabla(List<NwavLinea> nwavLineas, int nwavInicio) {
         List<NwavCelda> nwavColumnas = nwavLineas.get(nwavInicio).nwavCeldas();
         if (nwavColumnas.size() < 2) {
@@ -339,7 +309,6 @@ public final class NwavDisposicionPdf {
             for (int nwavColumna = 0; nwavColumna < nwavCeldas.size() && nwavAlineadas; nwavColumna++) {
                 NwavCelda nwavA = nwavColumnas.get(nwavColumna);
                 NwavCelda nwavB = nwavCeldas.get(nwavColumna);
-                // Se solapan horizontalmente (sirve para columnas alineadas a izquierda o derecha).
                 nwavAlineadas = nwavB.nwavX() <= nwavA.nwavXFin() + 4 && nwavA.nwavX() <= nwavB.nwavXFin() + 4;
             }
             if (!nwavAlineadas) {
@@ -350,9 +319,6 @@ public final class NwavDisposicionPdf {
         return nwavFin;
     }
 
-    // ============================================================ extraccion
-
-    /** Extractor de texto que conserva posicion, tamano, estilo y color de cada palabra. */
     private static final class NwavExtractor extends PDFTextStripper {
         private final List<NwavLinea> nwavLineas = new ArrayList<>();
         private final List<NwavPalabra> nwavActual = new ArrayList<>();
@@ -404,7 +370,6 @@ public final class NwavDisposicionPdf {
             if (nwavTamano <= 0.1f) {
                 nwavTamano = nwavPrimera.getHeightDir() * 1.4f;
             }
-            // Una "palabra" de PDFBox puede contener espacios: se separa por ellos.
             float nwavInicio = nwavPrimera.getXDirAdj();
             StringBuilder nwavTrozo = new StringBuilder();
             for (TextPosition nwavPos : nwavPosiciones) {
@@ -474,7 +439,6 @@ public final class NwavDisposicionPdf {
         return nwavEnlaces;
     }
 
-    /** Enlace (si lo hay) bajo una palabra. */
     public static String nwavEnlaceDe(NwavPalabra nwavPalabra, List<NwavEnlace> nwavEnlaces) {
         double nwavCx = (nwavPalabra.nwavX() + nwavPalabra.nwavXFin()) / 2;
         double nwavCy = nwavPalabra.nwavY() - nwavPalabra.nwavAlto() / 2;
@@ -502,7 +466,6 @@ public final class NwavDisposicionPdf {
         return nwavImagenes;
     }
 
-    /** Recorre el contenido (y los formularios XObject) anotando donde se dibuja cada imagen. */
     private static final class NwavLocalizador extends PDFStreamEngine {
         private final Map<PDImageXObject, PDRectangle> nwavEncontradas = new LinkedHashMap<>();
 

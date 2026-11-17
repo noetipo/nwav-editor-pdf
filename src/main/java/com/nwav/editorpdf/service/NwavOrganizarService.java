@@ -22,20 +22,12 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-/**
- * Herramientas de "Organizar" que trabajan sobre archivos (por lotes): unir, dividir,
- * eliminar, extraer, ordenar, rotar y recortar. Nunca modifican el original: cada resultado
- * es un archivo nuevo. El historial lo registra quien las ejecuta.
- */
 @Service
 @RequiredArgsConstructor
 public class NwavOrganizarService {
-
     public static final double NWAV_PUNTOS_POR_MM = 72.0 / 25.4;
 
     private final NwavPdfDocumentoService nwavDocumentos;
-
-    // ===================================================================== unir
 
     public Path nwavUnir(List<Path> nwavOrigenes, Map<Path, String> nwavContrasenas, Path nwavDestino,
                          NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) {
@@ -51,7 +43,7 @@ public class NwavOrganizarService {
                 nwavAvance.nwavInformar(nwavIndice, nwavOrigenes.size() + 1, "Añadiendo «" + nwavOrigen.getFileName() + "»…");
                 PDDocument nwavFuente = nwavDocumentos.nwavCargarDocumento(nwavOrigen,
                         nwavContrasenas == null ? null : nwavContrasenas.get(nwavOrigen));
-                nwavAbiertos.add(nwavFuente); // deben seguir abiertos hasta guardar
+                nwavAbiertos.add(nwavFuente);
                 nwavUnion.appendDocument(nwavResultado, nwavFuente);
             }
             nwavCancelacion.nwavVerificar();
@@ -63,8 +55,6 @@ public class NwavOrganizarService {
             nwavAbiertos.forEach(NwavOrganizarService::nwavCerrar);
         }
     }
-
-    // ================================================================== dividir
 
     public List<Path> nwavDividirPorRangos(Path nwavEntrada, String nwavContrasena, String nwavRangos, Path nwavCarpeta,
                                            NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) {
@@ -78,10 +68,6 @@ public class NwavOrganizarService {
                 nwavTotal -> NwavRangosPaginas.nwavCada(nwavPaginas, nwavTotal));
     }
 
-    /**
-     * Divide para que ninguna parte supere el tamano indicado (aproximado: se mide cada
-     * pagina por separado, asi que las partes suelen quedar algo por debajo del limite).
-     */
     public List<Path> nwavDividirPorTamano(Path nwavEntrada, String nwavContrasena, long nwavBytesMaximos,
                                            Path nwavCarpeta, NwavAvance nwavAvance, NwavCancelacion nwavCancelacion) {
         if (nwavBytesMaximos < 10_000) {
@@ -131,8 +117,6 @@ public class NwavOrganizarService {
         }
     }
 
-    // ===================================================== eliminar y extraer
-
     public Path nwavEliminarPaginas(Path nwavEntrada, String nwavContrasena, String nwavRangos, Path nwavDestino) {
         try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena)) {
             int nwavTotal = nwavPd.getNumberOfPages();
@@ -148,7 +132,6 @@ public class NwavOrganizarService {
         }
     }
 
-    /** Extrae las paginas a un PDF, o a un PDF por pagina si {@code nwavUnoPorPagina}. */
     public List<Path> nwavExtraerPaginas(Path nwavEntrada, String nwavContrasena, String nwavRangos,
                                          boolean nwavUnoPorPagina, Path nwavCarpeta, NwavCancelacion nwavCancelacion) {
         try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena)) {
@@ -170,9 +153,6 @@ public class NwavOrganizarService {
         }
     }
 
-    // ===================================================== ordenar, rotar, recortar
-
-    /** Reordena: {@code nwavOrden} = "3, 1, 2, 4-" (las paginas no nombradas se quitan). */
     public Path nwavOrdenar(Path nwavEntrada, String nwavContrasena, String nwavOrden, boolean nwavInvertir,
                             Path nwavDestino) {
         try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena)) {
@@ -192,7 +172,6 @@ public class NwavOrganizarService {
         }
     }
 
-    /** Rota las paginas indicadas (vacio = todas). {@code nwavGrados}: 90, 180 o 270. */
     public Path nwavRotar(Path nwavEntrada, String nwavContrasena, int nwavGrados, String nwavRangos, Path nwavDestino) {
         if (nwavGrados % 90 != 0) {
             throw new NwavEditorException("La rotación debe ser de 90, 180 o 270 grados.");
@@ -208,10 +187,6 @@ public class NwavOrganizarService {
         }
     }
 
-    /**
-     * Recorta por margenes (en milimetros, tal como se ve cada pagina: arriba, derecha,
-     * abajo, izquierda). Ajusta la CropBox: el contenido recortado sigue en el archivo.
-     */
     public Path nwavRecortarMargenes(Path nwavEntrada, String nwavContrasena, double nwavArribaMm, double nwavDerechaMm,
                                      double nwavAbajoMm, double nwavIzquierdaMm, String nwavRangos, Path nwavDestino) {
         try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena)) {
@@ -234,7 +209,6 @@ public class NwavOrganizarService {
         }
     }
 
-    /** CropBox nueva (en el espacio de la pagina) para un area visual. */
     static PDRectangle nwavCajaRecorte(PDPage nwavPagina, NwavRectangulo nwavZonaVisual) {
         NwavGeometriaPagina nwavGeometria = NwavGeometriaPagina.nwavDe(nwavPagina);
         double nwavX = Math.max(0, nwavZonaVisual.nwavX());
@@ -247,8 +221,6 @@ public class NwavOrganizarService {
         return nwavGeometria.nwavRectanguloPdf(new NwavRectangulo(nwavX, nwavY, nwavAncho, nwavAlto));
     }
 
-    // ================================================================ internos
-
     private static List<Integer> nwavPaginasElegidas(PDDocument nwavPd, String nwavRangos) {
         int nwavTotal = nwavPd.getNumberOfPages();
         return nwavRangos == null || nwavRangos.isBlank()
@@ -256,7 +228,6 @@ public class NwavOrganizarService {
                 : NwavRangosPaginas.nwavIndices(nwavRangos, nwavTotal);
     }
 
-    /** Escribe un PDF nuevo con esas paginas (en ese orden). El origen debe seguir abierto. */
     static Path nwavEscribirPaginas(PDDocument nwavOrigen, List<Integer> nwavIndices, Path nwavDestino) throws IOException {
         if (nwavIndices.isEmpty()) {
             throw new NwavEditorException("No hay páginas para escribir.");
@@ -291,11 +262,9 @@ public class NwavOrganizarService {
         try {
             nwavPd.close();
         } catch (IOException nwavError) {
-            // ya se informa el error principal, si lo hay
         }
     }
 
-    /** Para mensajes: si un origen esta protegido, se pide su contrasena en la interfaz. */
     public static boolean nwavEsFaltaDeContrasena(Throwable nwavError) {
         return nwavError instanceof NwavContrasenaRequeridaException;
     }

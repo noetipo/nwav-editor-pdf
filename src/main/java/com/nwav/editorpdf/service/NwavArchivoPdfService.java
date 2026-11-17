@@ -26,26 +26,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Operaciones que escriben archivos: guardar, extraer, dividir y unir. Todas escriben
- * primero un temporal en la carpeta de destino y luego lo mueven a su sitio, de modo que
- * un fallo a mitad nunca deja un PDF a medio escribir. Cada operacion queda en el historial.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NwavArchivoPdfService {
-
     private final NwavPdfDocumentoService nwavDocumentos;
     private final NwavHistorialService nwavHistorial;
 
-    // ---------------------------------------------------------------- guardar
-
-    /**
-     * Guarda el documento (con sus cambios en memoria) en {@code nwavDestino}, que puede ser
-     * el archivo original. El documento recibido queda cerrado y se devuelve el archivo
-     * guardado ya abierto: los cambios pasan a ser el nuevo punto de partida.
-     */
     public NwavDocumentoPdf nwavGuardarComo(NwavDocumentoPdf nwavDocumento, Path nwavDestino) {
         Path nwavFinal = nwavDestino.toAbsolutePath().normalize();
         boolean nwavSobrescribe = nwavFinal.equals(nwavDocumento.getNwavRuta());
@@ -64,7 +51,6 @@ public class NwavArchivoPdfService {
                 if (!nwavSobrescribe) {
                     throw nwavBloqueo;
                 }
-                // En Windows el original sigue abierto por el propio documento: se cierra y se reintenta.
                 nwavDocumento.close();
                 try {
                     nwavMoverAlDestino(nwavTemporal, nwavFinal);
@@ -91,7 +77,6 @@ public class NwavArchivoPdfService {
         }
     }
 
-    /** Aplica el cambio de proteccion pendiente o, si no hay, mantiene la que tenia. */
     private static void nwavAplicarProteccion(NwavDocumentoPdf nwavDocumento) throws IOException {
         NwavCambioProteccion nwavCambio = nwavDocumento.getNwavProteccionPendiente();
         PDDocument nwavPd = nwavDocumento.nwavPdDocument();
@@ -105,7 +90,6 @@ public class NwavArchivoPdfService {
         }
     }
 
-    /** Contrasena con la que se reabre el archivo recien guardado. */
     private static String nwavContrasenaTrasGuardar(NwavDocumentoPdf nwavDocumento) {
         NwavCambioProteccion nwavCambio = nwavDocumento.getNwavProteccionPendiente();
         if (nwavCambio == null) {
@@ -114,13 +98,6 @@ public class NwavArchivoPdfService {
         return nwavCambio.nwavQuitar() ? null : nwavCambio.nwavOpciones().nwavUsuario();
     }
 
-    /**
-     * PDFBox no guarda un documento cifrado sin una decision explicita. Nunca se quita la
-     * proteccion en silencio: se vuelve a cifrar con la misma contrasena de apertura y los
-     * mismos permisos. Si se abrio con permisos de propietario, esa contrasena tambien es la
-     * de propietario; si no, se usa una aleatoria (como no se conoce la original, nadie
-     * gana permisos que no tenia).
-     */
     private static void nwavMantenerProteccion(NwavDocumentoPdf nwavDocumento) throws IOException {
         PDDocument nwavPd = nwavDocumento.nwavPdDocument();
         if (!nwavPd.isEncrypted()) {
@@ -138,9 +115,6 @@ public class NwavArchivoPdfService {
         nwavPd.protect(nwavPolitica);
     }
 
-    // ---------------------------------------------------------------- extraer
-
-    /** Copia las paginas indicadas (en ese orden) a un PDF nuevo. El documento no cambia. */
     public Path nwavExtraer(NwavDocumentoPdf nwavDocumento, List<Integer> nwavIndices, Path nwavDestino) {
         Path nwavFinal = nwavDestino.toAbsolutePath().normalize();
         try {
@@ -156,12 +130,6 @@ public class NwavArchivoPdfService {
         }
     }
 
-    // ---------------------------------------------------------------- dividir
-
-    /**
-     * Crea un PDF por cada rango en {@code nwavCarpeta}, llamados
-     * "{base} - parte 01 (pág. 1-3).pdf". Nunca reemplaza archivos existentes.
-     */
     public List<Path> nwavDividir(NwavDocumentoPdf nwavDocumento, List<NwavRango> nwavRangos, Path nwavCarpeta,
                                   String nwavBase, NwavAvance nwavAvance) {
         Path nwavDirectorio = nwavCarpeta.toAbsolutePath().normalize();
@@ -198,9 +166,6 @@ public class NwavArchivoPdfService {
         }
     }
 
-    // ------------------------------------------------------------------- unir
-
-    /** Une los PDF en el orden dado. Los originales no se modifican. */
     public Path nwavUnir(List<Path> nwavOrigenes, Path nwavDestino, NwavAvance nwavAvance) {
         Path nwavFinal = nwavDestino.toAbsolutePath().normalize();
         List<PDDocument> nwavAbiertos = new ArrayList<>();
@@ -217,7 +182,7 @@ public class NwavArchivoPdfService {
                     nwavAvance.nwavInformar(nwavIndice, nwavOrigenes.size() + 1,
                             "Añadiendo «" + nwavOrigen.getFileName() + "»…");
                     PDDocument nwavFuente = nwavCargarParaUnir(nwavOrigen);
-                    nwavAbiertos.add(nwavFuente); // deben seguir abiertos hasta guardar
+                    nwavAbiertos.add(nwavFuente);
                     nwavUnion.appendDocument(nwavResultado, nwavFuente);
                 }
                 nwavAvance.nwavInformar(nwavOrigenes.size(), nwavOrigenes.size() + 1, "Guardando…");
@@ -249,8 +214,6 @@ public class NwavArchivoPdfService {
                     nwavError);
         }
     }
-
-    // --------------------------------------------------------------- internos
 
     private void nwavEscribirPaginas(NwavDocumentoPdf nwavDocumento, List<Integer> nwavIndices, Path nwavFinal) {
         if (nwavIndices == null || nwavIndices.isEmpty()) {
@@ -285,7 +248,6 @@ public class NwavArchivoPdfService {
         }
     }
 
-    /** Extraer o dividir nunca escribe sobre el documento abierto. */
     private static void nwavEvitarOriginal(NwavDocumentoPdf nwavDocumento, Path nwavFinal) {
         if (nwavFinal.equals(nwavDocumento.getNwavRuta())) {
             throw new NwavEditorException("Elige otro nombre: no se puede extraer sobre el documento abierto.");
@@ -323,7 +285,6 @@ public class NwavArchivoPdfService {
         }
     }
 
-    /** "informe.pdf" -> "informe (2).pdf" si ya existe. */
     static Path nwavSinColision(Path nwavRuta) {
         if (!Files.exists(nwavRuta)) {
             return nwavRuta;

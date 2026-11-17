@@ -11,9 +11,7 @@ import java.util.Locale;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Descripcion completa de una herramienta (lo que muestra su tarjeta y su pagina). */
 public final class NwavDefinicionHerramienta {
-
     private final String nwavId;
     private final String nwavNombre;
     private final String nwavDescripcion;
@@ -45,8 +43,6 @@ public final class NwavDefinicionHerramienta {
         this.nwavIcono = nwavIcono;
     }
 
-    // ------------------------------------------------------------ configuracion
-
     public NwavDefinicionHerramienta nwavLote(NwavTrabajo nwavTrabajo) {
         this.nwavModo = NwavModoHerramienta.NWAV_LOTE;
         this.nwavTrabajo = nwavTrabajo;
@@ -59,7 +55,6 @@ public final class NwavDefinicionHerramienta {
         return this;
     }
 
-    /** Accion del editor que no necesita un PDF abierto (p. ej. unir). */
     public NwavDefinicionHerramienta nwavSinDocumento() {
         this.nwavNecesitaDocumento = false;
         return this;
@@ -85,8 +80,6 @@ public final class NwavDefinicionHerramienta {
         return this;
     }
 
-    /** Herramienta que combina archivos: hace falta un minimo y el orden cuenta. */
-    /** La herramienta no necesita archivos de entrada (p. ej. convertir una URL). */
     public NwavDefinicionHerramienta nwavSinArchivos() {
         this.nwavMinimoArchivos = 0;
         return this;
@@ -113,7 +106,6 @@ public final class NwavDefinicionHerramienta {
         return this;
     }
 
-    /** Tras procesar, ofrece pasar los resultados a otra herramienta (p. ej. comprimir). */
     public NwavDefinicionHerramienta nwavOfrecer(String nwavOtraHerramienta, String nwavTexto) {
         this.nwavSiguiente = nwavOtraHerramienta;
         this.nwavTextoSiguiente = nwavTexto;
@@ -125,13 +117,10 @@ public final class NwavDefinicionHerramienta {
         return this;
     }
 
-    /** Aviso visible en la pagina de la herramienta (p. ej. "el resultado puede requerir ajustes"). */
     public NwavDefinicionHerramienta nwavConAviso(String nwavTexto) {
         this.nwavAviso = nwavTexto;
         return this;
     }
-
-    // ------------------------------------------------------------------ consulta
 
     public String getNwavId() {
         return nwavId;
@@ -205,7 +194,6 @@ public final class NwavDefinicionHerramienta {
         return nwavExtra;
     }
 
-    /** Estado de la dependencia externa, o disponible si no tiene. */
     public NwavDependenciasService.NwavEstado nwavEstado() {
         return nwavDependencia == null ? new NwavDependenciasService.NwavEstado(true, "", "") : nwavDependencia.get();
     }

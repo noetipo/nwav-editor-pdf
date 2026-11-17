@@ -8,7 +8,6 @@ import com.nwav.editorpdf.service.NwavRangosPaginas;
 import java.util.List;
 
 public class NwavComandoDuplicar extends NwavComandoEstructural {
-
     private final List<Integer> nwavIndices;
 
     public NwavComandoDuplicar(NwavPaginaService nwavServicio, NwavDocumentoPdf nwavDocumento,

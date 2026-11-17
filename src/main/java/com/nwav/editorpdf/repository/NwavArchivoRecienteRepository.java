@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface NwavArchivoRecienteRepository extends JpaRepository<NwavArchivoReciente, Long> {
-
     Optional<NwavArchivoReciente> findByNwavRuta(String nwavRuta);
 
     List<NwavArchivoReciente> findAllByOrderByNwavUltimaAperturaDesc();

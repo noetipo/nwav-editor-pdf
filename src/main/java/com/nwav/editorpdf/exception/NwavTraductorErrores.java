@@ -5,12 +5,7 @@ import java.nio.file.FileSystemException;
 import java.nio.file.NoSuchFileException;
 import java.util.Locale;
 
-/**
- * Convierte cualquier excepcion en una {@link NwavEditorException} con un mensaje
- * claro en espanol, para mostrarlo en la interfaz.
- */
 public final class NwavTraductorErrores {
-
     private static final int NWAV_PROFUNDIDAD_MAXIMA = 12;
 
     private NwavTraductorErrores() {
@@ -20,10 +15,6 @@ public final class NwavTraductorErrores {
         return nwavTraducir(nwavError, null).getMessage();
     }
 
-    /**
-     * @param nwavArchivo nombre del archivo involucrado, si se conoce; se usa en los
-     *                    mensajes de errores de entrada/salida.
-     */
     public static NwavEditorException nwavTraducir(Throwable nwavError, String nwavArchivo) {
         String nwavNombre = nwavArchivo == null ? "el archivo" : nwavArchivo;
         Throwable nwavActual = nwavError;
@@ -62,7 +53,6 @@ public final class NwavTraductorErrores {
                 || nwavTexto.contains("DATABASE IS LOCKED");
     }
 
-    /** Mensajes que da el sistema operativo cuando otro proceso bloquea el archivo. */
     public static boolean nwavEsArchivoEnUso(String nwavMensaje) {
         if (nwavMensaje == null) {
             return false;

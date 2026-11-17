@@ -83,23 +83,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/**
- * Redaccion REAL: en las zonas elegidas elimina del archivo el texto (glifo a glifo, sin
- * mover el resto), borra los pixeles de las imagenes, quita las anotaciones y campos que
- * caigan dentro y dibuja un recuadro opaco. Lo eliminado no se puede recuperar ni copiar
- * del archivo guardado. Opcionalmente limpia metadatos y datos ocultos.
- */
 @Service
 @RequiredArgsConstructor
 public class NwavRedaccionService {
-
     private final NwavPdfDocumentoService nwavDocumentos;
 
-    /** Zona a redactar, en coordenadas visuales de la pagina. */
     public record NwavZona(int nwavPagina, NwavRectangulo nwavRectangulo) {
     }
 
-    /** Patrones de datos personales que se pueden buscar automaticamente. */
     public enum NwavPatron {
         NWAV_CORREOS("Correos electrónicos", "[\\w.+-]+@[\\w-]+(?:\\.[\\w-]+)+"),
         NWAV_TELEFONOS("Teléfonos", "(?<![\\w])(?:\\+\\d{1,3}[\\s.-]?)?(?:\\(?\\d{2,4}\\)?[\\s.-]?){2,4}\\d{2,4}(?![\\w])"),
@@ -127,9 +118,6 @@ public class NwavRedaccionService {
     public record NwavResultadoRedaccion(Path nwavDestino, int nwavZonas, int nwavPaginas) {
     }
 
-    // ============================================================== archivos
-
-    /** Busca las palabras/patrones, redacta y guarda en un archivo nuevo. */
     public NwavResultadoRedaccion nwavRedactarBusqueda(Path nwavEntrada, String nwavContrasena, List<String> nwavTerminos,
                                                        Set<NwavPatron> nwavPatrones, boolean nwavLimpiar, Path nwavDestino,
                                                        NwavCancelacion nwavCancelacion) {
@@ -151,7 +139,6 @@ public class NwavRedaccionService {
         }
     }
 
-    /** Solo limpia metadatos y datos ocultos (sin redactar zonas). */
     public Path nwavLimpiarArchivo(Path nwavEntrada, String nwavContrasena, Path nwavDestino) {
         try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena)) {
             nwavLimpiarDatosOcultos(nwavPd);
@@ -162,7 +149,6 @@ public class NwavRedaccionService {
         }
     }
 
-    /** Redaccion sobre el documento abierto en el editor; se deshace restaurando la pagina. */
     public NwavComando nwavComandoRedactar(NwavDocumentoPdf nwavDocumento, List<NwavZona> nwavZonas) {
         if (nwavZonas == null || nwavZonas.isEmpty()) {
             throw new NwavEditorException("Marca al menos una zona.");
@@ -255,9 +241,6 @@ public class NwavRedaccionService {
         return nwavCopia;
     }
 
-    // ================================================================ buscar
-
-    /** Zonas de todas las coincidencias (terminos literales sin distinguir mayusculas, y patrones). */
     public List<NwavZona> nwavBuscar(PDDocument nwavPd, List<String> nwavTerminos, Set<NwavPatron> nwavPatrones,
                                      NwavCancelacion nwavCancelacion) throws IOException {
         List<Pattern> nwavExpresiones = new ArrayList<>();
@@ -293,7 +276,6 @@ public class NwavRedaccionService {
         return nwavZonas;
     }
 
-    /** Texto de la pagina con la posicion visual de cada caracter. */
     private static final class NwavLector extends PDFTextStripper {
         private final StringBuilder nwavTexto = new StringBuilder();
         private final List<TextPosition> nwavPosiciones = new ArrayList<>();
@@ -336,7 +318,6 @@ public class NwavRedaccionService {
             nwavPosiciones.add(null);
         }
 
-        /** Un rectangulo por linea que ocupa la coincidencia. */
         List<NwavRectangulo> nwavZonas(int nwavInicio, int nwavFin) {
             Map<Integer, double[]> nwavPorLinea = new LinkedHashMap<>();
             for (int nwavI = nwavInicio; nwavI < nwavFin && nwavI < nwavPosiciones.size(); nwavI++) {
@@ -358,9 +339,6 @@ public class NwavRedaccionService {
         }
     }
 
-    // ============================================================== redactar
-
-    /** Aplica las zonas sobre el documento (en memoria). */
     static void nwavAplicar(PDDocument nwavPd, List<NwavZona> nwavZonas, NwavCancelacion nwavCancelacion)
             throws IOException {
         Map<Integer, List<NwavRectangulo>> nwavPorPagina = nwavZonas.stream().collect(Collectors.groupingBy(
@@ -383,8 +361,6 @@ public class NwavRedaccionService {
             nwavZonas.add(new Rectangle2D.Float(nwavCaja.getLowerLeftX(), nwavCaja.getLowerLeftY(), nwavCaja.getWidth(),
                     nwavCaja.getHeight()));
         }
-        // Recursos propios de la pagina (copia): los objetos redactados se anaden aqui sin
-        // afectar a otras paginas que compartan recursos.
         PDResources nwavRecursos = new PDResources(nwavClonarRecursos(nwavPagina.getResources()));
         NwavReescritor nwavReescritor = new NwavReescritor(nwavPd, nwavZonas, nwavRecursos);
         nwavReescritor.processPage(nwavPagina);
@@ -396,7 +372,6 @@ public class NwavRedaccionService {
             nwavEscritor.writeTokens(Operator.getOperator("q"));
             nwavEscritor.writeTokens(nwavTokens);
             nwavEscritor.writeTokens(Operator.getOperator("Q"));
-            // recuadros opacos
             nwavEscritor.writeTokens(COSFloat.ZERO, COSFloat.ZERO, COSFloat.ZERO, Operator.getOperator("rg"));
             for (Rectangle2D nwavZona : nwavZonas) {
                 nwavEscritor.writeTokens(new COSFloat((float) nwavZona.getX()), new COSFloat((float) nwavZona.getY()),
@@ -405,12 +380,9 @@ public class NwavRedaccionService {
             }
         }
         nwavPagina.setContents(nwavNuevo);
-        // Lo sustituido (imagenes y formularios originales) deja de estar referenciado y no
-        // se guarda en el archivo.
         nwavPodarXObjetos(nwavRecursos, nwavTokens);
         nwavPagina.setResources(nwavRecursos);
 
-        // Anotaciones (y campos de formulario) que tocan alguna zona.
         List<PDAnnotation> nwavQuedan = new ArrayList<>();
         Set<COSDictionary> nwavWidgetsQuitados = new HashSet<>();
         for (PDAnnotation nwavAnotacion : nwavPagina.getAnnotations()) {
@@ -431,7 +403,6 @@ public class NwavRedaccionService {
         }
     }
 
-    /** Quita del formulario los campos cuyos widgets se eliminaron (su valor contiene datos). */
     private static void nwavQuitarCampos(PDDocument nwavPd, Set<COSDictionary> nwavWidgets) {
         PDAcroForm nwavFormulario = nwavPd.getDocumentCatalog().getAcroForm();
         if (nwavFormulario == null) {
@@ -442,7 +413,6 @@ public class NwavRedaccionService {
         nwavFormulario.setFields(nwavRaiz);
     }
 
-    /** true si el campo debe quitarse por completo. */
     private static boolean nwavFiltrar(PDField nwavCampo, Set<COSDictionary> nwavWidgets) {
         if (nwavCampo instanceof PDNonTerminalField nwavPadre) {
             List<PDField> nwavHijos = new ArrayList<>(nwavPadre.getChildren());
@@ -453,7 +423,6 @@ public class NwavRedaccionService {
         return nwavCampo.getWidgets().stream().anyMatch(nwavW -> nwavWidgets.contains(nwavW.getCOSObject()));
     }
 
-    /** Quita de los recursos los XObject que el contenido ya no dibuja. */
     private static void nwavPodarXObjetos(PDResources nwavRecursos, List<Object> nwavTokens) {
         COSDictionary nwavXObjetos = nwavRecursos.getCOSObject().getCOSDictionary(COSName.XOBJECT);
         if (nwavXObjetos == null) {
@@ -494,16 +463,10 @@ public class NwavRedaccionService {
         return nwavCopia;
     }
 
-    /**
-     * Recorre el contenido conservando cada operador y reescribiendo los que pintan texto o
-     * imagenes dentro de las zonas.
-     */
     private static final class NwavReescritor extends PDFStreamEngine {
         private final PDDocument nwavPd;
         private final List<Rectangle2D> nwavZonas;
-        /** Salida (tokens) del flujo que se esta reescribiendo: pagina o formulario anidado. */
         private final Deque<List<Object>> nwavSalida = new ArrayDeque<>();
-        /** Recursos donde registrar los objetos nuevos, en paralelo a {@link #nwavSalida}. */
         private final Deque<PDResources> nwavDestinos = new ArrayDeque<>();
         private List<NwavGlifo> nwavGlifos;
 
@@ -552,7 +515,6 @@ public class NwavRedaccionService {
                     if (!nwavToca(nwavCajaUnidad())) {
                         nwavCopiar(nwavOperador, nwavOperandos);
                     }
-                    // imagen en linea dentro de una zona: se elimina
                 }
                 default -> {
                     nwavCopiar(nwavOperador, nwavOperandos);
@@ -566,8 +528,6 @@ public class NwavRedaccionService {
             nwavActual().add(nwavOperador);
         }
 
-        // ------------------------------------------------------------- texto
-
         private void nwavTexto(Operator nwavOperador, List<COSBase> nwavOperandos) throws IOException {
             PDFont nwavFuente = getGraphicsState().getTextState().getFont();
             float nwavTamano = getGraphicsState().getTextState().getFontSize();
@@ -579,7 +539,6 @@ public class NwavRedaccionService {
                 nwavCopiar(nwavOperador, nwavOperandos);
                 return;
             }
-            // Elementos del texto mostrado, en orden.
             List<COSBase> nwavElementos = new ArrayList<>();
             String nwavNombre = nwavOperador.getName();
             if ("TJ".equals(nwavNombre)) {
@@ -612,7 +571,6 @@ public class NwavRedaccionService {
                             nwavNuevo.add(new COSString(nwavConservados.toByteArray()));
                             nwavConservados.reset();
                         }
-                        // Se sustituye el glifo por su avance: el resto del texto no se mueve.
                         nwavNuevo.add(new COSFloat(nwavMedido.nwavAjuste()));
                     } else {
                         nwavConservados.write(nwavBytes, nwavInicio, nwavLongitud);
@@ -632,7 +590,7 @@ public class NwavRedaccionService {
                 nwavActual().add(Operator.getOperator("T*"));
             }
             if (nwavTamano == 0) {
-                return; // texto de tamano 0: no se ve; se elimina entero
+                return;
             }
             nwavActual().add(nwavNuevo);
             nwavActual().add(Operator.getOperator("TJ"));
@@ -650,7 +608,6 @@ public class NwavRedaccionService {
             float nwavAvance = nwavDesplazamiento.getX() * nwavTamano + nwavEstado.getCharacterSpacing()
                     + (nwavEspacio ? nwavEstado.getWordSpacing() : 0);
             float nwavAjuste = nwavTamano == 0 ? 0 : -nwavAvance * 1000 / nwavTamano;
-            // Caja del glifo en el espacio de la pagina.
             AffineTransform nwavT = nwavTrm.createAffineTransform();
             float nwavAncho = Math.max(nwavDesplazamiento.getX(), 0.2f);
             Rectangle2D nwavCaja = nwavT.createTransformedShape(new Rectangle2D.Float(0, -0.2f, nwavAncho, 1f)).getBounds2D();
@@ -665,8 +622,6 @@ public class NwavRedaccionService {
         private static double nwavArea(Rectangle2D nwavR) {
             return Math.max(0, nwavR.getWidth()) * Math.max(0, nwavR.getHeight());
         }
-
-        // ---------------------------------------------------------- objetos
 
         private Rectangle2D nwavCajaUnidad() {
             return getGraphicsState().getCurrentTransformationMatrix().createAffineTransform()
@@ -690,7 +645,7 @@ public class NwavRedaccionService {
                     return;
                 }
                 if (nwavImagen.isStencil()) {
-                    return; // mascara que toca la zona: se elimina (la cubre el recuadro)
+                    return;
                 }
                 PDImageXObject nwavRedactada = nwavRedactarImagen(nwavImagen);
                 COSName nwavNuevoNombre = nwavDestinos.peek().add(nwavRedactada, "Red");
@@ -705,7 +660,6 @@ public class NwavRedaccionService {
                     nwavCopiar(nwavOperador, nwavOperandos);
                     return;
                 }
-                // Se reescribe una copia del formulario con sus propios recursos.
                 PDResources nwavRecursosCopia = new PDResources(nwavClonarRecursos(nwavFormulario.getResources()));
                 nwavSalida.push(new ArrayList<>());
                 nwavDestinos.push(nwavRecursosCopia);
@@ -751,7 +705,6 @@ public class NwavRedaccionService {
             return nwavCopia;
         }
 
-        /** Copia de la imagen con los pixeles de las zonas pintados de negro. */
         private PDImageXObject nwavRedactarImagen(PDImageXObject nwavImagen) throws IOException {
             BufferedImage nwavPixeles = nwavImagen.getImage();
             BufferedImage nwavCopia = new BufferedImage(nwavPixeles.getWidth(), nwavPixeles.getHeight(),
@@ -759,7 +712,6 @@ public class NwavRedaccionService {
             Graphics2D nwavG = nwavCopia.createGraphics();
             nwavG.drawImage(nwavPixeles, 0, 0, null);
             nwavG.setColor(java.awt.Color.BLACK);
-            // pagina -> cuadrado unidad de la imagen -> pixeles (el eje Y de la imagen va hacia abajo)
             AffineTransform nwavAPagina = getGraphicsState().getCurrentTransformationMatrix().createAffineTransform();
             AffineTransform nwavAPixeles = new AffineTransform(nwavPixeles.getWidth(), 0, 0, -nwavPixeles.getHeight(), 0,
                     nwavPixeles.getHeight());
@@ -777,12 +729,6 @@ public class NwavRedaccionService {
         }
     }
 
-    // ============================================================ limpiar
-
-    /**
-     * Quita metadatos (informacion del documento y XMP), JavaScript, archivos adjuntos,
-     * miniaturas y datos privados de aplicaciones (PieceInfo). Conserva el contenido visible.
-     */
     public static void nwavLimpiarDatosOcultos(PDDocument nwavPd) {
         PDDocumentInformation nwavLimpia = new PDDocumentInformation();
         nwavLimpia.setProducer("NWAV Editor PDF");

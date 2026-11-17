@@ -34,9 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
-/** Formularios, marca de agua, encabezado/pie, metadatos y busqueda (sin Spring). */
 class NwavHerramientasServiceTest {
-
     private final NwavPdfDocumentoService nwavDocumentos = new NwavPdfDocumentoService();
     private final NwavContenidoService nwavContenido = new NwavContenidoService();
     private final NwavSelloService nwavSellos = new NwavSelloService(nwavContenido);
@@ -66,8 +64,6 @@ class NwavHerramientasServiceTest {
             nwavDocumento.nwavPdDocument().save(nwavDestino.toFile());
         }
     }
-
-    // ============================================================ formularios
 
     @Test
     void nwavListaLosCamposConTipoEtiquetaYPosicion() throws Exception {
@@ -112,7 +108,6 @@ class NwavHerramientasServiceTest {
             PDAcroForm nwavFormulario = nwavReabierto.getDocumentCatalog().getAcroForm();
             assertThat(nwavFormulario.getField("nombre").getValueAsString()).isEqualTo("José Pérez");
             assertThat(nwavFormulario.getField("pais").getValueAsString()).contains("Chile");
-            // La apariencia se regenero: el valor se ve al renderizar la pagina (zona del campo).
             BufferedImage nwavImagen = new org.apache.pdfbox.rendering.PDFRenderer(nwavReabierto).renderImage(0, 1f);
             int nwavOscuros = 0;
             for (int nwavX = 102; nwavX < 250; nwavX++) {
@@ -142,8 +137,6 @@ class NwavHerramientasServiceTest {
         assertThat(nwavFormularios.nwavListar(nwavDocumento)).isEmpty();
     }
 
-    // ========================================================== marca de agua
-
     @Test
     void nwavMarcaDeAguaDeTextoEnLasPaginasElegidas() throws Exception {
         nwavDocumento = nwavDocumentos.nwavAbrir(NwavPdfDePrueba.nwavCrear(nwavCarpeta, "m.pdf", 3), null);
@@ -169,7 +162,6 @@ class NwavHerramientasServiceTest {
 
         BufferedImage nwavImagen = nwavRender.nwavRenderizarPagina(nwavDocumento, 0, 1f);
         Color nwavCentro = new Color(nwavImagen.getRGB(nwavImagen.getWidth() / 2, nwavImagen.getHeight() / 2));
-        // Azul (42,120,214) al 50 % sobre blanco: ni blanco ni azul puro.
         assertThat(nwavCentro.getBlue()).isGreaterThan(200);
         assertThat(nwavCentro.getRed()).isBetween(120, 170);
         assertThat(new Color(nwavImagen.getRGB(30, nwavImagen.getHeight() / 2))).isEqualTo(Color.WHITE);
@@ -185,8 +177,6 @@ class NwavHerramientasServiceTest {
                 NwavTipoMarcaAgua.NWAV_IMAGEN, null, null, null, 40, null, 0.3, 45, 1, "")))
                 .hasMessageContaining("imagen");
     }
-
-    // ===================================================== encabezado y numeros
 
     @Test
     void nwavNumeraLasPaginasYPoneEncabezado() throws Exception {
@@ -218,8 +208,6 @@ class NwavHerramientasServiceTest {
                 LocalDate.of(2026, 11, 17))).isEqualTo("2 de 9 · a.pdf · 17/11/2026");
     }
 
-    // ================================================================ metadatos
-
     @Test
     void nwavEditaYDeshaceLosMetadatos() throws Exception {
         nwavDocumento = nwavDocumentos.nwavAbrir(NwavPdfDePrueba.nwavCrear(nwavCarpeta, "meta.pdf", 2), null);
@@ -244,8 +232,6 @@ class NwavHerramientasServiceTest {
         nwavGestor().nwavDeshacer();
         assertThat(nwavMetadatos.nwavLeer(nwavDocumento).nwavMetadatos().nwavTitulo()).isNull();
     }
-
-    // ================================================================= busqueda
 
     @Test
     void nwavBuscaSinDistinguirMayusculasNiTildes() throws Exception {

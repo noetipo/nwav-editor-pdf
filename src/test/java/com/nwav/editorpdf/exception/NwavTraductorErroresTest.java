@@ -9,7 +9,6 @@ import java.sql.SQLException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NwavTraductorErroresTest {
-
     @Test
     void nwavReconoceLaBaseDeDatosBloqueada() {
         RuntimeException nwavError = new RuntimeException("fallo al guardar",

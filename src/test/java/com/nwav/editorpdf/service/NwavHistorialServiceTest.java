@@ -14,7 +14,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class NwavHistorialServiceTest {
-
     @Test
     void nwavUnFalloDeLaBaseNoInterrumpeLaOperacion() {
         NwavHistorialOperacionRepository nwavRepositorio = mock(NwavHistorialOperacionRepository.class);

@@ -3,7 +3,6 @@ package com.nwav.editorpdf.ui;
 import javafx.scene.paint.Color;
 import org.kordamp.ikonli.feather.Feather;
 
-/** Herramientas de edicion del visor. */
 public enum NwavHerramienta {
     NWAV_NAVEGAR("Navegar", Feather.MOUSE_POINTER, null,
             "Desplázate por el documento. Elige una herramienta para editar la página."),
@@ -81,7 +80,6 @@ public enum NwavHerramienta {
         return this == NWAV_TEXTO;
     }
 
-    /** Herramientas que se usan arrastrando un rectangulo. */
     public boolean nwavEsDeZona() {
         return this == NWAV_RESALTAR || this == NWAV_SUBRAYAR || this == NWAV_TACHAR || this == NWAV_RECTANGULO
                 || this == NWAV_ELIPSE || this == NWAV_CUBRIR || this == NWAV_TEXTO || this == NWAV_RECORTAR

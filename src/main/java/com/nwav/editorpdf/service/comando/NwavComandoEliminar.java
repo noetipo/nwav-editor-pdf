@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class NwavComandoEliminar extends NwavComandoEstructural {
-
     private final List<Integer> nwavIndices;
 
     public NwavComandoEliminar(NwavPaginaService nwavServicio, NwavDocumentoPdf nwavDocumento,

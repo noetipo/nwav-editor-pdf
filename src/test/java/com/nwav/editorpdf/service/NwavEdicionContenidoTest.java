@@ -26,9 +26,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Ediciones de contenido a traves del servicio de edicion: historial, deshacer y guardado. */
 class NwavEdicionContenidoTest extends NwavPruebaConBaseDatos {
-
     @Autowired private NwavEdicionService nwavEdicion;
     @Autowired private NwavArchivoPdfService nwavArchivos;
     @Autowired private NwavPdfDocumentoService nwavDocumentos;
@@ -70,7 +68,6 @@ class NwavEdicionContenidoTest extends NwavPruebaConBaseDatos {
                         NwavTipoOperacion.NWAV_RESALTAR, NwavTipoOperacion.NWAV_CUBRIR, NwavTipoOperacion.NWAV_IMAGEN,
                         NwavTipoOperacion.NWAV_TEXTO);
 
-        // Deshacer la forma y guardar: el resultado conserva el resto.
         assertThat(nwavEdicion.nwavDeshacer(nwavDocumento)).get()
                 .extracting(NwavResultadoEdicion::nwavEstructural).isEqualTo(false);
         try (NwavDocumentoPdf nwavGuardado = nwavArchivos.nwavGuardarComo(nwavDocumento, nwavCopia)) {

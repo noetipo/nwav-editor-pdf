@@ -1,8 +1,3 @@
-/* =====================================================================
-   NWAV Editor PDF — estilos sobre AtlantaFX Primer Light / Dark.
-   Basado en el tema de la plantilla: todos los colores usan los tokens
-   -color-* del tema, asi que el modo oscuro funciona sin reglas duplicadas.
-   ===================================================================== */
 
 .nwav-app {
     -fx-background-color: -color-bg-subtle;
@@ -15,8 +10,6 @@
     -nwav-lienzo: #15181d;
     -nwav-sombra-pagina: rgba(0, 0, 0, 0.55);
 }
-
-/* ============================ MENU LATERAL ============================ */
 
 .nwav-sidebar {
     -fx-background-color: -color-bg-default;
@@ -114,8 +107,6 @@
     -fx-padding: 6 0 6 0;
 }
 
-/* ======================== CONTENIDO Y ESTADO ========================== */
-
 .nwav-contenido {
     -fx-background-color: -color-bg-subtle;
 }
@@ -142,8 +133,6 @@
     -fx-background-radius: 4;
     -fx-background-insets: 0;
 }
-
-/* ============================== PAGINAS =============================== */
 
 .nwav-pagina {
     -fx-padding: 30 34 26 34;
@@ -252,8 +241,6 @@
     -fx-text-fill: -color-danger-fg;
 }
 
-/* =========================== ESTADO VACIO ============================= */
-
 .nwav-vacio {
     -fx-padding: 32;
 }
@@ -291,8 +278,6 @@
 .nwav-vacio-acciones {
     -fx-padding: 10 0 0 0;
 }
-
-/* =============================== VISOR ================================ */
 
 .nwav-barra-visor {
     -fx-background-color: -color-bg-default;
@@ -386,8 +371,6 @@
     -fx-font-size: 13px;
 }
 
-/* ======================== ARRASTRAR Y SOLTAR ========================== */
-
 .nwav-capa-arrastre {
     -fx-background-color: rgba(42, 120, 214, 0.10);
     -fx-border-color: -color-accent-emphasis;
@@ -414,8 +397,6 @@
     -fx-font-weight: bold;
     -fx-text-fill: -color-fg-default;
 }
-
-/* ============================= RECIENTES ============================== */
 
 .nwav-lista-recientes,
 .nwav-lista-recientes:focused {
@@ -483,8 +464,6 @@
     -fx-opacity: 0.6;
 }
 
-/* ====================== DIALOGOS Y NOTIFICACIONES ===================== */
-
 .nwav-dialogo {
     -fx-background-color: -color-bg-default;
     -fx-background-radius: 18;
@@ -548,8 +527,6 @@
 .nwav-toast > .container {
     -fx-background-radius: 12;
 }
-
-/* ===================== FASE 2: PANELES LATERALES ====================== */
 
 .nwav-panel {
     -fx-background-color: -color-bg-default;
@@ -629,8 +606,6 @@
     -fx-padding: 8 10 8 10;
 }
 
-/* ===================== FASE 2: REORDENAR MINIATURAS =================== */
-
 .nwav-lista-miniaturas .nwav-celda-miniatura:nwav-soltar-antes {
     -fx-border-color: -color-accent-emphasis transparent transparent transparent;
     -fx-border-width: 3 0 0 0;
@@ -640,8 +615,6 @@
     -fx-border-color: transparent transparent -color-accent-emphasis transparent;
     -fx-border-width: 0 0 3 0;
 }
-
-/* ============================ FASE 2: VARIOS ========================== */
 
 .nwav-chip-exito {
     -fx-background-color: -color-success-subtle;
@@ -656,7 +629,6 @@
     -fx-icon-color: -color-warning-fg;
 }
 
-/* Tabla (estilo de la plantilla) */
 .nwav-tabla {
     -fx-background-color: transparent;
     -fx-border-color: -color-border-muted;
@@ -683,8 +655,6 @@
     -fx-alignment: CENTER_LEFT;
     -fx-padding: 0 10 0 10;
 }
-
-/* ================== FASE 3: EDICION DE CONTENIDO ====================== */
 
 .nwav-barra-edicion {
     -fx-background-color: -color-bg-default;
@@ -777,8 +747,6 @@
     -fx-border-width: 1;
 }
 
-/* ======================= FASE 4: HERRAMIENTAS ========================= */
-
 .nwav-barra-busqueda {
     -fx-background-color: -color-bg-default;
     -fx-border-color: transparent transparent -color-border-muted transparent;
@@ -829,8 +797,6 @@
 .nwav-fila-firma .image-view {
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 4, 0, 0, 1);
 }
-
-/* ================= HERRAMIENTAS: INICIO Y PAGINA COMUN ================== */
 
 .nwav-titulo-categoria {
     -fx-font-size: 11px;

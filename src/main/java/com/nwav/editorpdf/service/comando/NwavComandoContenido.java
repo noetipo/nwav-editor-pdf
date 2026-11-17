@@ -5,13 +5,7 @@ import com.nwav.editorpdf.service.NwavContenidoService;
 import com.nwav.editorpdf.service.NwavDocumentoPdf;
 import com.nwav.editorpdf.service.NwavInstantaneaPagina;
 
-/**
- * Comando que cambia el contenido o las anotaciones de una pagina. La primera ejecucion
- * dibuja y guarda una foto de la pagina antes y despues; deshacer y rehacer restauran la
- * foto correspondiente. No cambia el numero ni el orden de paginas.
- */
 public class NwavComandoContenido implements NwavComando {
-
     private final NwavContenidoService nwavServicio;
     private final NwavDocumentoPdf nwavDocumento;
     private final int nwavPagina;
@@ -42,7 +36,7 @@ public class NwavComandoContenido implements NwavComando {
             try {
                 nwavAccion.run();
             } catch (RuntimeException nwavError) {
-                nwavServicio.nwavRestaurar(nwavDocumento, nwavAntes); // sin cambios a medias
+                nwavServicio.nwavRestaurar(nwavDocumento, nwavAntes);
                 throw nwavError;
             }
             nwavDespues = nwavServicio.nwavCapturar(nwavDocumento, nwavPagina);

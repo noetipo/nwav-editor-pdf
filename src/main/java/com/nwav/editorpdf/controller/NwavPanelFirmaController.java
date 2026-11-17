@@ -35,14 +35,9 @@ import java.io.File;
 import java.nio.file.Files;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Panel "Firmar": firmas guardadas (SQLite) y creacion de nuevas, dibujadas o cargadas
- * desde una imagen. Son firmas visuales, no firmas digitales con certificado.
- */
 @Component
 @RequiredArgsConstructor
 public class NwavPanelFirmaController implements NwavPanel {
-
     private static final DateTimeFormatter NWAV_FORMATO = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final Color NWAV_TINTA = Color.rgb(16, 37, 120);
 
@@ -255,7 +250,6 @@ public class NwavPanelFirmaController implements NwavPanel {
         nwavNotificador.nwavCerrarPanel();
     }
 
-    /** Fila con la imagen de la firma y su nombre. */
     private static final class NwavCeldaFirma extends ListCell<NwavFirma> {
         private final ImageView nwavVista = new ImageView();
         private final Label nwavNombre = new Label();

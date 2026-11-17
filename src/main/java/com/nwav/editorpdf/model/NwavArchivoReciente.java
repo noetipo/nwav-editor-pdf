@@ -14,20 +14,17 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/** Archivo abierto recientemente y la posicion en la que se dejo. */
 @Entity
 @Table(name = "nwav_archivo_reciente")
 @Getter
 @Setter
 @NoArgsConstructor
 public class NwavArchivoReciente {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "nwav_id")
     private Long nwavId;
 
-    /** Ruta absoluta y normalizada: es la clave natural del registro. */
     @Column(name = "nwav_ruta", nullable = false, unique = true, length = 2048)
     private String nwavRuta;
 
@@ -37,7 +34,6 @@ public class NwavArchivoReciente {
     @Column(name = "nwav_ultima_apertura", nullable = false)
     private LocalDateTime nwavUltimaApertura;
 
-    /** Indice de pagina, empezando en 0. */
     @Column(name = "nwav_ultima_pagina", nullable = false)
     private int nwavUltimaPagina;
 

@@ -24,11 +24,9 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
-/** Panel "Dividir PDF": un archivo por rango o por bloques de N paginas. */
 @Component
 @RequiredArgsConstructor
 public class NwavPanelDividirController implements NwavPanel {
-
     private static final int NWAV_RANGOS_EN_RESUMEN = 6;
 
     private final NwavVisorController nwavVisor;

@@ -6,16 +6,10 @@ import javafx.scene.image.WritableImage;
 
 import java.awt.image.BufferedImage;
 
-/**
- * Convierte imagenes AWT (las que produce PDFBox) a imagenes JavaFX sin depender del
- * modulo javafx-swing. Se puede llamar desde un hilo de fondo.
- */
 public final class NwavImagenFx {
-
     private NwavImagenFx() {
     }
 
-    /** Imagen JavaFX (p. ej. un lienzo de dibujo) a bytes PNG, conservando la transparencia. */
     public static byte[] nwavAPng(Image nwavImagen) {
         int nwavAncho = (int) nwavImagen.getWidth();
         int nwavAlto = (int) nwavImagen.getHeight();
