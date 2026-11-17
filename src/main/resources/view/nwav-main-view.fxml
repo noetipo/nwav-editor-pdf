@@ -44,6 +44,10 @@
                                       styleClass="nwav-nav-item" maxWidth="Infinity">
                             <graphic><FontIcon iconLiteral="fth-clock"/></graphic>
                         </ToggleButton>
+                        <ToggleButton fx:id="nwavNavHistorial" text="Historial" toggleGroup="$nwavMenu"
+                                      styleClass="nwav-nav-item" maxWidth="Infinity">
+                            <graphic><FontIcon iconLiteral="fth-list"/></graphic>
+                        </ToggleButton>
 
                         <Label text="AJUSTES" styleClass="nwav-nav-seccion"/>
                         <ToggleButton fx:id="nwavNavPreferencias" text="Preferencias" toggleGroup="$nwavMenu"
@@ -76,10 +80,38 @@
                             <MenuItem text="Abrir…" onAction="#nwavOnAbrir" accelerator="Shortcut+O"/>
                             <Menu fx:id="nwavMnuRecientes" text="Abrir reciente"/>
                             <SeparatorMenuItem/>
+                            <MenuItem fx:id="nwavMnuGuardar" text="Guardar…" onAction="#nwavOnGuardar"
+                                      accelerator="Shortcut+S"/>
+                            <MenuItem fx:id="nwavMnuGuardarComo" text="Guardar como…" onAction="#nwavOnGuardarComo"
+                                      accelerator="Shortcut+Shift+S"/>
+                            <SeparatorMenuItem/>
+                            <MenuItem text="Unir PDF…" onAction="#nwavOnUnir"/>
+                            <SeparatorMenuItem/>
                             <MenuItem fx:id="nwavMnuCerrar" text="Cerrar documento"
                                       onAction="#nwavOnCerrarDocumento" accelerator="Shortcut+W"/>
                             <SeparatorMenuItem/>
                             <MenuItem text="Salir" onAction="#nwavOnSalir" accelerator="Shortcut+Q"/>
+                        </Menu>
+                        <Menu text="Editar">
+                            <MenuItem fx:id="nwavMnuDeshacer" text="Deshacer" onAction="#nwavOnDeshacer"
+                                      accelerator="Shortcut+Z"/>
+                            <MenuItem fx:id="nwavMnuRehacer" text="Rehacer" onAction="#nwavOnRehacer"
+                                      accelerator="Shortcut+Shift+Z"/>
+                        </Menu>
+                        <Menu fx:id="nwavMnuPaginas" text="Páginas">
+                            <MenuItem text="Rotar a la izquierda" onAction="#nwavOnRotarIzquierda"
+                                      accelerator="Shortcut+Shift+L"/>
+                            <MenuItem text="Rotar a la derecha" onAction="#nwavOnRotarDerecha"
+                                      accelerator="Shortcut+Shift+R"/>
+                            <MenuItem text="Girar 180°" onAction="#nwavOnGirar180"/>
+                            <SeparatorMenuItem/>
+                            <MenuItem text="Duplicar" onAction="#nwavOnDuplicar" accelerator="Shortcut+D"/>
+                            <MenuItem text="Eliminar" onAction="#nwavOnEliminar"/>
+                            <SeparatorMenuItem/>
+                            <MenuItem text="Insertar páginas…" onAction="#nwavOnInsertar" accelerator="Shortcut+I"/>
+                            <MenuItem text="Extraer páginas…" onAction="#nwavOnExtraer" accelerator="Shortcut+E"/>
+                            <MenuItem text="Dividir PDF…" onAction="#nwavOnDividir"/>
+                            <MenuItem id="nwavMnuUnir" text="Unir PDF…" onAction="#nwavOnUnir"/>
                         </Menu>
                         <Menu fx:id="nwavMnuVer" text="Ver">
                             <MenuItem text="Acercar" onAction="#nwavOnAcercar" accelerator="Shortcut+Plus"/>

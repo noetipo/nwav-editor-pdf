@@ -114,6 +114,47 @@ public class NwavNotificador {
         nwavAceptar.requestFocus();
     }
 
+    /** Opcion de un dialogo de eleccion. La que tiene {@code nwavPorDefecto} responde a Intro. */
+    public record NwavOpcion(String nwavTexto, String nwavEstilo, Runnable nwavAccion, boolean nwavPorDefecto) {
+
+        public static NwavOpcion nwavCancelar() {
+            return new NwavOpcion("Cancelar", Styles.BUTTON_OUTLINED, null, false);
+        }
+    }
+
+    /**
+     * Dialogo con varias acciones (p. ej. "Cancelar / Descartar / Guardar como…").
+     * La primera opcion sin accion actua como cancelar (tecla Esc).
+     */
+    public void nwavElegir(String nwavTitulo, String nwavMensaje, boolean nwavAdvertencia, NwavOpcion... nwavOpciones) {
+        Button[] nwavBotones = new Button[nwavOpciones.length];
+        Button nwavFoco = null;
+        for (int nwavIndice = 0; nwavIndice < nwavOpciones.length; nwavIndice++) {
+            NwavOpcion nwavOpcion = nwavOpciones[nwavIndice];
+            Button nwavBoton = new Button(nwavOpcion.nwavTexto());
+            for (String nwavClase : nwavOpcion.nwavEstilo().split(",")) {
+                nwavBoton.getStyleClass().add(nwavClase.trim());
+            }
+            nwavBoton.setCancelButton(nwavOpcion.nwavAccion() == null);
+            nwavBoton.setDefaultButton(nwavOpcion.nwavPorDefecto());
+            nwavBoton.setOnAction(nwavEvento -> {
+                nwavModalDialogo.hide();
+                if (nwavOpcion.nwavAccion() != null) {
+                    nwavOpcion.nwavAccion().run();
+                }
+            });
+            if (nwavOpcion.nwavPorDefecto()) {
+                nwavFoco = nwavBoton;
+            }
+            nwavBotones[nwavIndice] = nwavBoton;
+        }
+        nwavMostrarDialogo(nwavAdvertencia ? Feather.ALERT_TRIANGLE : Feather.SAVE,
+                nwavAdvertencia ? "nwav-aviso" : "nwav-acento", nwavTitulo, nwavMensaje, null, nwavBotones);
+        if (nwavFoco != null) {
+            nwavFoco.requestFocus();
+        }
+    }
+
     /**
      * Pide la contrasena de un PDF protegido.
      *

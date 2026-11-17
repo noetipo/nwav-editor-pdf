@@ -1,5 +1,6 @@
 package com.nwav.editorpdf.controller;
 
+import atlantafx.base.theme.Styles;
 import com.nwav.editorpdf.exception.NwavArchivoNoEncontradoException;
 import com.nwav.editorpdf.exception.NwavContrasenaIncorrectaException;
 import com.nwav.editorpdf.exception.NwavContrasenaRequeridaException;
@@ -7,17 +8,26 @@ import com.nwav.editorpdf.exception.NwavTraductorErrores;
 import com.nwav.editorpdf.model.NwavArchivoReciente;
 import com.nwav.editorpdf.model.NwavModoZoom;
 import com.nwav.editorpdf.model.NwavZoomPreferido;
+import com.nwav.editorpdf.service.NwavArchivoPdfService;
 import com.nwav.editorpdf.service.NwavArchivoRecienteService;
 import com.nwav.editorpdf.service.NwavConfiguracionService;
 import com.nwav.editorpdf.service.NwavDocumentoPdf;
+import com.nwav.editorpdf.service.NwavEdicionService;
+import com.nwav.editorpdf.service.NwavEdicionService.NwavResultadoEdicion;
 import com.nwav.editorpdf.service.NwavPdfDocumentoService;
 import com.nwav.editorpdf.service.NwavPdfRenderService;
+import com.nwav.editorpdf.service.comando.NwavGestorComandos;
+import com.nwav.editorpdf.ui.NwavCargadorVistas;
 import com.nwav.editorpdf.ui.NwavCeldaMiniatura;
 import com.nwav.editorpdf.ui.NwavImagenFx;
 import com.nwav.editorpdf.ui.NwavNotificador;
+import com.nwav.editorpdf.ui.NwavNotificador.NwavOpcion;
+import com.nwav.editorpdf.ui.NwavPanel;
 import com.nwav.editorpdf.ui.NwavTareaFondo;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
@@ -28,16 +38,23 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.IndexedCell;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.DragEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.ZoomEvent;
@@ -48,6 +65,8 @@ import javafx.stage.Window;
 import javafx.util.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.kordamp.ikonli.feather.Feather;
+import org.kordamp.ikonli.javafx.FontIcon;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -59,15 +78,17 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.IntSupplier;
 import java.util.stream.IntStream;
 
 /**
- * Visor de PDF: scroll continuo, zoom, navegacion por pagina y panel de miniaturas.
+ * Visor y editor de paginas: scroll continuo, zoom, navegacion, panel de miniaturas
+ * (que tambien sirve para seleccionar y reordenar) y las operaciones de pagina.
  * <p>
- * Solo coordina la interfaz: abrir y dibujar paginas lo hacen los servicios, siempre
- * en segundo plano. Solo se renderizan las paginas cercanas a la zona visible; las
- * lejanas sueltan su imagen para no acumular memoria con documentos grandes.
+ * Solo coordina la interfaz: abrir, dibujar, editar y guardar lo hacen los servicios,
+ * siempre en segundo plano. Las ediciones se aplican en memoria; el original solo se
+ * reemplaza si el usuario lo confirma de forma explicita.
  */
 @Component
 @RequiredArgsConstructor
@@ -82,18 +103,30 @@ public class NwavVisorController {
     public static final double[] NWAV_PASOS_ZOOM = {
             0.10, 0.25, 0.33, 0.50, 0.67, 0.75, 0.90, 1.00, 1.10, 1.25, 1.50, 1.75, 2.00, 2.50, 3.00, 4.00, 5.00,
             6.00, 8.00};
+    public static final String NWAV_PANEL_EXTRAER = "nwav-panel-extraer";
+    public static final String NWAV_PANEL_DIVIDIR = "nwav-panel-dividir";
+    public static final String NWAV_PANEL_INSERTAR = "nwav-panel-insertar";
+    public static final String NWAV_PANEL_UNIR = "nwav-panel-unir";
     private static final int NWAV_PAGINAS_ANTICIPADAS = 2;
     private static final int NWAV_PAGINAS_CONSERVADAS = 6;
     private static final int NWAV_MINIATURAS_EN_MEMORIA = 400;
+    private static final double NWAV_BORDE_AUTODESPLAZAMIENTO = 36;
 
     private final NwavPdfDocumentoService nwavPdfService;
     private final NwavPdfRenderService nwavRenderService;
     private final NwavArchivoRecienteService nwavRecientes;
     private final NwavConfiguracionService nwavConfiguracion;
+    private final NwavEdicionService nwavEdicion;
+    private final NwavArchivoPdfService nwavArchivos;
     private final NwavTareaFondo nwavTareaFondo;
     private final NwavNotificador nwavNotificador;
+    private final NwavCargadorVistas nwavCargador;
 
     @FXML private Button nwavBtnCerrar;
+    @FXML private Button nwavBtnGuardarComo;
+    @FXML private Button nwavBtnDeshacer;
+    @FXML private Button nwavBtnRehacer;
+    @FXML private MenuButton nwavMbtPaginas;
     @FXML private Button nwavBtnAnterior;
     @FXML private Button nwavBtnSiguiente;
     @FXML private Button nwavBtnAlejar;
@@ -150,8 +183,15 @@ public class NwavVisorController {
 
     private final BooleanProperty nwavHayDocumento = new SimpleBooleanProperty(false);
     private final BooleanProperty nwavMiniaturasVisibles = new SimpleBooleanProperty(true);
+    private final BooleanProperty nwavEditando = new SimpleBooleanProperty(false);
+    private final BooleanProperty nwavSinGuardar = new SimpleBooleanProperty(false);
+    private final BooleanProperty nwavPuedeDeshacer = new SimpleBooleanProperty(false);
+    private final BooleanProperty nwavPuedeRehacer = new SimpleBooleanProperty(false);
+    private final StringProperty nwavTextoDeshacer = new SimpleStringProperty("Deshacer");
+    private final StringProperty nwavTextoRehacer = new SimpleStringProperty("Rehacer");
     private final StringProperty nwavTitulo = new SimpleStringProperty("");
     private final StringProperty nwavEstado = new SimpleStringProperty("Sin documento");
+    private BooleanBinding nwavPuedeEditar;
 
     private Runnable nwavAccionVerRecientes = () -> { };
     private Runnable nwavAlCambiarRecientes = () -> { };
@@ -164,6 +204,7 @@ public class NwavVisorController {
         nwavPausaGuardado.setOnFinished(nwavEvento -> nwavGuardarEstadoEnFondo());
         nwavPausaAjuste = new PauseTransition(Duration.millis(90));
         nwavPausaAjuste.setOnFinished(nwavEvento -> nwavReaplicarAjuste());
+        nwavPuedeEditar = nwavHayDocumento.and(nwavEditando.not());
 
         nwavContenedorPaginas.setPadding(new Insets(NWAV_MARGEN_DOCUMENTO));
         nwavContenedorPaginas.setSpacing(NWAV_ESPACIO_PAGINAS);
@@ -239,13 +280,7 @@ public class NwavVisorController {
             }
         });
 
-        nwavListaMiniaturas.setCellFactory(nwavLista ->
-                new NwavCeldaMiniatura(nwavProveedorMiniaturas(), NWAV_ANCHO_MINIATURA));
-        nwavListaMiniaturas.getSelectionModel().selectedItemProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
-            if (!nwavActualizandoControles && nwavAhora != null && nwavAhora != nwavPaginaActual) {
-                nwavIrAPagina(nwavAhora);
-            }
-        });
+        nwavConfigurarMiniaturas();
 
         nwavMiniaturasVisibles.set(nwavConfiguracion.nwavMiniaturasVisibles());
         nwavTglMiniaturas.selectedProperty().bindBidirectional(nwavMiniaturasVisibles);
@@ -260,8 +295,68 @@ public class NwavVisorController {
                 nwavBtnAcercar, nwavTglAjustarAncho, nwavTglAjustarPagina, nwavTxtPagina, nwavCmbZoom)) {
             nwavControl.disableProperty().bind(nwavHayDocumento.not());
         }
+        nwavBtnGuardarComo.disableProperty().bind(nwavPuedeEditar.not());
+        nwavMbtPaginas.disableProperty().bind(nwavPuedeEditar.not());
+        nwavBtnDeshacer.disableProperty().bind(nwavPuedeEditar.not().or(nwavPuedeDeshacer.not()));
+        nwavBtnRehacer.disableProperty().bind(nwavPuedeEditar.not().or(nwavPuedeRehacer.not()));
+        nwavBtnDeshacer.setTooltip(new Tooltip());
+        nwavBtnDeshacer.getTooltip().textProperty().bind(nwavTextoDeshacer);
+        nwavBtnRehacer.setTooltip(new Tooltip());
+        nwavBtnRehacer.getTooltip().textProperty().bind(nwavTextoRehacer);
         nwavMostrarZoomEnControles();
         nwavMostrarPaginaEnControles();
+    }
+
+    private void nwavConfigurarMiniaturas() {
+        nwavListaMiniaturas.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        nwavListaMiniaturas.setCellFactory(nwavLista ->
+                new NwavCeldaMiniatura(nwavProveedorMiniaturas(), NWAV_ANCHO_MINIATURA));
+        nwavListaMiniaturas.getSelectionModel().selectedItemProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
+            if (!nwavActualizandoControles && nwavAhora != null && nwavAhora != nwavPaginaActual) {
+                nwavIrAPagina(nwavAhora);
+            }
+        });
+        nwavListaMiniaturas.setOnKeyPressed(nwavEvento -> {
+            if ((nwavEvento.getCode() == KeyCode.DELETE || nwavEvento.getCode() == KeyCode.BACK_SPACE)
+                    && nwavPuedeEditar.get()) {
+                nwavEliminarSeleccion();
+                nwavEvento.consume();
+            }
+        });
+        // Al arrastrar cerca de los bordes, la lista se desplaza sola.
+        nwavListaMiniaturas.addEventHandler(DragEvent.DRAG_OVER, nwavEvento -> {
+            VirtualFlow<?> nwavFlujo = (VirtualFlow<?>) nwavListaMiniaturas.lookup(".virtual-flow");
+            if (nwavFlujo == null || !nwavEvento.getDragboard().hasContent(NwavCeldaMiniatura.NWAV_FORMATO_PAGINAS)) {
+                return;
+            }
+            double nwavY = nwavListaMiniaturas.sceneToLocal(nwavEvento.getSceneX(), nwavEvento.getSceneY()).getY();
+            if (nwavY < NWAV_BORDE_AUTODESPLAZAMIENTO) {
+                nwavFlujo.scrollPixels(-14);
+            } else if (nwavY > nwavListaMiniaturas.getHeight() - NWAV_BORDE_AUTODESPLAZAMIENTO) {
+                nwavFlujo.scrollPixels(14);
+            }
+        });
+        nwavListaMiniaturas.setContextMenu(nwavCrearMenuContextual());
+    }
+
+    private ContextMenu nwavCrearMenuContextual() {
+        ContextMenu nwavMenu = new ContextMenu(
+                nwavItem("Rotar a la izquierda", Feather.ROTATE_CCW, () -> nwavRotarSeleccion(-90)),
+                nwavItem("Rotar a la derecha", Feather.ROTATE_CW, () -> nwavRotarSeleccion(90)),
+                nwavItem("Girar 180°", Feather.REFRESH_CW, () -> nwavRotarSeleccion(180)),
+                new SeparatorMenuItem(),
+                nwavItem("Duplicar", Feather.COPY, this::nwavDuplicarSeleccion),
+                nwavItem("Extraer a un PDF nuevo…", Feather.EXTERNAL_LINK, () -> nwavAbrirPanel(NWAV_PANEL_EXTRAER)),
+                new SeparatorMenuItem(),
+                nwavItem("Eliminar", Feather.TRASH_2, this::nwavEliminarSeleccion));
+        nwavMenu.getItems().forEach(nwavItem -> nwavItem.disableProperty().bind(nwavPuedeEditar.not()));
+        return nwavMenu;
+    }
+
+    private static MenuItem nwavItem(String nwavTexto, Feather nwavIcono, Runnable nwavAccion) {
+        MenuItem nwavItem = new MenuItem(nwavTexto, new FontIcon(nwavIcono));
+        nwavItem.setOnAction(nwavEvento -> nwavAccion.run());
+        return nwavItem;
     }
 
     /** El controlador principal conecta aqui la navegacion y el menu de recientes. */
@@ -270,8 +365,34 @@ public class NwavVisorController {
         this.nwavAlCambiarRecientes = nwavAlCambiarRecientes;
     }
 
+    // Propiedades que observan el menu principal y la ventana.
+
     public ReadOnlyBooleanProperty nwavHayDocumentoProperty() {
         return nwavHayDocumento;
+    }
+
+    public BooleanBinding nwavPuedeEditarProperty() {
+        return nwavPuedeEditar;
+    }
+
+    public ReadOnlyBooleanProperty nwavSinGuardarProperty() {
+        return nwavSinGuardar;
+    }
+
+    public ReadOnlyBooleanProperty nwavPuedeDeshacerProperty() {
+        return nwavPuedeDeshacer;
+    }
+
+    public ReadOnlyBooleanProperty nwavPuedeRehacerProperty() {
+        return nwavPuedeRehacer;
+    }
+
+    public ReadOnlyStringProperty nwavTextoDeshacerProperty() {
+        return nwavTextoDeshacer;
+    }
+
+    public ReadOnlyStringProperty nwavTextoRehacerProperty() {
+        return nwavTextoRehacer;
     }
 
     public BooleanProperty nwavMiniaturasVisiblesProperty() {
@@ -286,21 +407,44 @@ public class NwavVisorController {
         return nwavEstado;
     }
 
+    // Estado que consultan los paneles de herramientas.
+
+    public Optional<NwavDocumentoPdf> nwavDocumentoActual() {
+        return Optional.ofNullable(nwavDocumento);
+    }
+
+    public int nwavPaginaActual() {
+        return nwavPaginaActual;
+    }
+
+    /** Paginas seleccionadas en las miniaturas (o la actual si no hay seleccion), ordenadas. */
+    public List<Integer> nwavSeleccionPaginas() {
+        List<Integer> nwavSeleccion = nwavListaMiniaturas.getSelectionModel().getSelectedIndices().stream()
+                .filter(nwavIndice -> nwavIndice >= 0 && nwavIndice < nwavNodos.size())
+                .distinct().sorted().toList();
+        return nwavSeleccion.isEmpty() && nwavDocumento != null ? List.of(nwavPaginaActual) : nwavSeleccion;
+    }
+
+    public Window nwavVentana() {
+        return nwavScroll.getScene() == null ? null : nwavScroll.getScene().getWindow();
+    }
+
     // ============================================================ abrir/cerrar
 
     @FXML
     public void nwavOnAbrir() {
-        Window nwavVentana = nwavScroll.getScene() == null ? null : nwavScroll.getScene().getWindow();
-        FileChooser nwavSelector = new FileChooser();
-        nwavSelector.setTitle("Abrir documento PDF");
-        nwavSelector.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Documentos PDF", "*.pdf", "*.PDF"),
-                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-        nwavConfiguracion.nwavCarpetaInicial().map(Path::toFile).ifPresent(nwavSelector::setInitialDirectory);
-        File nwavElegido = nwavSelector.showOpenDialog(nwavVentana);
-        if (nwavElegido != null) {
-            nwavAbrirArchivo(nwavElegido.toPath());
-        }
+        nwavConfirmarSiHayCambios(() -> {
+            FileChooser nwavSelector = new FileChooser();
+            nwavSelector.setTitle("Abrir documento PDF");
+            nwavSelector.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("Documentos PDF", "*.pdf", "*.PDF"),
+                    new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            nwavConfiguracion.nwavCarpetaInicial().map(Path::toFile).ifPresent(nwavSelector::setInitialDirectory);
+            File nwavElegido = nwavSelector.showOpenDialog(nwavVentana());
+            if (nwavElegido != null) {
+                nwavAbrirArchivo(nwavElegido.toPath(), null);
+            }
+        });
     }
 
     @FXML
@@ -308,8 +452,9 @@ public class NwavVisorController {
         nwavAccionVerRecientes.run();
     }
 
+    /** Abre un PDF; si el actual tiene cambios sin guardar, pregunta antes. */
     public void nwavAbrirArchivo(Path nwavRuta) {
-        nwavAbrirArchivo(nwavRuta, null);
+        nwavConfirmarSiHayCambios(() -> nwavAbrirArchivo(nwavRuta, null));
     }
 
     private void nwavAbrirArchivo(Path nwavRuta, String nwavContrasena) {
@@ -360,19 +505,6 @@ public class NwavVisorController {
         nwavCerrarDocumentoActual(true);
 
         NwavDocumentoPdf nwavNuevo = nwavApertura.nwavDocumento();
-        nwavDocumento = nwavNuevo;
-        nwavGeneracion++;
-        nwavGeneracionActiva = nwavGeneracion;
-        nwavConstruirPaginas();
-        nwavActualizandoControles = true;
-        nwavListaMiniaturas.getItems().setAll(
-                IntStream.range(0, nwavNuevo.getNwavNumeroPaginas()).boxed().toList());
-        nwavActualizandoControles = false;
-        nwavLblTotalPaginas.setText("/ " + nwavNuevo.getNwavNumeroPaginas());
-        nwavLblArchivo.setText(nwavNuevo.getNwavNombre());
-        nwavTitulo.set(nwavNuevo.getNwavNombre());
-        nwavHayDocumento.set(true);
-
         NwavZoomPreferido nwavZoom = nwavApertura.nwavZoomDefecto();
         int nwavPagina = 0;
         if (nwavApertura.nwavRestaurar() && nwavApertura.nwavPrevio().isPresent()) {
@@ -380,21 +512,10 @@ public class NwavVisorController {
             nwavZoom = nwavPrevio.getNwavZoomPreferido();
             nwavPagina = Math.min(nwavPrevio.getNwavUltimaPagina(), nwavNuevo.getNwavNumeroPaginas() - 1);
         }
-        nwavPaginaActual = nwavPagina;
-        NwavZoomPreferido nwavZoomInicial = nwavZoom;
-        int nwavPaginaInicial = nwavPagina;
-        // Tras el primer layout el visor ya conoce su tamano para los modos de ajuste.
-        Platform.runLater(() -> {
-            if (nwavDocumento != nwavNuevo) {
-                return;
-            }
-            nwavEstablecerZoomSinAnclar(nwavZoomInicial.nwavModo(), nwavZoomInicial.nwavFactor());
-            nwavIrAPagina(nwavPaginaInicial);
-            nwavScroll.requestFocus();
-        });
+        nwavInstalarDocumento(nwavNuevo, nwavZoom, nwavPagina);
 
-        if (nwavPaginaInicial > 0) {
-            nwavNotificador.nwavInfo("Continuando en la página " + (nwavPaginaInicial + 1) + ".");
+        if (nwavPagina > 0) {
+            nwavNotificador.nwavInfo("Continuando en la página " + (nwavPagina + 1) + ".");
         }
         if (nwavApertura.nwavAviso() != null) {
             nwavNotificador.nwavAdvertencia(nwavApertura.nwavAviso());
@@ -402,14 +523,81 @@ public class NwavVisorController {
         nwavAlCambiarRecientes.run();
     }
 
+    /** Pone un documento en el visor con el zoom y la pagina indicados. */
+    private void nwavInstalarDocumento(NwavDocumentoPdf nwavNuevo, NwavZoomPreferido nwavZoom, int nwavPagina) {
+        nwavDocumento = nwavNuevo;
+        nwavHayDocumento.set(true);
+        nwavModoZoom = nwavZoom.nwavModo();
+        nwavFactorZoom = nwavZoom.nwavFactor();
+        nwavRecargarEstructura(nwavPagina);
+    }
+
+    /**
+     * Reconstruye paginas y miniaturas desde el documento (tras abrir, editar o guardar) y
+     * se situa en {@code nwavPagina}.
+     */
+    private void nwavRecargarEstructura(int nwavPagina) {
+        NwavDocumentoPdf nwavActual = nwavDocumento;
+        nwavGeneracion++;
+        nwavGeneracionActiva = nwavGeneracion;
+        nwavMiniaturasFx.clear();
+        nwavConstruirPaginas();
+        int nwavTotal = nwavActual.getNwavNumeroPaginas();
+        int nwavDestino = Math.max(0, Math.min(nwavTotal - 1, nwavPagina));
+        nwavPaginaActual = nwavDestino;
+        nwavActualizandoControles = true;
+        nwavListaMiniaturas.getItems().setAll(IntStream.range(0, nwavTotal).boxed().toList());
+        nwavListaMiniaturas.getSelectionModel().clearAndSelect(nwavDestino);
+        nwavActualizandoControles = false;
+        nwavLblTotalPaginas.setText("/ " + nwavTotal);
+        nwavMostrarPaginaEnControles();
+        nwavActualizarEstadoEdicion();
+        // Tras el layout el visor ya conoce su tamano para los modos de ajuste.
+        Platform.runLater(() -> {
+            if (nwavDocumento != nwavActual) {
+                return;
+            }
+            nwavEstablecerZoomSinAnclar(nwavModoZoom, nwavFactorZoom);
+            nwavIrAPagina(nwavDestino);
+            nwavScroll.requestFocus();
+        });
+    }
+
     @FXML
     public void nwavOnCerrar() {
-        nwavCerrarDocumentoActual(true);
+        nwavConfirmarSiHayCambios(() -> nwavCerrarDocumentoActual(true));
+    }
+
+    /**
+     * Si hay cambios sin guardar, pregunta si guardarlos (como copia) o descartarlos antes de
+     * continuar; si no, continua directamente.
+     */
+    public void nwavConfirmarSiHayCambios(Runnable nwavContinuar) {
+        if (nwavDocumento == null || !nwavDocumento.nwavHayCambiosSinGuardar()) {
+            nwavContinuar.run();
+            return;
+        }
+        nwavNotificador.nwavElegir("Cambios sin guardar",
+                "«" + nwavDocumento.getNwavNombre() + "» tiene cambios que aún no se han guardado.", true,
+                NwavOpcion.nwavCancelar(),
+                new NwavOpcion("Descartar cambios", Styles.BUTTON_OUTLINED + "," + Styles.DANGER, () -> {
+                    nwavDescartarCambios();
+                    nwavContinuar.run();
+                }, false),
+                new NwavOpcion("Guardar como…", Styles.ACCENT, () -> nwavGuardarComo(nwavContinuar), true));
+    }
+
+    /** Olvida los cambios en memoria (al salir o cerrar sin guardar). */
+    public void nwavDescartarCambios() {
+        if (nwavDocumento != null) {
+            nwavDocumento.getNwavGestor().nwavMarcarGuardado();
+            nwavActualizarEstadoEdicion();
+        }
     }
 
     /**
      * Cierra el documento actual: guarda su posicion, vacia la interfaz y libera el
-     * PDDocument y sus caches en segundo plano (espera a que acabe cualquier renderizado).
+     * PDDocument y sus caches en segundo plano (espera a que acabe cualquier tarea).
      */
     private void nwavCerrarDocumentoActual(boolean nwavGuardarEstado) {
         if (nwavDocumento == null) {
@@ -421,6 +609,19 @@ public class NwavVisorController {
         NwavModoZoom nwavModo = nwavModoZoom;
         double nwavFactor = nwavFactorZoom;
 
+        nwavVaciarInterfaz();
+        nwavTareaFondo.nwavGuardarEnFondo(() -> {
+            try {
+                if (nwavGuardarEstado) {
+                    nwavRecientes.nwavGuardarEstado(nwavRuta, nwavPagina, nwavModo, nwavFactor);
+                }
+            } finally {
+                nwavAnterior.close();
+            }
+        });
+    }
+
+    private void nwavVaciarInterfaz() {
         nwavDocumento = null;
         nwavGeneracion++;
         nwavGeneracionActiva = nwavGeneracion;
@@ -433,22 +634,10 @@ public class NwavVisorController {
         nwavListaMiniaturas.getItems().clear();
         nwavActualizandoControles = false;
         nwavHayDocumento.set(false);
-        nwavTitulo.set("");
-        nwavLblArchivo.setText("");
         nwavLblTotalPaginas.setText("/ 0");
         nwavPaginaActual = 0;
         nwavMostrarPaginaEnControles();
-        nwavEstado.set("Sin documento");
-
-        nwavTareaFondo.nwavGuardarEnFondo(() -> {
-            try {
-                if (nwavGuardarEstado) {
-                    nwavRecientes.nwavGuardarEstado(nwavRuta, nwavPagina, nwavModo, nwavFactor);
-                }
-            } finally {
-                nwavAnterior.close();
-            }
-        });
+        nwavActualizarEstadoEdicion();
     }
 
     /** Al salir de la aplicacion: guarda la posicion y cierra, de forma sincrona. */
@@ -477,6 +666,287 @@ public class NwavVisorController {
         double nwavFactor = nwavFactorZoom;
         nwavTareaFondo.nwavGuardarEnFondo(() ->
                 nwavRecientes.nwavGuardarEstado(nwavRuta, nwavPagina, nwavModo, nwavFactor));
+    }
+
+    // ================================================================ guardar
+
+    /**
+     * Ctrl/⌘+S. Por seguridad no sobrescribe directamente: pregunta, y la opcion por
+     * defecto es guardar una copia.
+     */
+    @FXML
+    public void nwavOnGuardar() {
+        if (nwavDocumento == null) {
+            return;
+        }
+        if (!nwavDocumento.nwavHayCambiosSinGuardar()) {
+            nwavNotificador.nwavInfo("No hay cambios por guardar.");
+            return;
+        }
+        Path nwavOriginal = nwavDocumento.getNwavRuta();
+        nwavNotificador.nwavElegir("Guardar cambios",
+                "Puedes guardar una copia (recomendado) o reemplazar el archivo original «"
+                        + nwavOriginal.getFileName() + "». Reemplazarlo no se puede deshacer.", false,
+                NwavOpcion.nwavCancelar(),
+                new NwavOpcion("Sobrescribir original", Styles.BUTTON_OUTLINED + "," + Styles.DANGER,
+                        () -> nwavGuardarEn(nwavOriginal, null), false),
+                new NwavOpcion("Guardar como…", Styles.ACCENT, () -> nwavGuardarComo(null), true));
+    }
+
+    @FXML
+    public void nwavOnGuardarComo() {
+        nwavGuardarComo(null);
+    }
+
+    /** Pide destino y guarda; al terminar ejecuta {@code nwavDespues} (si no es nulo). */
+    public void nwavGuardarComo(Runnable nwavDespues) {
+        if (nwavDocumento == null) {
+            return;
+        }
+        Path nwavOriginal = nwavDocumento.getNwavRuta();
+        FileChooser nwavSelector = new FileChooser();
+        nwavSelector.setTitle("Guardar como");
+        nwavSelector.getExtensionFilters().add(new FileChooser.ExtensionFilter("Documento PDF", "*.pdf"));
+        Path nwavCarpeta = nwavOriginal.getParent();
+        if (nwavCarpeta != null && nwavCarpeta.toFile().isDirectory()) {
+            nwavSelector.setInitialDirectory(nwavCarpeta.toFile());
+        }
+        nwavSelector.setInitialFileName(
+                NwavArchivoPdfService.nwavSinExtension(nwavOriginal.getFileName().toString()) + " (editado).pdf");
+        File nwavElegido = nwavSelector.showSaveDialog(nwavVentana());
+        if (nwavElegido != null) {
+            nwavGuardarEn(nwavConExtensionPdf(nwavElegido.toPath()), nwavDespues);
+        }
+    }
+
+    public static Path nwavConExtensionPdf(Path nwavRuta) {
+        String nwavNombre = nwavRuta.getFileName().toString();
+        return nwavNombre.toLowerCase(Locale.ROOT).endsWith(".pdf") ? nwavRuta : nwavRuta.resolveSibling(nwavNombre + ".pdf");
+    }
+
+    private void nwavGuardarEn(Path nwavDestino, Runnable nwavDespues) {
+        NwavDocumentoPdf nwavActual = nwavDocumento;
+        if (nwavActual == null) {
+            return;
+        }
+        int nwavPagina = nwavPaginaActual;
+        NwavZoomPreferido nwavZoom = new NwavZoomPreferido(nwavModoZoom, nwavFactorZoom);
+        nwavEditando.set(true);
+        nwavTareaFondo.nwavEjecutarEdicion("Guardando «" + nwavDestino.getFileName() + "»…", () -> {
+            NwavDocumentoPdf nwavGuardado = nwavArchivos.nwavGuardarComo(nwavActual, nwavDestino);
+            try {
+                nwavRecientes.nwavRegistrarApertura(nwavDestino);
+                nwavRecientes.nwavGuardarEstado(nwavDestino, nwavPagina, nwavZoom.nwavModo(), nwavZoom.nwavFactor());
+            } catch (RuntimeException nwavError) {
+                nwavLog.warn("No se pudo actualizar recientes tras guardar", nwavError);
+            }
+            return nwavGuardado;
+        }, nwavGuardado -> {
+            nwavEditando.set(false);
+            if (nwavDocumento != nwavActual) {
+                nwavGuardado.close();
+                return;
+            }
+            nwavInstalarDocumento(nwavGuardado, nwavZoom, nwavPagina);
+            nwavNotificador.nwavExito("Guardado en «" + nwavGuardado.getNwavNombre() + "».");
+            nwavAlCambiarRecientes.run();
+            if (nwavDespues != null) {
+                nwavDespues.run();
+            }
+        }, nwavError -> {
+            nwavEditando.set(false);
+            nwavNotificador.nwavError(NwavTraductorErrores.nwavMensaje(nwavError));
+            if (nwavActual.isNwavCerrado() && nwavDocumento == nwavActual) {
+                // Solo pasa si fallo el reemplazo del original tras cerrarlo: se vuelve a abrir.
+                nwavVaciarInterfaz();
+                nwavAbrirArchivo(nwavActual.getNwavRuta(), null);
+            }
+        });
+    }
+
+    // ================================================================ edicion
+
+    /**
+     * Ejecuta una edicion sobre el documento abierto en el hilo de ediciones y refresca el
+     * visor al terminar. {@code nwavAlFallar} es opcional (por defecto, aviso de error).
+     */
+    public void nwavEditar(String nwavMensaje, Function<NwavDocumentoPdf, NwavResultadoEdicion> nwavOperacion,
+                           Consumer<NwavResultadoEdicion> nwavAlTerminar, Consumer<Throwable> nwavAlFallar) {
+        NwavDocumentoPdf nwavActual = nwavDocumento;
+        if (nwavActual == null || nwavEditando.get()) {
+            return;
+        }
+        nwavEditando.set(true);
+        nwavTareaFondo.nwavEjecutarEdicion(nwavMensaje, () -> nwavOperacion.apply(nwavActual), nwavResultado -> {
+            nwavEditando.set(false);
+            if (nwavDocumento != nwavActual) {
+                return;
+            }
+            if (nwavResultado.nwavTuvoEfecto()) {
+                nwavRecargarEstructura(nwavResultado.nwavPaginaDestacada() >= 0
+                        ? nwavResultado.nwavPaginaDestacada() : nwavPaginaActual);
+            }
+            if (nwavAlTerminar != null) {
+                nwavAlTerminar.accept(nwavResultado);
+            }
+        }, nwavError -> {
+            nwavEditando.set(false);
+            if (nwavDocumento == nwavActual) {
+                nwavActualizarEstadoEdicion();
+            }
+            if (nwavAlFallar != null) {
+                nwavAlFallar.accept(nwavError);
+            } else {
+                nwavLog.warn("Fallo una edicion", nwavError);
+                nwavNotificador.nwavError(NwavTraductorErrores.nwavMensaje(nwavError));
+            }
+        });
+    }
+
+    public void nwavRotarSeleccion(int nwavGrados) {
+        List<Integer> nwavSeleccion = nwavSeleccionPaginas();
+        nwavEditar("Rotando…", nwavDoc -> nwavEdicion.nwavRotar(nwavDoc, nwavSeleccion, nwavGrados),
+                nwavResultado -> nwavSeleccionar(nwavSeleccion), null);
+    }
+
+    public void nwavDuplicarSeleccion() {
+        List<Integer> nwavSeleccion = nwavSeleccionPaginas();
+        nwavEditar("Duplicando…", nwavDoc -> nwavEdicion.nwavDuplicar(nwavDoc, nwavSeleccion), null, null);
+    }
+
+    public void nwavEliminarSeleccion() {
+        List<Integer> nwavSeleccion = nwavSeleccionPaginas();
+        nwavEditar("Eliminando…", nwavDoc -> nwavEdicion.nwavEliminar(nwavDoc, nwavSeleccion),
+                nwavResultado -> nwavNotificador.nwavInfo(nwavResultado.nwavDescripcion()
+                        + ". Puedes deshacerlo con Ctrl/⌘ + Z."), null);
+    }
+
+    private void nwavMoverPaginas(List<Integer> nwavPaginas, int nwavDestino) {
+        int nwavCantidad = nwavPaginas.size();
+        nwavEditar("Reordenando…", nwavDoc -> nwavEdicion.nwavMover(nwavDoc, nwavPaginas, nwavDestino),
+                nwavResultado -> {
+                    if (nwavResultado.nwavTuvoEfecto()) {
+                        int nwavInicio = nwavResultado.nwavPaginaDestacada();
+                        nwavSeleccionar(IntStream.range(nwavInicio, nwavInicio + nwavCantidad).boxed().toList());
+                    }
+                }, null);
+    }
+
+    @FXML
+    public void nwavOnDeshacer() {
+        nwavEditar("Deshaciendo…", nwavDoc -> nwavEdicion.nwavDeshacer(nwavDoc)
+                        .orElse(new NwavResultadoEdicion("", -1, false)),
+                nwavResultado -> {
+                    if (nwavResultado.nwavTuvoEfecto()) {
+                        nwavNotificador.nwavInfo("Deshecho: " + nwavResultado.nwavDescripcion());
+                    }
+                }, null);
+    }
+
+    @FXML
+    public void nwavOnRehacer() {
+        nwavEditar("Rehaciendo…", nwavDoc -> nwavEdicion.nwavRehacer(nwavDoc)
+                        .orElse(new NwavResultadoEdicion("", -1, false)),
+                nwavResultado -> {
+                    if (nwavResultado.nwavTuvoEfecto()) {
+                        nwavNotificador.nwavInfo("Rehecho: " + nwavResultado.nwavDescripcion());
+                    }
+                }, null);
+    }
+
+    @FXML
+    private void nwavOnRotarIzquierda() {
+        nwavRotarSeleccion(-90);
+    }
+
+    @FXML
+    private void nwavOnRotarDerecha() {
+        nwavRotarSeleccion(90);
+    }
+
+    @FXML
+    private void nwavOnGirar180() {
+        nwavRotarSeleccion(180);
+    }
+
+    @FXML
+    private void nwavOnDuplicar() {
+        nwavDuplicarSeleccion();
+    }
+
+    @FXML
+    private void nwavOnEliminar() {
+        nwavEliminarSeleccion();
+    }
+
+    @FXML
+    public void nwavOnInsertar() {
+        nwavAbrirPanel(NWAV_PANEL_INSERTAR);
+    }
+
+    @FXML
+    public void nwavOnExtraer() {
+        nwavAbrirPanel(NWAV_PANEL_EXTRAER);
+    }
+
+    @FXML
+    public void nwavOnDividir() {
+        nwavAbrirPanel(NWAV_PANEL_DIVIDIR);
+    }
+
+    @FXML
+    public void nwavOnUnir() {
+        nwavAbrirPanel(NWAV_PANEL_UNIR);
+    }
+
+    /** Abre un panel lateral de herramientas, preparado con el estado actual. */
+    public void nwavAbrirPanel(String nwavNombre) {
+        NwavCargadorVistas.NwavVistaCargada nwavVista = nwavCargador.nwavObtener(nwavNombre);
+        if (nwavVista.nwavControlador() instanceof NwavPanel nwavPanel) {
+            nwavPanel.nwavPreparar();
+        }
+        nwavNotificador.nwavAbrirPanel(nwavVista.nwavNodo());
+    }
+
+    private void nwavSeleccionar(List<Integer> nwavIndices) {
+        if (nwavIndices.isEmpty()) {
+            return;
+        }
+        nwavActualizandoControles = true;
+        nwavListaMiniaturas.getSelectionModel().clearSelection();
+        for (int nwavIndice : nwavIndices) {
+            if (nwavIndice >= 0 && nwavIndice < nwavListaMiniaturas.getItems().size()) {
+                nwavListaMiniaturas.getSelectionModel().select(nwavIndice);
+            }
+        }
+        nwavActualizandoControles = false;
+    }
+
+    /** Refleja en la interfaz el estado de deshacer/rehacer y de cambios sin guardar. */
+    private void nwavActualizarEstadoEdicion() {
+        if (nwavDocumento == null) {
+            nwavSinGuardar.set(false);
+            nwavPuedeDeshacer.set(false);
+            nwavPuedeRehacer.set(false);
+            nwavTextoDeshacer.set("Deshacer");
+            nwavTextoRehacer.set("Rehacer");
+            nwavTitulo.set("");
+            nwavLblArchivo.setText("");
+            nwavActualizarEstado();
+            return;
+        }
+        NwavGestorComandos nwavGestor = nwavDocumento.getNwavGestor();
+        nwavSinGuardar.set(nwavGestor.nwavHayCambiosSinGuardar());
+        nwavPuedeDeshacer.set(nwavGestor.nwavPuedeDeshacer());
+        nwavPuedeRehacer.set(nwavGestor.nwavPuedeRehacer());
+        nwavTextoDeshacer.set(nwavGestor.nwavDescripcionDeshacer().map(nwavTexto -> "Deshacer: " + nwavTexto)
+                .orElse("Deshacer"));
+        nwavTextoRehacer.set(nwavGestor.nwavDescripcionRehacer().map(nwavTexto -> "Rehacer: " + nwavTexto)
+                .orElse("Rehacer"));
+        String nwavNombre = nwavDocumento.getNwavNombre();
+        nwavTitulo.set(nwavSinGuardar.get() ? "• " + nwavNombre : nwavNombre);
+        nwavLblArchivo.setText(nwavSinGuardar.get() ? nwavNombre + "  (sin guardar)" : nwavNombre);
+        nwavActualizarEstado();
     }
 
     // ================================================================ paginas
@@ -635,7 +1105,7 @@ public class NwavVisorController {
         NwavDocumentoPdf nwavDoc = nwavDocumento;
         int nwavGen = nwavGeneracion;
         nwavTareaFondo.nwavRenderizarPagina(() -> {
-            // Si entretanto se cambio de documento o la pagina salio de la vista, no se dibuja.
+            // Si entretanto se cambio el documento o la pagina salio de la vista, no se dibuja.
             boolean nwavVigente = nwavGen == nwavGeneracionActiva
                     && nwavIndice >= nwavPrimeraVisible - NWAV_PAGINAS_ANTICIPADAS - 1
                     && nwavIndice <= nwavUltimaVisible + NWAV_PAGINAS_ANTICIPADAS + 1;
@@ -676,12 +1146,14 @@ public class NwavVisorController {
         nwavPausaGuardado.playFromStart();
     }
 
+    /** Marca la pagina actual en las miniaturas, salvo que el usuario tenga varias seleccionadas. */
     private void nwavSincronizarMiniatura() {
-        if (nwavListaMiniaturas.getItems().isEmpty()) {
+        if (nwavListaMiniaturas.getItems().isEmpty()
+                || nwavListaMiniaturas.getSelectionModel().getSelectedIndices().size() > 1) {
             return;
         }
         nwavActualizandoControles = true;
-        nwavListaMiniaturas.getSelectionModel().select(nwavPaginaActual);
+        nwavListaMiniaturas.getSelectionModel().clearAndSelect(nwavPaginaActual);
         nwavActualizandoControles = false;
         VirtualFlow<?> nwavFlujo = (VirtualFlow<?>) nwavListaMiniaturas.lookup(".virtual-flow");
         if (nwavFlujo != null) {
@@ -723,7 +1195,8 @@ public class NwavVisorController {
         }
         nwavEstado.set("Página " + (nwavPaginaActual + 1) + " de " + nwavNodos.size()
                 + "  ·  " + nwavTextoPorcentaje((int) Math.round(nwavFactorZoom * 100))
-                + (nwavDocumento.isNwavCifrado() ? "  ·  Protegido" : ""));
+                + (nwavDocumento.isNwavCifrado() ? "  ·  Protegido" : "")
+                + (nwavSinGuardar.get() ? "  ·  Cambios sin guardar" : ""));
     }
 
     // =================================================================== zoom
@@ -821,7 +1294,8 @@ public class NwavVisorController {
 
     private double nwavFactorAjustePagina() {
         double nwavAltoDisponible = nwavScroll.getViewportBounds().getHeight() - 2 * NWAV_MARGEN_DOCUMENTO;
-        NwavDocumentoPdf.NwavTamanoPagina nwavTamano = nwavDocumento.nwavTamano(nwavPaginaActual);
+        int nwavReferencia = Math.min(nwavPaginaActual, nwavDocumento.getNwavNumeroPaginas() - 1);
+        NwavDocumentoPdf.NwavTamanoPagina nwavTamano = nwavDocumento.nwavTamano(nwavReferencia);
         if (nwavAltoDisponible <= 0) {
             return nwavFactorZoom;
         }
@@ -866,6 +1340,16 @@ public class NwavVisorController {
             public void nwavSolicitar(int nwavIndice, IntSupplier nwavIndiceDeseado, Consumer<Image> nwavAlRecibir) {
                 nwavSolicitarMiniatura(nwavIndice, nwavIndiceDeseado, nwavAlRecibir);
             }
+
+            @Override
+            public void nwavMover(List<Integer> nwavPaginas, int nwavDestino) {
+                nwavMoverPaginas(nwavPaginas, nwavDestino);
+            }
+
+            @Override
+            public boolean nwavPuedeEditar() {
+                return nwavPuedeEditar.get();
+            }
         };
     }
 
@@ -891,5 +1375,10 @@ public class NwavVisorController {
             nwavMiniaturasFx.put(nwavIndice, nwavImagen);
             nwavAlRecibir.accept(nwavImagen);
         }, nwavError -> nwavLog.debug("Fallo la miniatura {}", nwavIndice + 1, nwavError));
+    }
+
+    /** Enlaza un boton o elemento a "se puede editar" (lo usan los paneles). */
+    public void nwavDeshabilitarSinEdicion(javafx.scene.Node nwavNodo) {
+        nwavNodo.disableProperty().bind(Bindings.not(nwavPuedeEditar));
     }
 }

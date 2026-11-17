@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nwav.editorpdf.controller.NwavPanelUnirController"
+      styleClass="nwav-panel" prefWidth="440.0" maxWidth="440.0" maxHeight="Infinity">
+
+    <HBox styleClass="nwav-panel-cabecera" spacing="12.0" alignment="CENTER_LEFT">
+        <StackPane styleClass="nwav-panel-icono">
+            <FontIcon iconLiteral="fth-git-merge"/>
+        </StackPane>
+        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+            <Label text="Unir PDF" styleClass="nwav-panel-titulo-grande"/>
+            <Label text="Combina varios PDF en uno nuevo, en el orden de la lista. Los originales no se modifican." styleClass="nwav-panel-subtitulo" wrapText="true"/>
+        </VBox>
+        <Button onAction="#nwavOnCerrar" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+        </Button>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="nwav-panel-scroll">
+        <VBox styleClass="nwav-panel-cuerpo" spacing="12.0">
+            <HBox spacing="8.0" alignment="CENTER_LEFT">
+                <Button text="Añadir PDF…" onAction="#nwavOnAnadir" styleClass="button-outlined">
+                    <graphic><FontIcon iconLiteral="fth-plus"/></graphic>
+                </Button>
+                <Button fx:id="nwavBtnAnadirAbierto" text="Añadir el abierto" onAction="#nwavOnAnadirAbierto"
+                        styleClass="flat">
+                    <graphic><FontIcon iconLiteral="fth-book-open"/></graphic>
+                </Button>
+            </HBox>
+            <ListView fx:id="nwavListaArchivos" prefHeight="300.0" VBox.vgrow="ALWAYS" styleClass="nwav-lista-panel"/>
+            <HBox spacing="6.0" alignment="CENTER_LEFT">
+                <Button fx:id="nwavBtnSubir" onAction="#nwavOnSubir" styleClass="button-icon, flat">
+                    <graphic><FontIcon iconLiteral="fth-arrow-up"/></graphic>
+                    <tooltip><Tooltip text="Subir"/></tooltip>
+                </Button>
+                <Button fx:id="nwavBtnBajar" onAction="#nwavOnBajar" styleClass="button-icon, flat">
+                    <graphic><FontIcon iconLiteral="fth-arrow-down"/></graphic>
+                    <tooltip><Tooltip text="Bajar"/></tooltip>
+                </Button>
+                <Button fx:id="nwavBtnQuitar" onAction="#nwavOnQuitar" styleClass="button-icon, flat">
+                    <graphic><FontIcon iconLiteral="fth-trash-2"/></graphic>
+                    <tooltip><Tooltip text="Quitar de la lista"/></tooltip>
+                </Button>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="nwavLblResumen" styleClass="nwav-texto-tenue"/>
+            </HBox>
+            <Label text="Los PDF protegidos con contraseña no se pueden unir directamente: guarda antes una copia sin protección."
+                   styleClass="nwav-panel-ayuda" wrapText="true"/>
+            <CheckBox fx:id="nwavChkAbrir" text="Abrir el PDF unido al terminar" selected="true"/>
+        </VBox>
+    </ScrollPane>
+
+    <HBox styleClass="nwav-panel-pie" spacing="10.0" alignment="CENTER_RIGHT">
+        <Button text="Cancelar" onAction="#nwavOnCerrar" styleClass="button-outlined" cancelButton="true"/>
+        <Button fx:id="nwavBtnUnir" text="Unir…" onAction="#nwavOnUnir" styleClass="accent">
+            <graphic><FontIcon iconLiteral="fth-git-merge"/></graphic>
+        </Button>
+    </HBox>
+</VBox>

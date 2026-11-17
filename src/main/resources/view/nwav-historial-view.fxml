@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nwav.editorpdf.controller.NwavHistorialController"
+      styleClass="nwav-pagina">
+
+    <HBox styleClass="nwav-pagina-cabecera">
+        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+            <Label text="Historial de operaciones" styleClass="nwav-pagina-titulo"/>
+            <Label text="Cada operación sobre tus PDF queda registrada. Doble clic en una fila abre el PDF resultante."
+                   styleClass="nwav-pagina-subtitulo"/>
+        </VBox>
+        <Button text="Actualizar" onAction="#nwavOnActualizar" styleClass="button-outlined">
+            <graphic><FontIcon iconLiteral="fth-refresh-cw"/></graphic>
+        </Button>
+        <Button text="Vaciar historial" onAction="#nwavOnLimpiar" styleClass="button-outlined, danger">
+            <graphic><FontIcon iconLiteral="fth-trash-2"/></graphic>
+        </Button>
+    </HBox>
+
+    <VBox styleClass="nwav-tarjeta" VBox.vgrow="ALWAYS">
+        <HBox styleClass="nwav-barra-herramientas">
+            <TextField fx:id="nwavTxtBuscar" promptText="Buscar por archivo o detalle…" styleClass="nwav-buscador"
+                       HBox.hgrow="ALWAYS"/>
+            <ComboBox fx:id="nwavCmbTipo" prefWidth="210.0"/>
+            <ComboBox fx:id="nwavCmbResultado" prefWidth="170.0"/>
+            <Label fx:id="nwavLblResumen" styleClass="nwav-texto-tenue"/>
+        </HBox>
+        <TableView fx:id="nwavTabla" VBox.vgrow="ALWAYS" styleClass="nwav-tabla">
+            <columns>
+                <TableColumn fx:id="nwavColFecha" text="Fecha" prefWidth="150.0" minWidth="140.0"/>
+                <TableColumn fx:id="nwavColOperacion" text="Operación" prefWidth="150.0"/>
+                <TableColumn fx:id="nwavColOrigen" text="Origen" prefWidth="180.0"/>
+                <TableColumn fx:id="nwavColDestino" text="Destino" prefWidth="180.0"/>
+                <TableColumn fx:id="nwavColResultado" text="Resultado" prefWidth="100.0" minWidth="90.0"/>
+                <TableColumn fx:id="nwavColDetalle" text="Detalle" prefWidth="260.0"/>
+            </columns>
+        </TableView>
+    </VBox>
+</VBox>

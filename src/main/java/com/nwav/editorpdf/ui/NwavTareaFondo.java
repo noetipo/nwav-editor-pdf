@@ -1,6 +1,7 @@
 package com.nwav.editorpdf.ui;
 
 import com.nwav.editorpdf.exception.NwavTraductorErrores;
+import com.nwav.editorpdf.service.NwavAvance;
 import jakarta.annotation.PreDestroy;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
@@ -30,15 +31,10 @@ import java.util.function.Consumer;
 @Slf4j
 public class NwavTareaFondo {
 
-    /** Trabajo que puede informar su avance (0..1). */
+    /** Trabajo que puede informar su avance. */
     @FunctionalInterface
     public interface NwavTrabajoConProgreso<NwavR> {
         NwavR nwavEjecutar(NwavAvance nwavAvance) throws Exception;
-    }
-
-    @FunctionalInterface
-    public interface NwavAvance {
-        void nwavInformar(double nwavHecho, double nwavTotal, String nwavMensaje);
     }
 
     private final NwavNotificador nwavNotificador;
@@ -46,6 +42,8 @@ public class NwavTareaFondo {
     private final ExecutorService nwavEjecutorGeneral = Executors.newCachedThreadPool(nwavFabrica("nwav-tarea"));
     private final ExecutorService nwavEjecutorPaginas = Executors.newSingleThreadExecutor(nwavFabrica("nwav-render"));
     private final ExecutorService nwavEjecutorMiniaturas = Executors.newSingleThreadExecutor(nwavFabrica("nwav-miniatura"));
+    /** Las ediciones se aplican de una en una y en el orden en que se pidieron. */
+    private final ExecutorService nwavEjecutorEdicion = Executors.newSingleThreadExecutor(nwavFabrica("nwav-edicion"));
 
     private final IntegerProperty nwavTareasActivas = new SimpleIntegerProperty(0);
     private Region nwavZonaProgreso;
@@ -71,6 +69,20 @@ public class NwavTareaFondo {
     public <NwavR> Task<NwavR> nwavEjecutarConProgreso(String nwavMensaje, NwavTrabajoConProgreso<NwavR> nwavTrabajo,
                                                        Consumer<NwavR> nwavAlTerminar,
                                                        Consumer<Throwable> nwavAlFallar) {
+        return nwavEnviarConProgreso(nwavEjecutorGeneral, nwavMensaje, nwavTrabajo, nwavAlTerminar, nwavAlFallar);
+    }
+
+    /** Edicion del documento abierto: en un hilo propio, en orden y con indicador de progreso. */
+    public <NwavR> Task<NwavR> nwavEjecutarEdicion(String nwavMensaje, Callable<NwavR> nwavTrabajo,
+                                                   Consumer<NwavR> nwavAlTerminar, Consumer<Throwable> nwavAlFallar) {
+        return nwavEnviarConProgreso(nwavEjecutorEdicion, nwavMensaje, nwavAvance -> nwavTrabajo.call(),
+                nwavAlTerminar, nwavAlFallar);
+    }
+
+    private <NwavR> Task<NwavR> nwavEnviarConProgreso(ExecutorService nwavEjecutor, String nwavMensaje,
+                                                      NwavTrabajoConProgreso<NwavR> nwavTrabajo,
+                                                      Consumer<NwavR> nwavAlTerminar,
+                                                      Consumer<Throwable> nwavAlFallar) {
         Task<NwavR> nwavTarea = new Task<>() {
             @Override
             protected NwavR call() throws Exception {
@@ -95,7 +107,7 @@ public class NwavTareaFondo {
             nwavManejarError(nwavTarea.getException(), nwavAlFallar);
         });
         nwavTarea.setOnCancelled(nwavEvento -> nwavOcultarProgreso());
-        nwavEjecutorGeneral.execute(nwavTarea);
+        nwavEjecutor.execute(nwavTarea);
         return nwavTarea;
     }
 
@@ -189,5 +201,6 @@ public class NwavTareaFondo {
         nwavEjecutorGeneral.shutdownNow();
         nwavEjecutorPaginas.shutdownNow();
         nwavEjecutorMiniaturas.shutdownNow();
+        nwavEjecutorEdicion.shutdownNow();
     }
 }

@@ -43,7 +43,8 @@ public class NwavPdfDocumentoService {
             if (nwavDocumento.getNumberOfPages() == 0) {
                 throw new NwavPdfCorruptoException(nwavNombre);
             }
-            NwavDocumentoPdf nwavResultado = new NwavDocumentoPdf(nwavAbsoluta, nwavDocumento);
+            NwavDocumentoPdf nwavResultado = new NwavDocumentoPdf(nwavAbsoluta, nwavDocumento,
+                    nwavContrasena == null || nwavContrasena.isEmpty() ? null : nwavContrasena);
             nwavLog.info("Abierto {} ({} paginas{})", nwavAbsoluta, nwavResultado.getNwavNumeroPaginas(),
                     nwavResultado.isNwavCifrado() ? ", cifrado" : "");
             return nwavResultado;
@@ -53,6 +54,22 @@ public class NwavPdfDocumentoService {
                     ? nwavError
                     : new NwavPdfCorruptoException(nwavNombre, nwavError);
         }
+    }
+
+    /**
+     * Carga un PDF auxiliar (para insertar o unir) con las mismas validaciones y errores
+     * que {@link #nwavAbrir}. El llamador debe cerrarlo.
+     */
+    public PDDocument nwavCargarDocumento(Path nwavRuta, String nwavContrasena) {
+        Path nwavAbsoluta = nwavRuta.toAbsolutePath().normalize();
+        String nwavNombre = String.valueOf(nwavAbsoluta.getFileName());
+        nwavValidarLectura(nwavAbsoluta, nwavNombre);
+        PDDocument nwavDocumento = nwavCargar(nwavAbsoluta, nwavNombre, nwavContrasena);
+        if (nwavDocumento.getNumberOfPages() == 0) {
+            nwavCerrarSilencioso(nwavDocumento);
+            throw new NwavPdfCorruptoException(nwavNombre);
+        }
+        return nwavDocumento;
     }
 
     /** Indica si el archivo necesita contrasena de usuario para abrirse. */

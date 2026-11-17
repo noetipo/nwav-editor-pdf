@@ -1,5 +1,6 @@
 package com.nwav.editorpdf.service;
 
+import com.nwav.editorpdf.service.comando.NwavGestorComandos;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -13,9 +14,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Documento abierto en el visor. Envuelve el {@link PDDocument} junto con su renderizador
- * y sus caches; al cerrarlo se libera todo. Se usa con try-with-resources o se cierra
- * explicitamente al cambiar de archivo.
+ * Documento abierto en el editor. Envuelve el {@link PDDocument} junto con su renderizador,
+ * sus caches y su historial de cambios (deshacer/rehacer); al cerrarlo se libera todo.
+ * Se usa con try-with-resources o se cierra explicitamente al cambiar de archivo.
  * <p>
  * PDFBox no es seguro entre hilos: todo acceso al documento debe sincronizarse sobre
  * esta instancia (lo hacen los servicios).
@@ -32,32 +33,46 @@ public class NwavDocumentoPdf implements AutoCloseable {
 
     private final Path nwavRuta;
     private final PDDocument nwavDocumento;
+    private final String nwavContrasena;
     private final PDFRenderer nwavRenderizador;
-    private final List<NwavTamanoPagina> nwavTamanos;
     private final boolean nwavCifrado;
     private final NwavCacheRender nwavCachePaginas = new NwavCacheRender(NWAV_CACHE_PAGINAS_BYTES);
     private final NwavCacheRender nwavCacheMiniaturas = new NwavCacheRender(NWAV_CACHE_MINIATURAS_BYTES);
+    private final NwavGestorComandos nwavGestor = new NwavGestorComandos();
+    /** PDF de los que se importaron paginas: deben seguir abiertos hasta guardar o cerrar. */
+    private final List<PDDocument> nwavAuxiliares = new ArrayList<>();
+    private volatile List<NwavTamanoPagina> nwavTamanos;
     private volatile boolean nwavCerrado;
 
-    NwavDocumentoPdf(Path nwavRuta, PDDocument nwavDocumento) {
+    NwavDocumentoPdf(Path nwavRuta, PDDocument nwavDocumento, String nwavContrasena) {
         this.nwavRuta = nwavRuta;
         this.nwavDocumento = nwavDocumento;
+        this.nwavContrasena = nwavContrasena;
         this.nwavRenderizador = new PDFRenderer(nwavDocumento);
         this.nwavCifrado = nwavDocumento.isEncrypted();
-        List<NwavTamanoPagina> nwavLista = new ArrayList<>(nwavDocumento.getNumberOfPages());
-        for (PDPage nwavPagina : nwavDocumento.getPages()) {
-            nwavLista.add(nwavCalcularTamano(nwavPagina));
-        }
-        this.nwavTamanos = Collections.unmodifiableList(nwavLista);
+        nwavActualizarEstructura();
     }
 
     static NwavTamanoPagina nwavCalcularTamano(PDPage nwavPagina) {
         PDRectangle nwavCaja = nwavPagina.getCropBox();
-        int nwavRotacion = ((nwavPagina.getRotation() % 360) + 360) % 360;
+        int nwavRotacion = nwavRotacionNormalizada(nwavPagina);
         boolean nwavGirada = nwavRotacion == 90 || nwavRotacion == 270;
         return nwavGirada
                 ? new NwavTamanoPagina(nwavCaja.getHeight(), nwavCaja.getWidth())
                 : new NwavTamanoPagina(nwavCaja.getWidth(), nwavCaja.getHeight());
+    }
+
+    static int nwavRotacionNormalizada(PDPage nwavPagina) {
+        return ((nwavPagina.getRotation() % 360) + 360) % 360;
+    }
+
+    /** Recalcula los tamanos tras un cambio de paginas. Llamar dentro de {@code synchronized (this)}. */
+    void nwavActualizarEstructura() {
+        List<NwavTamanoPagina> nwavLista = new ArrayList<>(nwavDocumento.getNumberOfPages());
+        for (PDPage nwavPagina : nwavDocumento.getPages()) {
+            nwavLista.add(nwavCalcularTamano(nwavPagina));
+        }
+        nwavTamanos = Collections.unmodifiableList(nwavLista);
     }
 
     public Path getNwavRuta() {
@@ -88,6 +103,15 @@ public class NwavDocumentoPdf implements AutoCloseable {
         return nwavCerrado;
     }
 
+    /** Historial de cambios en memoria (deshacer/rehacer) de este documento. */
+    public NwavGestorComandos getNwavGestor() {
+        return nwavGestor;
+    }
+
+    public boolean nwavHayCambiosSinGuardar() {
+        return nwavGestor.nwavHayCambiosSinGuardar();
+    }
+
     /** Solo para los servicios del paquete, siempre dentro de {@code synchronized (this)}. */
     PDDocument nwavPdDocument() {
         return nwavDocumento;
@@ -95,6 +119,10 @@ public class NwavDocumentoPdf implements AutoCloseable {
 
     PDFRenderer nwavRenderizador() {
         return nwavRenderizador;
+    }
+
+    String nwavContrasena() {
+        return nwavContrasena;
     }
 
     NwavCacheRender nwavCachePaginas() {
@@ -105,6 +133,16 @@ public class NwavDocumentoPdf implements AutoCloseable {
         return nwavCacheMiniaturas;
     }
 
+    void nwavRetenerAuxiliar(PDDocument nwavAuxiliar) {
+        nwavAuxiliares.add(nwavAuxiliar);
+    }
+
+    void nwavVerificarAbierto() {
+        if (nwavCerrado) {
+            throw new com.nwav.editorpdf.exception.NwavEditorException("El documento ya está cerrado.");
+        }
+    }
+
     /** Libera la memoria de las caches sin cerrar el documento. */
     public void nwavLiberarCaches() {
         nwavCachePaginas.nwavLimpiar();
@@ -113,18 +151,25 @@ public class NwavDocumentoPdf implements AutoCloseable {
 
     @Override
     public void close() {
-        // Espera a que termine cualquier renderizado en curso antes de cerrar.
+        // Espera a que termine cualquier renderizado o edicion en curso antes de cerrar.
         synchronized (this) {
             if (nwavCerrado) {
                 return;
             }
             nwavCerrado = true;
             nwavLiberarCaches();
-            try {
-                nwavDocumento.close();
-            } catch (IOException nwavError) {
-                nwavLog.warn("No se pudo cerrar {} limpiamente", nwavRuta, nwavError);
-            }
+            nwavGestor.nwavLimpiar();
+            nwavCerrarSilencioso(nwavDocumento);
+            nwavAuxiliares.forEach(NwavDocumentoPdf::nwavCerrarSilencioso);
+            nwavAuxiliares.clear();
+        }
+    }
+
+    private static void nwavCerrarSilencioso(PDDocument nwavDoc) {
+        try {
+            nwavDoc.close();
+        } catch (IOException nwavError) {
+            nwavLog.warn("No se pudo cerrar un documento limpiamente", nwavError);
         }
     }
 }

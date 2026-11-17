@@ -27,8 +27,9 @@ public class NwavHistorialOperacion {
     @Column(name = "nwav_id")
     private Long nwavId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "nwav_tipo", nullable = false, length = 40)
-    private String nwavTipo;
+    private NwavTipoOperacion nwavTipo;
 
     @Column(name = "nwav_archivo_origen", length = 4096)
     private String nwavArchivoOrigen;

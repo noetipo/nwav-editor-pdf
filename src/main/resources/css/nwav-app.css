@@ -548,3 +548,138 @@
 .nwav-toast > .container {
     -fx-background-radius: 12;
 }
+
+/* ===================== FASE 2: PANELES LATERALES ====================== */
+
+.nwav-panel {
+    -fx-background-color: -color-bg-default;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 30, 0, -4, 0);
+}
+
+.nwav-panel-cabecera {
+    -fx-padding: 22 18 16 22;
+    -fx-border-color: transparent transparent -color-border-muted transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.nwav-panel-icono {
+    -fx-background-color: -color-accent-subtle;
+    -fx-background-radius: 10;
+    -fx-min-width: 40;
+    -fx-min-height: 40;
+    -fx-max-width: 40;
+    -fx-max-height: 40;
+}
+
+.nwav-panel-icono .ikonli-font-icon {
+    -fx-icon-color: -color-accent-fg;
+    -fx-icon-size: 18px;
+}
+
+.nwav-panel-titulo-grande {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
+}
+
+.nwav-panel-subtitulo {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.nwav-panel-scroll,
+.nwav-panel-scroll > .viewport {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+}
+
+.nwav-panel-cuerpo {
+    -fx-padding: 20 22 20 22;
+}
+
+.nwav-panel-pie {
+    -fx-padding: 14 22 18 22;
+    -fx-border-color: -color-border-muted transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.nwav-panel-pie .button {
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 9;
+    -fx-border-radius: 9;
+}
+
+.nwav-panel-ayuda {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -color-fg-subtle;
+}
+
+.nwav-panel-miniaturas .nwav-panel-ayuda {
+    -fx-padding: 0 12 6 16;
+}
+
+.nwav-lista-panel {
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+}
+
+.nwav-selector-segmentos .toggle-button {
+    -fx-padding: 8 10 8 10;
+}
+
+/* ===================== FASE 2: REORDENAR MINIATURAS =================== */
+
+.nwav-lista-miniaturas .nwav-celda-miniatura:nwav-soltar-antes {
+    -fx-border-color: -color-accent-emphasis transparent transparent transparent;
+    -fx-border-width: 3 0 0 0;
+}
+
+.nwav-lista-miniaturas .nwav-celda-miniatura:nwav-soltar-despues {
+    -fx-border-color: transparent transparent -color-accent-emphasis transparent;
+    -fx-border-width: 0 0 3 0;
+}
+
+/* ============================ FASE 2: VARIOS ========================== */
+
+.nwav-chip-exito {
+    -fx-background-color: -color-success-subtle;
+    -fx-text-fill: -color-success-fg;
+}
+
+.nwav-dialogo-icono.nwav-aviso {
+    -fx-background-color: -color-warning-subtle;
+}
+
+.nwav-dialogo-icono.nwav-aviso .ikonli-font-icon {
+    -fx-icon-color: -color-warning-fg;
+}
+
+/* Tabla (estilo de la plantilla) */
+.nwav-tabla {
+    -fx-background-color: transparent;
+    -fx-border-color: -color-border-muted;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+.nwav-tabla > .column-header-background {
+    -fx-background-color: -color-bg-subtle;
+    -fx-background-radius: 10 10 0 0;
+}
+
+.nwav-tabla .column-header .label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-muted;
+    -fx-font-size: 12px;
+}
+
+.nwav-tabla .table-row-cell {
+    -fx-cell-size: 38;
+}
+
+.nwav-tabla .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 10 0 10;
+}

@@ -1,6 +1,7 @@
 package com.nwav.editorpdf.service;
 
 import com.nwav.editorpdf.exception.NwavEditorException;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.rendering.ImageType;
 import org.springframework.stereotype.Service;
 
@@ -52,23 +53,24 @@ public class NwavPdfRenderService {
             throw new IllegalArgumentException("Página fuera de rango: " + (nwavIndice + 1));
         }
         float nwavSegura = nwavEscalaSegura(nwavDocumento, nwavIndice, nwavEscala);
-        BufferedImage nwavGuardada = nwavCache.nwavObtener(nwavIndice, nwavSegura);
-        if (nwavGuardada != null) {
-            return nwavGuardada;
-        }
-        BufferedImage nwavImagen;
         synchronized (nwavDocumento) {
-            if (nwavDocumento.isNwavCerrado()) {
-                throw new NwavEditorException("El documento ya está cerrado.");
+            nwavDocumento.nwavVerificarAbierto();
+            PDPage nwavPagina = nwavDocumento.nwavPdDocument().getPage(nwavIndice);
+            Object nwavIdentidad = nwavPagina.getCOSObject();
+            int nwavRotacion = NwavDocumentoPdf.nwavRotacionNormalizada(nwavPagina);
+            BufferedImage nwavGuardada = nwavCache.nwavObtener(nwavIdentidad, nwavRotacion, nwavSegura);
+            if (nwavGuardada != null) {
+                return nwavGuardada;
             }
             try {
-                nwavImagen = nwavDocumento.nwavRenderizador().renderImage(nwavIndice, nwavSegura, ImageType.RGB);
+                BufferedImage nwavImagen = nwavDocumento.nwavRenderizador()
+                        .renderImage(nwavIndice, nwavSegura, ImageType.RGB);
+                nwavCache.nwavGuardar(nwavIdentidad, nwavRotacion, nwavSegura, nwavImagen);
+                return nwavImagen;
             } catch (IOException nwavError) {
                 throw new NwavEditorException("No se pudo dibujar la página " + (nwavIndice + 1)
                         + " de «" + nwavDocumento.getNwavNombre() + "». El archivo podría estar dañado.", nwavError);
             }
         }
-        nwavCache.nwavGuardar(nwavIndice, nwavSegura, nwavImagen);
-        return nwavImagen;
     }
 }

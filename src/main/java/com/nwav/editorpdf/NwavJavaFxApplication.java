@@ -66,6 +66,13 @@ public class NwavJavaFxApplication extends Application {
         NwavMainController nwavMain = nwavCargador.getController();
         nwavVentana.titleProperty().bind(nwavMain.nwavTituloVentana());
         nwavVentana.setScene(nwavEscena);
+        // Cerrar la ventana con cambios sin guardar pregunta antes (por defecto, "Guardar como").
+        nwavVentana.setOnCloseRequest(nwavEvento -> {
+            if (nwavContexto.getBean(NwavVisorController.class).nwavSinGuardarProperty().get()) {
+                nwavEvento.consume();
+                nwavMain.nwavSalir();
+            }
+        });
         nwavVentana.setMinWidth(980);
         nwavVentana.setMinHeight(640);
         nwavVentana.show();

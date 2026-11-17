@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nwav.editorpdf.controller.NwavPanelDividirController"
+      styleClass="nwav-panel" prefWidth="440.0" maxWidth="440.0" maxHeight="Infinity">
+
+    <HBox styleClass="nwav-panel-cabecera" spacing="12.0" alignment="CENTER_LEFT">
+        <StackPane styleClass="nwav-panel-icono">
+            <FontIcon iconLiteral="fth-scissors"/>
+        </StackPane>
+        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+            <Label text="Dividir PDF" styleClass="nwav-panel-titulo-grande"/>
+            <Label text="Crea un archivo por cada parte, en la carpeta que elijas. Nunca reemplaza archivos existentes." styleClass="nwav-panel-subtitulo" wrapText="true"/>
+        </VBox>
+        <Button onAction="#nwavOnCerrar" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+        </Button>
+    </HBox>
+
+    <fx:define>
+        <ToggleGroup fx:id="nwavGrupoModo"/>
+    </fx:define>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="nwav-panel-scroll">
+        <VBox styleClass="nwav-panel-cuerpo" spacing="16.0">
+            <VBox spacing="6.0">
+                <Label text="Documento" styleClass="nwav-campo-label"/>
+                <Label fx:id="nwavLblDocumento" styleClass="nwav-texto-tenue" wrapText="true"/>
+            </VBox>
+            <VBox spacing="8.0">
+                <Label text="Cómo dividir" styleClass="nwav-campo-label"/>
+                <RadioButton fx:id="nwavRdbRangos" text="Por rangos: un archivo por cada rango" toggleGroup="$nwavGrupoModo"
+                             selected="true"/>
+                <TextField fx:id="nwavTxtRangos" promptText="Ej.: 1-3, 4-6, 7-"/>
+                <RadioButton fx:id="nwavRdbCada" text="Cada cierto número de páginas" toggleGroup="$nwavGrupoModo"/>
+                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                    <Spinner fx:id="nwavSpnCada" editable="true" prefWidth="110.0"/>
+                    <Label text="páginas por archivo" styleClass="nwav-texto-tenue"/>
+                </HBox>
+            </VBox>
+            <VBox spacing="6.0">
+                <Label text="Nombre base de los archivos" styleClass="nwav-campo-label"/>
+                <TextField fx:id="nwavTxtNombreBase"/>
+                <Label text="Ej.: «informe - parte 01 (pág. 1-3).pdf»" styleClass="nwav-panel-ayuda"/>
+            </VBox>
+            <Label fx:id="nwavLblResumen" wrapText="true" styleClass="nwav-texto-tenue"/>
+        </VBox>
+    </ScrollPane>
+
+    <HBox styleClass="nwav-panel-pie" spacing="10.0" alignment="CENTER_RIGHT">
+        <Button text="Cancelar" onAction="#nwavOnCerrar" styleClass="button-outlined" cancelButton="true"/>
+        <Button fx:id="nwavBtnDividir" text="Elegir carpeta y dividir…" onAction="#nwavOnDividir" styleClass="accent">
+            <graphic><FontIcon iconLiteral="fth-scissors"/></graphic>
+        </Button>
+    </HBox>
+</VBox>

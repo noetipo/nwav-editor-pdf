@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface NwavHistorialOperacionRepository extends JpaRepository<NwavHistorialOperacion, Long> {
 
-    List<NwavHistorialOperacion> findAllByOrderByNwavFechaDesc();
+    List<NwavHistorialOperacion> findAllByOrderByNwavFechaDescNwavIdDesc();
 }

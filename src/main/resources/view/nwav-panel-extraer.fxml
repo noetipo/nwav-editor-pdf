@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nwav.editorpdf.controller.NwavPanelExtraerController"
+      styleClass="nwav-panel" prefWidth="440.0" maxWidth="440.0" maxHeight="Infinity">
+
+    <HBox styleClass="nwav-panel-cabecera" spacing="12.0" alignment="CENTER_LEFT">
+        <StackPane styleClass="nwav-panel-icono">
+            <FontIcon iconLiteral="fth-external-link"/>
+        </StackPane>
+        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+            <Label text="Extraer páginas" styleClass="nwav-panel-titulo-grande"/>
+            <Label text="Copia las páginas elegidas a un PDF nuevo. El documento abierto no cambia." styleClass="nwav-panel-subtitulo" wrapText="true"/>
+        </VBox>
+        <Button onAction="#nwavOnCerrar" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+        </Button>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="nwav-panel-scroll">
+        <VBox styleClass="nwav-panel-cuerpo" spacing="16.0">
+            <VBox spacing="6.0">
+                <Label text="Documento" styleClass="nwav-campo-label"/>
+                <Label fx:id="nwavLblDocumento" styleClass="nwav-texto-tenue" wrapText="true"/>
+            </VBox>
+            <VBox spacing="6.0">
+                <Label text="Páginas" styleClass="nwav-campo-label"/>
+                <TextField fx:id="nwavTxtPaginas" promptText="Ej.: 1-3, 5, 8-10"/>
+                <Label fx:id="nwavLblError" wrapText="true" styleClass="nwav-texto-tenue"/>
+                <Label text="Se toma de la selección de miniaturas. Usa «8-» para ir hasta el final. Se incluyen los cambios aún sin guardar."
+                       styleClass="nwav-panel-ayuda" wrapText="true"/>
+            </VBox>
+            <CheckBox fx:id="nwavChkAbrir" text="Abrir el PDF nuevo al terminar"/>
+        </VBox>
+    </ScrollPane>
+
+    <HBox styleClass="nwav-panel-pie" spacing="10.0" alignment="CENTER_RIGHT">
+        <Button text="Cancelar" onAction="#nwavOnCerrar" styleClass="button-outlined" cancelButton="true"/>
+        <Button fx:id="nwavBtnExtraer" text="Extraer…" onAction="#nwavOnExtraer" styleClass="accent">
+            <graphic><FontIcon iconLiteral="fth-external-link"/></graphic>
+        </Button>
+    </HBox>
+</VBox>

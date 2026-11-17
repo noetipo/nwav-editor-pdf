@@ -8,6 +8,7 @@ import com.nwav.editorpdf.model.NwavMarcaAgua;
 import com.nwav.editorpdf.model.NwavModoZoom;
 import com.nwav.editorpdf.model.NwavResultadoOperacion;
 import com.nwav.editorpdf.model.NwavTipoMarcaAgua;
+import com.nwav.editorpdf.model.NwavTipoOperacion;
 import com.nwav.editorpdf.soporte.NwavPruebaConBaseDatos;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -142,12 +143,12 @@ class NwavRepositoriosTest extends NwavPruebaConBaseDatos {
 
     @Test
     void nwavElHistorialSeOrdenaPorFecha() {
-        nwavHistorial.save(nwavOperacion("ROTAR", LocalDateTime.now().minusHours(1)));
-        nwavHistorial.save(nwavOperacion("UNIR", LocalDateTime.now()));
+        nwavHistorial.save(nwavOperacion(NwavTipoOperacion.NWAV_ROTAR, LocalDateTime.now().minusHours(1)));
+        nwavHistorial.save(nwavOperacion(NwavTipoOperacion.NWAV_UNIR, LocalDateTime.now()));
 
-        assertThat(nwavHistorial.findAllByOrderByNwavFechaDesc())
+        assertThat(nwavHistorial.findAllByOrderByNwavFechaDescNwavIdDesc())
                 .extracting(NwavHistorialOperacion::getNwavTipo)
-                .containsExactly("UNIR", "ROTAR");
+                .containsExactly(NwavTipoOperacion.NWAV_UNIR, NwavTipoOperacion.NWAV_ROTAR);
     }
 
     private static NwavArchivoReciente nwavReciente(String nwavRuta, int nwavHorasDespues) {
@@ -158,7 +159,7 @@ class NwavRepositoriosTest extends NwavPruebaConBaseDatos {
         return nwavReciente;
     }
 
-    private static NwavHistorialOperacion nwavOperacion(String nwavTipo, LocalDateTime nwavFecha) {
+    private static NwavHistorialOperacion nwavOperacion(NwavTipoOperacion nwavTipo, LocalDateTime nwavFecha) {
         NwavHistorialOperacion nwavOperacion = new NwavHistorialOperacion();
         nwavOperacion.setNwavTipo(nwavTipo);
         nwavOperacion.setNwavArchivoOrigen("/tmp/origen.pdf");

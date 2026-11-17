@@ -25,6 +25,53 @@
                 <tooltip><Tooltip text="Cerrar documento"/></tooltip>
             </Button>
 
+            <Button fx:id="nwavBtnGuardarComo" onAction="#nwavOnGuardarComo" styleClass="button-icon, flat">
+                <graphic><FontIcon iconLiteral="fth-save"/></graphic>
+                <tooltip><Tooltip text="Guardar como… (Ctrl/⌘ + Mayús + S)"/></tooltip>
+            </Button>
+
+            <Separator orientation="VERTICAL"/>
+            <Button fx:id="nwavBtnDeshacer" onAction="#nwavOnDeshacer" styleClass="button-icon, flat">
+                <graphic><FontIcon iconLiteral="fth-corner-up-left"/></graphic>
+            </Button>
+            <Button fx:id="nwavBtnRehacer" onAction="#nwavOnRehacer" styleClass="button-icon, flat">
+                <graphic><FontIcon iconLiteral="fth-corner-up-right"/></graphic>
+            </Button>
+            <MenuButton fx:id="nwavMbtPaginas" text="Páginas" styleClass="flat">
+                <graphic><FontIcon iconLiteral="fth-layers"/></graphic>
+                <items>
+                    <MenuItem text="Rotar a la izquierda" onAction="#nwavOnRotarIzquierda">
+                        <graphic><FontIcon iconLiteral="fth-rotate-ccw"/></graphic>
+                    </MenuItem>
+                    <MenuItem text="Rotar a la derecha" onAction="#nwavOnRotarDerecha">
+                        <graphic><FontIcon iconLiteral="fth-rotate-cw"/></graphic>
+                    </MenuItem>
+                    <MenuItem text="Girar 180°" onAction="#nwavOnGirar180">
+                        <graphic><FontIcon iconLiteral="fth-refresh-cw"/></graphic>
+                    </MenuItem>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Duplicar" onAction="#nwavOnDuplicar">
+                        <graphic><FontIcon iconLiteral="fth-copy"/></graphic>
+                    </MenuItem>
+                    <MenuItem text="Eliminar" onAction="#nwavOnEliminar">
+                        <graphic><FontIcon iconLiteral="fth-trash-2"/></graphic>
+                    </MenuItem>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Insertar páginas…" onAction="#nwavOnInsertar">
+                        <graphic><FontIcon iconLiteral="fth-file-plus"/></graphic>
+                    </MenuItem>
+                    <MenuItem text="Extraer páginas…" onAction="#nwavOnExtraer">
+                        <graphic><FontIcon iconLiteral="fth-external-link"/></graphic>
+                    </MenuItem>
+                    <MenuItem text="Dividir PDF…" onAction="#nwavOnDividir">
+                        <graphic><FontIcon iconLiteral="fth-scissors"/></graphic>
+                    </MenuItem>
+                    <MenuItem text="Unir PDF…" onAction="#nwavOnUnir">
+                        <graphic><FontIcon iconLiteral="fth-git-merge"/></graphic>
+                    </MenuItem>
+                </items>
+            </MenuButton>
+
             <Separator orientation="VERTICAL"/>
             <ToggleButton fx:id="nwavTglMiniaturas" styleClass="button-icon, flat">
                 <graphic><FontIcon iconLiteral="fth-sidebar"/></graphic>
@@ -65,7 +112,7 @@
             </ToggleButton>
 
             <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="nwavLblArchivo" styleClass="nwav-nombre-archivo" textOverrun="CENTER_ELLIPSIS"/>
+            <Label fx:id="nwavLblArchivo" styleClass="nwav-nombre-archivo" textOverrun="CENTER_ELLIPSIS" minWidth="0"/>
         </HBox>
     </top>
 
@@ -73,6 +120,8 @@
     <left>
         <VBox fx:id="nwavPanelMiniaturas" styleClass="nwav-panel-miniaturas" prefWidth="170.0" minWidth="170.0">
             <Label text="PÁGINAS" styleClass="nwav-panel-titulo"/>
+            <Label text="Arrastra para reordenar · clic derecho para más opciones" styleClass="nwav-panel-ayuda"
+                   wrapText="true"/>
             <ListView fx:id="nwavListaMiniaturas" VBox.vgrow="ALWAYS" styleClass="nwav-lista-miniaturas"/>
         </VBox>
     </left>

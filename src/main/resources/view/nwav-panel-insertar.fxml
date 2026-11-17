@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nwav.editorpdf.controller.NwavPanelInsertarController"
+      styleClass="nwav-panel" prefWidth="440.0" maxWidth="440.0" maxHeight="Infinity">
+
+    <HBox styleClass="nwav-panel-cabecera" spacing="12.0" alignment="CENTER_LEFT">
+        <StackPane styleClass="nwav-panel-icono">
+            <FontIcon iconLiteral="fth-file-plus"/>
+        </StackPane>
+        <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+            <Label text="Insertar páginas" styleClass="nwav-panel-titulo-grande"/>
+            <Label text="Añade páginas de otro PDF o imágenes al documento abierto. Puedes deshacerlo." styleClass="nwav-panel-subtitulo" wrapText="true"/>
+        </VBox>
+        <Button onAction="#nwavOnCerrar" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-x"/></graphic>
+        </Button>
+    </HBox>
+
+    <fx:define>
+        <ToggleGroup fx:id="nwavGrupoOrigen"/>
+    </fx:define>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="nwav-panel-scroll">
+        <VBox styleClass="nwav-panel-cuerpo" spacing="16.0">
+            <HBox styleClass="nwav-selector-segmentos">
+                <ToggleButton fx:id="nwavTglDesdePdf" text="Desde un PDF" toggleGroup="$nwavGrupoOrigen"
+                              selected="true" styleClass="left-pill" maxWidth="Infinity" HBox.hgrow="ALWAYS">
+                    <graphic><FontIcon iconLiteral="fth-file-text"/></graphic>
+                </ToggleButton>
+                <ToggleButton fx:id="nwavTglDesdeImagenes" text="Desde imágenes" toggleGroup="$nwavGrupoOrigen"
+                              styleClass="right-pill" maxWidth="Infinity" HBox.hgrow="ALWAYS">
+                    <graphic><FontIcon iconLiteral="fth-image"/></graphic>
+                </ToggleButton>
+            </HBox>
+
+            <VBox fx:id="nwavSeccionPdf" spacing="8.0">
+                <Label text="Archivo PDF" styleClass="nwav-campo-label"/>
+                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                    <Button text="Elegir PDF…" onAction="#nwavOnElegirPdf" styleClass="button-outlined">
+                        <graphic><FontIcon iconLiteral="fth-folder"/></graphic>
+                    </Button>
+                    <Label fx:id="nwavLblPdfElegido" text="Ninguno elegido" styleClass="nwav-texto-tenue"
+                           textOverrun="CENTER_ELLIPSIS" minWidth="0"/>
+                </HBox>
+                <Label text="Páginas del PDF elegido (vacío = todas)" styleClass="nwav-campo-label"/>
+                <TextField fx:id="nwavTxtPaginasOrigen" promptText="Ej.: 1-3, 5"/>
+            </VBox>
+
+            <VBox fx:id="nwavSeccionImagenes" spacing="8.0">
+                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                    <Label text="Imágenes (una por página, en este orden)" styleClass="nwav-campo-label"
+                           HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Button onAction="#nwavOnQuitarImagenes" styleClass="button-icon, flat">
+                        <graphic><FontIcon iconLiteral="fth-minus"/></graphic>
+                        <tooltip><Tooltip text="Quitar las seleccionadas"/></tooltip>
+                    </Button>
+                    <Button onAction="#nwavOnAnadirImagenes" styleClass="button-icon, flat">
+                        <graphic><FontIcon iconLiteral="fth-plus"/></graphic>
+                        <tooltip><Tooltip text="Añadir imágenes"/></tooltip>
+                    </Button>
+                </HBox>
+                <ListView fx:id="nwavListaImagenes" prefHeight="180.0" styleClass="nwav-lista-panel"/>
+                <Label text="Cada imagen se coloca centrada en una hoja A4, vertical u horizontal según su forma."
+                       styleClass="nwav-panel-ayuda" wrapText="true"/>
+            </VBox>
+
+            <VBox spacing="6.0">
+                <Label text="Dónde insertar" styleClass="nwav-campo-label"/>
+                <ComboBox fx:id="nwavCmbPosicion" maxWidth="Infinity"/>
+            </VBox>
+        </VBox>
+    </ScrollPane>
+
+    <HBox styleClass="nwav-panel-pie" spacing="10.0" alignment="CENTER_RIGHT">
+        <Button text="Cancelar" onAction="#nwavOnCerrar" styleClass="button-outlined" cancelButton="true"/>
+        <Button fx:id="nwavBtnInsertar" text="Insertar" onAction="#nwavOnInsertar" styleClass="accent">
+            <graphic><FontIcon iconLiteral="fth-file-plus"/></graphic>
+        </Button>
+    </HBox>
+</VBox>

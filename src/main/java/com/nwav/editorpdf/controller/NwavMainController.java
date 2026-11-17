@@ -7,6 +7,7 @@ import atlantafx.base.util.Animations;
 import com.nwav.editorpdf.service.NwavArchivoRecienteService;
 import com.nwav.editorpdf.service.NwavArchivoRecienteService.NwavRecienteVista;
 import com.nwav.editorpdf.service.NwavConfiguracionService;
+import com.nwav.editorpdf.ui.NwavCargadorVistas;
 import com.nwav.editorpdf.ui.NwavNotificador;
 import com.nwav.editorpdf.ui.NwavRefrescable;
 import com.nwav.editorpdf.ui.NwavTareaFondo;
@@ -20,10 +21,8 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringExpression;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBase;
@@ -51,18 +50,13 @@ import javafx.util.Duration;
 import lombok.RequiredArgsConstructor;
 import org.kordamp.ikonli.feather.Feather;
 import org.kordamp.ikonli.javafx.FontIcon;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * Ventana principal: menu lateral, barra de menus, barra de estado y capas flotantes.
@@ -77,13 +71,14 @@ public class NwavMainController {
     public static final String NWAV_VISTA_VISOR = "nwav-visor-view";
     public static final String NWAV_VISTA_RECIENTES = "nwav-recientes-view";
     public static final String NWAV_VISTA_PREFERENCIAS = "nwav-preferencias-view";
+    public static final String NWAV_VISTA_HISTORIAL = "nwav-historial-view";
 
     private static final double NWAV_ANCHO_EXPANDIDO = 232;
     private static final double NWAV_ANCHO_CONTRAIDO = 76;
     private static final Duration NWAV_DURACION_MENU = Duration.millis(260);
     private static final int NWAV_RECIENTES_EN_MENU = 10;
 
-    private final ApplicationContext nwavContexto;
+    private final NwavCargadorVistas nwavCargador;
     private final NwavNotificador nwavNotificador;
     private final NwavTareaFondo nwavTareaFondo;
     private final NwavConfiguracionService nwavConfiguracion;
@@ -102,6 +97,7 @@ public class NwavMainController {
     @FXML private ToggleButton nwavNavVisor;
     @FXML private ToggleButton nwavNavRecientes;
     @FXML private ToggleButton nwavNavPreferencias;
+    @FXML private ToggleButton nwavNavHistorial;
     @FXML private Region nwavIndicador;
     @FXML private VBox nwavMarcaTextos;
     @FXML private Button nwavBtnTema;
@@ -109,6 +105,11 @@ public class NwavMainController {
 
     @FXML private Menu nwavMnuRecientes;
     @FXML private MenuItem nwavMnuCerrar;
+    @FXML private MenuItem nwavMnuGuardar;
+    @FXML private MenuItem nwavMnuGuardarComo;
+    @FXML private MenuItem nwavMnuDeshacer;
+    @FXML private MenuItem nwavMnuRehacer;
+    @FXML private Menu nwavMnuPaginas;
     @FXML private Menu nwavMnuVer;
     @FXML private CheckMenuItem nwavMnuMiniaturas;
 
@@ -117,13 +118,8 @@ public class NwavMainController {
     @FXML private ProgressBar nwavBarraProgreso;
     @FXML private Label nwavLblProgreso;
 
-    /** Vistas ya cargadas: se construyen una sola vez y se reutilizan. */
-    private final Map<String, NwavVista> nwavVistas = new HashMap<>();
     private boolean nwavOscuro;
     private boolean nwavContraido;
-
-    private record NwavVista(Parent nwavNodo, Object nwavControlador) {
-    }
 
     @FXML
     public void initialize() {
@@ -135,6 +131,7 @@ public class NwavMainController {
         nwavNavVisor.setUserData(NWAV_VISTA_VISOR);
         nwavNavRecientes.setUserData(NWAV_VISTA_RECIENTES);
         nwavNavPreferencias.setUserData(NWAV_VISTA_PREFERENCIAS);
+        nwavNavHistorial.setUserData(NWAV_VISTA_HISTORIAL);
         for (ToggleButton nwavBoton : nwavBotonesMenu()) {
             Tooltip nwavAyuda = new Tooltip(nwavBoton.getText());
             nwavAyuda.setShowDelay(Duration.millis(300));
@@ -161,6 +158,18 @@ public class NwavMainController {
         // Estado del visor en la barra de estado y en los menus.
         nwavLblEstadoDocumento.textProperty().bind(nwavVisor.nwavEstadoProperty());
         nwavMnuCerrar.disableProperty().bind(nwavVisor.nwavHayDocumentoProperty().not());
+        nwavMnuGuardar.disableProperty().bind(nwavVisor.nwavPuedeEditarProperty().not()
+                .or(nwavVisor.nwavSinGuardarProperty().not()));
+        nwavMnuGuardarComo.disableProperty().bind(nwavVisor.nwavPuedeEditarProperty().not());
+        nwavMnuDeshacer.disableProperty().bind(nwavVisor.nwavPuedeEditarProperty().not()
+                .or(nwavVisor.nwavPuedeDeshacerProperty().not()));
+        nwavMnuDeshacer.textProperty().bind(nwavVisor.nwavTextoDeshacerProperty());
+        nwavMnuRehacer.disableProperty().bind(nwavVisor.nwavPuedeEditarProperty().not()
+                .or(nwavVisor.nwavPuedeRehacerProperty().not()));
+        nwavMnuRehacer.textProperty().bind(nwavVisor.nwavTextoRehacerProperty());
+        nwavMnuPaginas.getItems().stream()
+                .filter(nwavItem -> !(nwavItem instanceof SeparatorMenuItem) && !"nwavMnuUnir".equals(nwavItem.getId()))
+                .forEach(nwavItem -> nwavItem.disableProperty().bind(nwavVisor.nwavPuedeEditarProperty().not()));
         nwavMnuVer.getItems().stream()
                 .filter(nwavItem -> nwavItem != nwavMnuMiniaturas && !(nwavItem instanceof SeparatorMenuItem))
                 .forEach(nwavItem -> nwavItem.disableProperty().bind(nwavVisor.nwavHayDocumentoProperty().not()));
@@ -202,25 +211,12 @@ public class NwavMainController {
     }
 
     private void nwavMostrar(String nwavNombre) {
-        NwavVista nwavVista = nwavVistas.computeIfAbsent(nwavNombre, this::nwavCargar);
+        NwavCargadorVistas.NwavVistaCargada nwavVista = nwavCargador.nwavObtener(nwavNombre);
         nwavContenido.getChildren().setAll(nwavVista.nwavNodo());
         if (nwavVista.nwavControlador() instanceof NwavRefrescable nwavRefrescable) {
             nwavRefrescable.nwavRefrescar();
         }
         Animations.fadeIn(nwavVista.nwavNodo(), Duration.millis(260)).play();
-    }
-
-    private NwavVista nwavCargar(String nwavNombre) {
-        FXMLLoader nwavCargador = new FXMLLoader(getClass().getResource("/view/" + nwavNombre + ".fxml"));
-        nwavCargador.setControllerFactory(nwavContexto::getBean);
-        // Explicito: en macOS el hilo de eventos puede no tener class loader de contexto.
-        nwavCargador.setClassLoader(getClass().getClassLoader());
-        try {
-            Parent nwavNodo = nwavCargador.load();
-            return new NwavVista(nwavNodo, nwavCargador.getController());
-        } catch (IOException nwavError) {
-            throw new UncheckedIOException("No se pudo cargar la vista " + nwavNombre, nwavError);
-        }
     }
 
     /** Desliza el fondo resaltado hasta la opcion seleccionada. */
@@ -253,7 +249,94 @@ public class NwavMainController {
 
     @FXML
     private void nwavOnSalir() {
-        Platform.exit();
+        nwavSalir();
+    }
+
+    /** Sale de la aplicacion; si hay cambios sin guardar, pregunta antes. */
+    public void nwavSalir() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavConfirmarSiHayCambios(() -> {
+            nwavVisor.nwavDescartarCambios();
+            Platform.exit();
+        });
+    }
+
+    @FXML
+    private void nwavOnGuardar() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnGuardar();
+    }
+
+    @FXML
+    private void nwavOnGuardarComo() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnGuardarComo();
+    }
+
+    @FXML
+    private void nwavOnDeshacer() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnDeshacer();
+    }
+
+    @FXML
+    private void nwavOnRehacer() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnRehacer();
+    }
+
+    @FXML
+    private void nwavOnRotarIzquierda() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavRotarSeleccion(-90);
+    }
+
+    @FXML
+    private void nwavOnRotarDerecha() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavRotarSeleccion(90);
+    }
+
+    @FXML
+    private void nwavOnGirar180() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavRotarSeleccion(180);
+    }
+
+    @FXML
+    private void nwavOnDuplicar() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavDuplicarSeleccion();
+    }
+
+    @FXML
+    private void nwavOnEliminar() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavEliminarSeleccion();
+    }
+
+    @FXML
+    private void nwavOnInsertar() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnInsertar();
+    }
+
+    @FXML
+    private void nwavOnExtraer() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnExtraer();
+    }
+
+    @FXML
+    private void nwavOnDividir() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnDividir();
+    }
+
+    @FXML
+    private void nwavOnUnir() {
+        nwavIrA(NWAV_VISTA_VISOR);
+        nwavVisor.nwavOnUnir();
     }
 
     @FXML
@@ -350,6 +433,9 @@ public class NwavMainController {
         nwavRaiz.addEventFilter(DragEvent.DRAG_EXITED, nwavEvento -> nwavCapaArrastre.setVisible(false));
         nwavRaiz.addEventFilter(DragEvent.DRAG_DROPPED, nwavEvento -> {
             nwavCapaArrastre.setVisible(false);
+            if (!nwavEvento.getDragboard().hasFiles()) {
+                return; // arrastres internos (p. ej. reordenar miniaturas)
+            }
             List<File> nwavPdfs = nwavPdfsArrastrados(nwavEvento.getDragboard());
             if (nwavPdfs.isEmpty()) {
                 nwavNotificador.nwavAdvertencia("Solo se pueden abrir archivos PDF.");
@@ -461,7 +547,7 @@ public class NwavMainController {
     }
 
     private List<ToggleButton> nwavBotonesMenu() {
-        return List.of(nwavNavVisor, nwavNavRecientes, nwavNavPreferencias);
+        return List.of(nwavNavVisor, nwavNavRecientes, nwavNavHistorial, nwavNavPreferencias);
     }
 
     private List<ButtonBase> nwavTodosLosBotones() {
