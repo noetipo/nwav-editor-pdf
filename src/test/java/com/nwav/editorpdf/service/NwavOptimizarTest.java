@@ -206,9 +206,38 @@ class NwavOptimizarTest {
                 nwavCarpeta.resolve("scan_ocr.pdf"), nwavCarpeta.resolve("scan_ocr.txt"),
                 NwavAvance.NWAV_NINGUNO, NwavCancelacion.NWAV_NUNCA);
 
+        String nwavDiagnostico = nwavDiagnosticoOcr(nwavDependencias, nwavEscaneado, nwavResultado);
         assertThat(nwavResultado.nwavPaginasReconocidas()).isEqualTo(1);
-        assertThat(NwavLectorPdf.nwavTextos(nwavResultado.nwavPdf()).get(0)).contains("HOLA").contains("MUNDO");
+        assertThat(NwavLectorPdf.nwavTextos(nwavResultado.nwavPdf()).get(0)).as(nwavDiagnostico)
+                .contains("HOLA").contains("MUNDO");
         assertThat(Files.readString(nwavResultado.nwavTexto())).contains("HOLA MUNDO");
+    }
+
+    private static String nwavDiagnosticoOcr(NwavDependenciasService nwavDependencias, Path nwavEscaneado,
+                                             NwavOcrService.NwavResultadoOcr nwavResultado) {
+        StringBuilder nwavTexto = new StringBuilder("palabras=" + nwavResultado.nwavPalabras()
+                + " idiomas=" + nwavResultado.nwavIdiomas() + " os=" + System.getProperty("os.name"));
+        try {
+            nwavTexto.append(" txt=[").append(Files.readString(nwavResultado.nwavTexto()).strip()).append(']');
+            net.sourceforge.tess4j.Tesseract nwavMotor = new net.sourceforge.tess4j.Tesseract();
+            nwavMotor.setDatapath(nwavDependencias.nwavCarpetaIdiomasPreparada().toString());
+            nwavMotor.setLanguage("eng");
+            java.awt.image.BufferedImage nwavImagen;
+            try (org.apache.pdfbox.pdmodel.PDDocument nwavPd = org.apache.pdfbox.Loader.loadPDF(nwavEscaneado.toFile())) {
+                nwavImagen = new org.apache.pdfbox.rendering.PDFRenderer(nwavPd).renderImageWithDPI(0, 300,
+                        org.apache.pdfbox.rendering.ImageType.RGB);
+            }
+            nwavTexto.append(" doOCR=[").append(nwavMotor.doOCR(nwavImagen).strip()).append(']');
+            nwavTexto.append(" getWords=").append(nwavMotor.getWords(List.of(nwavImagen),
+                    net.sourceforge.tess4j.ITessAPI.TessPageIteratorLevel.RIL_WORD).size());
+            nwavTexto.append(" datos=").append(nwavDependencias.nwavCarpetaIdiomasPreparada());
+            try (var nwavLista = Files.list(nwavDependencias.nwavCarpetaIdiomasPreparada())) {
+                nwavTexto.append(nwavLista.map(nwavR -> nwavR.getFileName() + ":" + nwavR.toFile().length()).toList());
+            }
+        } catch (Throwable nwavError) {
+            nwavTexto.append(" error=").append(nwavError);
+        }
+        return nwavTexto.toString();
     }
 
     @Test
