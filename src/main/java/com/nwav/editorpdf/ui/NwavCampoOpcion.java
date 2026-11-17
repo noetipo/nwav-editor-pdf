@@ -28,6 +28,7 @@ public final class NwavCampoOpcion {
     private String nwavAyuda;
     private String nwavSiClave;
     private Set<String> nwavSiValores = Set.of();
+    private boolean nwavNoGuardar;
 
     private NwavCampoOpcion(String nwavClave, String nwavEtiqueta, NwavTipo nwavTipo, String nwavDefecto) {
         this.nwavClave = nwavClave;
@@ -153,6 +154,12 @@ public final class NwavCampoOpcion {
     }
 
     public boolean nwavSeGuarda() {
-        return nwavTipo != NwavTipo.NWAV_CONTRASENA;
+        return nwavTipo != NwavTipo.NWAV_CONTRASENA && !nwavNoGuardar;
+    }
+
+    /** No recordar este valor (p. ej. una confirmacion que se pide en cada uso). */
+    public NwavCampoOpcion nwavSinGuardar() {
+        this.nwavNoGuardar = true;
+        return this;
     }
 }

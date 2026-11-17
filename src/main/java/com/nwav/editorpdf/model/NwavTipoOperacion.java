@@ -43,6 +43,8 @@ public enum NwavTipoOperacion {
     NWAV_VERIFICAR_FIRMAS("Verificar firmas"),
     NWAV_CERTIFICADO("Crear certificado"),
     NWAV_DESBLOQUEAR("Quitar contraseña"),
+    NWAV_IA_RESUMIR("Resumir con IA"),
+    NWAV_IA_TRADUCIR("Traducir con IA"),
     NWAV_COMPRIMIR("Comprimir PDF"),
     NWAV_OCR("OCR"),
     NWAV_REPARAR("Reparar PDF"),

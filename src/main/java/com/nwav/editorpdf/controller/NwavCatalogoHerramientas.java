@@ -54,6 +54,8 @@ public class NwavCatalogoHerramientas {
     private final com.nwav.editorpdf.service.NwavFirmaDigitalService nwavFirmaDigital;
     private final com.nwav.editorpdf.service.NwavRedaccionService nwavRedaccion;
     private final com.nwav.editorpdf.service.NwavPdfDocumentoService nwavDocumentosPdf;
+    private final com.nwav.editorpdf.service.ia.NwavIaService nwavIa;
+    private final com.nwav.editorpdf.service.ia.NwavConfiguracionIaService nwavConfiguracionIa;
     private final NwavTareaFondo nwavTareaFondo;
     private final NwavNotificador nwavNotificador;
     private final NwavVisorController nwavVisor;
@@ -79,6 +81,7 @@ public class NwavCatalogoHerramientas {
         nwavAgregarDesdePdf(nwavLista);
         nwavAgregarEditar(nwavLista);
         nwavAgregarSeguridad(nwavLista);
+        nwavAgregarIa(nwavLista);
         return nwavLista;
     }
 
@@ -907,6 +910,73 @@ public class NwavCatalogoHerramientas {
                                 NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
                                         "limpio", "pdf")), "Metadatos y datos ocultos eliminados")))
                 .nwavConPalabrasClave("privacidad anonimizar metadatos autor xmp limpiar"));
+    }
+
+    // ===================================================================== IA
+
+    private static final String NWAV_AVISO_IA = "⚠ Esta herramienta ENVÍA EL CONTENIDO DEL DOCUMENTO a un servicio "
+            + "externo (Anthropic, modelo Claude) a través de Internet, usando tu clave de API (con su coste). No la uses "
+            + "con documentos que no puedas compartir. El resultado lo genera una IA y puede contener errores.";
+
+    private void nwavAgregarIa(List<NwavDefinicionHerramienta> nwavLista) {
+        String[] nwavIdiomas = com.nwav.editorpdf.service.ia.NwavIaService.NWAV_IDIOMAS.stream()
+                .map(nwavI -> nwavI + "=" + Character.toUpperCase(nwavI.charAt(0)) + nwavI.substring(1))
+                .toArray(String[]::new);
+        nwavLista.add(new NwavDefinicionHerramienta("resumir-ia", "Resumir con IA",
+                "Crea un resumen del documento en el idioma que elijas.", NwavCategoriaHerramienta.NWAV_IA,
+                Feather.ALIGN_CENTER)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_IA_RESUMIR, true, nwavEntrada -> {
+                    nwavExigirConfirmacionIa(nwavEntrada);
+                    boolean nwavPdf = "pdf".equals(nwavEntrada.nwavTexto("formato", "md"));
+                    Path nwavDestino = NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavCarpetaSalida(), "resumen", nwavPdf ? "pdf" : "md");
+                    return NwavResultadoProceso.nwavDe(nwavIa.nwavResumir(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavEntrada.nwavTexto("idioma", "español"),
+                            com.nwav.editorpdf.service.ia.NwavIaService.NwavLongitud.valueOf(
+                                    nwavEntrada.nwavTexto("longitud", "NWAV_NORMAL")), nwavPdf, nwavDestino,
+                            nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion()), "Resumen generado con IA");
+                }))
+                .nwavRequiere(nwavConfiguracionIa::nwavEstado)
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavEleccion("longitud", "Extensión", "NWAV_NORMAL", "NWAV_BREVE=Breve",
+                                "NWAV_NORMAL=Normal (una página)", "NWAV_DETALLADO=Detallado por secciones"),
+                        NwavCampoOpcion.nwavEleccion("idioma", "Idioma del resumen", "español", nwavIdiomas),
+                        NwavCampoOpcion.nwavEleccion("formato", "Guardar como", "md", "md=Markdown (.md)", "pdf=PDF"),
+                        NwavCampoOpcion.nwavCasilla("acepto", "Confirmo que puedo enviar estos documentos a Anthropic",
+                                false).nwavSinGuardar())
+                .nwavConAviso(NWAV_AVISO_IA)
+                .nwavConPalabrasClave("ia inteligencia artificial resumen claude anthropic"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("traducir-ia", "Traducir con IA",
+                "Traduce el texto del PDF conservando títulos, listas y tablas.", NwavCategoriaHerramienta.NWAV_IA,
+                Feather.GLOBE)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_IA_TRADUCIR, true, nwavEntrada -> {
+                    nwavExigirConfirmacionIa(nwavEntrada);
+                    boolean nwavPdf = "pdf".equals(nwavEntrada.nwavTexto("formato", "pdf"));
+                    String nwavIdioma = nwavEntrada.nwavTexto("idioma", "inglés");
+                    Path nwavDestino = NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavCarpetaSalida(), "traducido", nwavPdf ? "pdf" : "md");
+                    return NwavResultadoProceso.nwavDe(nwavIa.nwavTraducir(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavIdioma, nwavPdf, nwavDestino,
+                            nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion()), "Traducido al " + nwavIdioma);
+                }))
+                .nwavRequiere(nwavConfiguracionIa::nwavEstado)
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavEleccion("idioma", "Traducir al", "inglés", nwavIdiomas),
+                        NwavCampoOpcion.nwavEleccion("formato", "Guardar como", "pdf", "pdf=PDF (texto, sin el diseño "
+                                + "original)", "md=Markdown (.md)"),
+                        NwavCampoOpcion.nwavCasilla("acepto", "Confirmo que puedo enviar estos documentos a Anthropic",
+                                false).nwavSinGuardar())
+                .nwavConAviso(NWAV_AVISO_IA + " Se traduce el texto (los escaneos necesitan OCR antes); el resultado no "
+                        + "conserva el diseño ni las imágenes del original.")
+                .nwavConPalabrasClave("ia inteligencia artificial traduccion idioma claude anthropic"));
+    }
+
+    private static void nwavExigirConfirmacionIa(NwavEntradaProceso nwavEntrada) {
+        if (!nwavEntrada.nwavSiNo("acepto", false)) {
+            throw new com.nwav.editorpdf.exception.NwavEditorException("Marca la casilla de confirmación: el contenido "
+                    + "del documento se enviará a Anthropic.");
+        }
     }
 
     private NwavResultadoProceso nwavProcesoFirmaDigital(NwavEntradaProceso nwavEntrada) {

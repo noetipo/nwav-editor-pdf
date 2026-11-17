@@ -109,6 +109,30 @@
             </GridPane>
         </VBox>
 
+        <!-- Inteligencia artificial -->
+        <VBox styleClass="nwav-tarjeta">
+            <Label text="Inteligencia artificial (opcional)" styleClass="nwav-tarjeta-titulo"/>
+            <Label text="Resumir y traducir con IA envía el contenido del documento a Anthropic (modelo Claude) por Internet, usando tu propia clave de API y con su coste. Está desactivado hasta que lo actives aquí; el resto de la aplicación funciona sin Internet."
+                   styleClass="nwav-aviso-herramienta" wrapText="true"/>
+            <GridPane styleClass="nwav-rejilla-form" hgap="16.0" vgap="12.0">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="200.0"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <CheckBox fx:id="nwavChkIaActiva" text="Activar las funciones de IA (entiendo que el contenido se envía a Anthropic)"
+                          wrapText="true" GridPane.columnSpan="2"/>
+                <Label text="Clave de API de Anthropic" styleClass="nwav-campo-label" GridPane.rowIndex="1"/>
+                <HBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                    <PasswordField fx:id="nwavTxtClaveIa" HBox.hgrow="ALWAYS"/>
+                    <Button text="Borrar clave" onAction="#nwavOnBorrarClaveIa" styleClass="button-outlined"/>
+                </HBox>
+                <Label text="Modelo" styleClass="nwav-campo-label" GridPane.rowIndex="2"/>
+                <TextField fx:id="nwavTxtModeloIa" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                <Label fx:id="nwavLblEstadoIa" wrapText="true" styleClass="nwav-texto-tenue" GridPane.columnIndex="1"
+                       GridPane.rowIndex="3"/>
+            </GridPane>
+        </VBox>
+
         <!-- Datos -->
         <VBox styleClass="nwav-tarjeta">
             <Label text="Datos de la aplicación" styleClass="nwav-tarjeta-titulo"/>

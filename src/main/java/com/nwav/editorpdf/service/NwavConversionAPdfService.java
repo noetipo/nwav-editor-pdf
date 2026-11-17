@@ -358,6 +358,23 @@ public class NwavConversionAPdfService {
         }
     }
 
+    /** Fuentes TTF con muchos alfabetos (para textos generados en otros idiomas). */
+    private static final List<String> NWAV_FUENTES_UNICODE = List.of(
+            "/System/Library/Fonts/Supplemental/Arial Unicode.ttf", "/Library/Fonts/Arial Unicode.ttf",
+            "C:\\Windows\\Fonts\\arialuni.ttf", "C:\\Windows\\Fonts\\arial.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf");
+
+    /** PDF a partir de un HTML generado por la app (p. ej. un resumen), con fuente Unicode si hay. */
+    public Path nwavHtmlCadenaAPdf(String nwavHtml, NwavOpcionesHtml nwavOpciones, Path nwavDestino) {
+        org.jsoup.nodes.Document nwavDoc = Jsoup.parse(nwavHtml);
+        java.util.Optional<java.io.File> nwavFuente = NWAV_FUENTES_UNICODE.stream().map(java.io.File::new)
+                .filter(java.io.File::isFile).findFirst();
+        nwavFuente.ifPresent(nwavArchivo -> nwavDoc.head().appendElement("style")
+                .text("body { font-family: 'NwavUnicode', sans-serif; }"));
+        return nwavRenderizar(nwavDoc, "about:blank", nwavOpciones, nwavDestino, nwavFuente.orElse(null));
+    }
+
     /** Nombre de archivo razonable para una URL. */
     public static String nwavNombreParaUrl(String nwavUrl) {
         String nwavLimpio = nwavUrl.replaceFirst("(?i)^https?://", "").replaceFirst("^www\\.", "")
@@ -367,6 +384,11 @@ public class NwavConversionAPdfService {
 
     private Path nwavRenderizar(org.jsoup.nodes.Document nwavDoc, String nwavBase, NwavOpcionesHtml nwavOpciones,
                                 Path nwavDestino) {
+        return nwavRenderizar(nwavDoc, nwavBase, nwavOpciones, nwavDestino, null);
+    }
+
+    private Path nwavRenderizar(org.jsoup.nodes.Document nwavDoc, String nwavBase, NwavOpcionesHtml nwavOpciones,
+                                Path nwavDestino, java.io.File nwavFuenteUnicode) {
         // Las opciones elegidas van al final del <head> para que manden sobre la pagina.
         String nwavTamano = ("letter".equalsIgnoreCase(nwavOpciones.nwavTamano()) ? "letter" : "A4")
                 + (nwavOpciones.nwavHorizontal() ? " landscape" : " portrait");
@@ -380,6 +402,9 @@ public class NwavConversionAPdfService {
             try (OutputStream nwavSalida = Files.newOutputStream(nwavTemporal)) {
                 PdfRendererBuilder nwavConstructor = new PdfRendererBuilder();
                 nwavConstructor.useFastMode();
+                if (nwavFuenteUnicode != null) {
+                    nwavConstructor.useFont(nwavFuenteUnicode, "NwavUnicode");
+                }
                 nwavConstructor.withW3cDocument(nwavDom, nwavBase);
                 nwavConstructor.toStream(nwavSalida);
                 nwavConstructor.run();

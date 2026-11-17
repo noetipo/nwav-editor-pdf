@@ -255,8 +255,25 @@ public class NwavConversionDesdePdfService {
         }
     }
 
+    /** Markdown de cada pagina (misma deteccion de estilos para todo el documento). */
+    public List<String> nwavMarkdownPorPagina(Path nwavEntrada, String nwavContrasena, NwavCancelacion nwavCancelacion) {
+        try (PDDocument nwavPd = nwavDocumentos.nwavCargarDocumento(nwavEntrada, nwavContrasena)) {
+            List<NwavPagina> nwavPaginas = NwavDisposicionPdf.nwavAnalizar(nwavPd, nwavTodas(nwavPd), nwavCancelacion);
+            List<String> nwavResultado = new ArrayList<>();
+            for (NwavPagina nwavPagina : nwavPaginas) {
+                nwavResultado.add(nwavMarkdownConEstilos(List.of(nwavPagina), NwavDisposicionPdf.nwavEstilos(nwavPaginas)));
+            }
+            return nwavResultado;
+        } catch (IOException nwavError) {
+            throw NwavTraductorErrores.nwavTraducir(nwavError, String.valueOf(nwavEntrada.getFileName()));
+        }
+    }
+
     static String nwavMarkdown(List<NwavPagina> nwavPaginas) {
-        NwavEstilos nwavEstilos = NwavDisposicionPdf.nwavEstilos(nwavPaginas);
+        return nwavMarkdownConEstilos(nwavPaginas, NwavDisposicionPdf.nwavEstilos(nwavPaginas));
+    }
+
+    private static String nwavMarkdownConEstilos(List<NwavPagina> nwavPaginas, NwavEstilos nwavEstilos) {
         StringBuilder nwavMd = new StringBuilder();
         for (NwavPagina nwavPagina : nwavPaginas) {
             NwavTipoBloque nwavAnterior = null;

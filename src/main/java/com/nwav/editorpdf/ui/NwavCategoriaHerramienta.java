@@ -7,7 +7,8 @@ public enum NwavCategoriaHerramienta {
     NWAV_CONVERTIR_A_PDF("Convertir a PDF", "nwav-cat-a-pdf"),
     NWAV_CONVERTIR_DESDE_PDF("Convertir desde PDF", "nwav-cat-desde-pdf"),
     NWAV_EDITAR("Editar", "nwav-cat-editar"),
-    NWAV_SEGURIDAD("Seguridad", "nwav-cat-seguridad");
+    NWAV_SEGURIDAD("Seguridad", "nwav-cat-seguridad"),
+    NWAV_IA("Inteligencia artificial (opcional)", "nwav-cat-ia");
 
     private final String nwavNombre;
     private final String nwavClaseEstilo;
