@@ -37,7 +37,17 @@ public class NwavTareaFondo {
         NwavR nwavEjecutar(NwavAvance nwavAvance) throws Exception;
     }
 
+    /** Trabajo que informa su avance y consulta si se pidio cancelar. */
+    @FunctionalInterface
+    public interface NwavTrabajoCancelable<NwavR> {
+        NwavR nwavEjecutar(NwavAvance nwavAvance, com.nwav.editorpdf.service.NwavCancelacion nwavCancelacion)
+                throws Exception;
+    }
+
     private final NwavNotificador nwavNotificador;
+    /** Tarea que se puede cancelar desde la barra de estado (solo una a la vez). */
+    private final javafx.beans.property.ObjectProperty<Task<?>> nwavCancelable =
+            new javafx.beans.property.SimpleObjectProperty<>();
 
     private final ExecutorService nwavEjecutorGeneral = Executors.newCachedThreadPool(nwavFabrica("nwav-tarea"));
     private final ExecutorService nwavEjecutorPaginas = Executors.newSingleThreadExecutor(nwavFabrica("nwav-render"));
@@ -70,6 +80,74 @@ public class NwavTareaFondo {
                                                        Consumer<NwavR> nwavAlTerminar,
                                                        Consumer<Throwable> nwavAlFallar) {
         return nwavEnviarConProgreso(nwavEjecutorGeneral, nwavMensaje, nwavTrabajo, nwavAlTerminar, nwavAlFallar);
+    }
+
+    /**
+     * Tarea larga que el usuario puede cancelar con el boton de la barra de estado. Al
+     * cancelar, el trabajo lo detecta en su siguiente comprobacion y su resultado se descarta.
+     */
+    public <NwavR> Task<NwavR> nwavEjecutarCancelable(String nwavMensaje, NwavTrabajoCancelable<NwavR> nwavTrabajo,
+                                                      Consumer<NwavR> nwavAlTerminar, Consumer<Throwable> nwavAlFallar) {
+        Task<NwavR> nwavTarea = new Task<>() {
+            @Override
+            protected NwavR call() throws Exception {
+                updateMessage(nwavMensaje);
+                return nwavTrabajo.nwavEjecutar((nwavHecho, nwavTotal, nwavTexto) -> {
+                    updateProgress(nwavHecho, nwavTotal);
+                    if (nwavTexto != null) {
+                        updateMessage(nwavTexto);
+                    }
+                }, this::isCancelled);
+            }
+        };
+        nwavMostrarProgreso(nwavTarea);
+        nwavEnHiloFx(() -> nwavCancelable.set(nwavTarea));
+        Runnable nwavSoltar = () -> {
+            nwavOcultarProgreso();
+            if (nwavCancelable.get() == nwavTarea) {
+                nwavCancelable.set(null);
+            }
+        };
+        nwavTarea.setOnSucceeded(nwavEvento -> {
+            nwavSoltar.run();
+            if (nwavAlTerminar != null) {
+                nwavAlTerminar.accept(nwavTarea.getValue());
+            }
+        });
+        nwavTarea.setOnFailed(nwavEvento -> {
+            nwavSoltar.run();
+            if (nwavTarea.getException() instanceof com.nwav.editorpdf.exception.NwavCanceladoException) {
+                nwavAvisarCancelacion(nwavAlFallar);
+                return;
+            }
+            nwavManejarError(nwavTarea.getException(), nwavAlFallar);
+        });
+        nwavTarea.setOnCancelled(nwavEvento -> {
+            nwavSoltar.run();
+            nwavAvisarCancelacion(nwavAlFallar);
+        });
+        nwavEjecutorGeneral.execute(nwavTarea);
+        return nwavTarea;
+    }
+
+    /** La cancelacion se informa como aviso (no como error) y llega tambien a quien lanzo la tarea. */
+    private void nwavAvisarCancelacion(Consumer<Throwable> nwavAlFallar) {
+        nwavNotificador.nwavInfo("Operación cancelada.");
+        if (nwavAlFallar != null) {
+            nwavAlFallar.accept(new com.nwav.editorpdf.exception.NwavCanceladoException());
+        }
+    }
+
+    public javafx.beans.property.ReadOnlyObjectProperty<Task<?>> nwavCancelableProperty() {
+        return nwavCancelable;
+    }
+
+    /** Pide cancelar la tarea cancelable en curso (si hay). */
+    public void nwavCancelar() {
+        Task<?> nwavTarea = nwavCancelable.get();
+        if (nwavTarea != null) {
+            nwavTarea.cancel(false);
+        }
     }
 
     /** Edicion del documento abierto: en un hilo propio, en orden y con indicador de progreso. */

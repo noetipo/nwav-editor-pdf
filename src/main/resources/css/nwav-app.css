@@ -829,3 +829,109 @@
 .nwav-fila-firma .image-view {
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 4, 0, 0, 1);
 }
+
+/* ================= HERRAMIENTAS: INICIO Y PAGINA COMUN ================== */
+
+.nwav-titulo-categoria {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-subtle;
+}
+
+.nwav-tarjeta-herramienta {
+    -fx-background-color: -color-bg-default;
+    -fx-background-radius: 14;
+    -fx-border-color: -color-border-muted;
+    -fx-border-radius: 14;
+    -fx-padding: 16;
+    -fx-pref-width: 230;
+    -fx-min-height: 150;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.05), 12, 0, 0, 2);
+}
+
+.nwav-tarjeta-herramienta:hover {
+    -fx-border-color: -color-accent-emphasis;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.14), 18, 0, 0, 5);
+    -fx-translate-y: -2;
+}
+
+.nwav-tarjeta-no-disponible {
+    -fx-opacity: 0.6;
+}
+
+.nwav-tarjeta-herramienta-titulo {
+    -fx-font-size: 14.5px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
+}
+
+.nwav-tarjeta-herramienta-texto {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.nwav-tarjeta-herramienta-aviso {
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-warning-fg;
+    -fx-font-weight: bold;
+}
+
+.nwav-icono-herramienta {
+    -fx-background-radius: 11;
+    -fx-min-width: 42;
+    -fx-min-height: 42;
+    -fx-max-width: 42;
+    -fx-max-height: 42;
+}
+
+.nwav-icono-herramienta .ikonli-font-icon {
+    -fx-icon-size: 20px;
+    -fx-icon-color: white;
+}
+
+.nwav-cat-organizar { -fx-background-color: #2a78d6; }
+.nwav-cat-optimizar { -fx-background-color: #1baf7a; }
+.nwav-cat-a-pdf { -fx-background-color: #eb6834; }
+.nwav-cat-desde-pdf { -fx-background-color: #c98500; }
+.nwav-cat-editar { -fx-background-color: #8b5cf6; }
+.nwav-cat-seguridad { -fx-background-color: #dc2626; }
+
+.nwav-aviso-dependencia {
+    -fx-background-color: -color-warning-subtle;
+    -fx-background-radius: 10;
+    -fx-padding: 12 14 12 14;
+}
+
+.nwav-aviso-herramienta {
+    -fx-background-color: -color-accent-subtle;
+    -fx-background-radius: 10;
+    -fx-padding: 10 14 10 14;
+    -fx-text-fill: -color-fg-default;
+}
+
+.nwav-boton-procesar {
+    -fx-padding: 11 18 11 18;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+}
+
+.nwav-fila-resultado {
+    -fx-padding: 10 12 10 12;
+    -fx-background-color: -color-bg-subtle;
+    -fx-background-radius: 10;
+}
+
+.nwav-resultado-ok { -fx-icon-color: -color-success-fg; -fx-icon-size: 20px; }
+.nwav-resultado-aviso { -fx-icon-color: -color-warning-fg; -fx-icon-size: 20px; }
+.nwav-resultado-error { -fx-icon-color: -color-danger-fg; -fx-icon-size: 20px; }
+
+.nwav-vista-previa {
+    -fx-padding: 8 0 4 0;
+}
+
+.nwav-marco-vista-previa {
+    -fx-border-color: -color-border-muted;
+    -fx-border-radius: 6;
+}

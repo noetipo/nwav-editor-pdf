@@ -68,6 +68,8 @@ import java.util.Locale;
 public class NwavMainController {
 
     public static final String NWAV_TITULO_APP = "NWAV Editor PDF";
+    public static final String NWAV_VISTA_INICIO = "nwav-inicio-view";
+    public static final String NWAV_VISTA_HERRAMIENTA = "nwav-herramienta-view";
     public static final String NWAV_VISTA_VISOR = "nwav-visor-view";
     public static final String NWAV_VISTA_RECIENTES = "nwav-recientes-view";
     public static final String NWAV_VISTA_PREFERENCIAS = "nwav-preferencias-view";
@@ -94,6 +96,7 @@ public class NwavMainController {
     @FXML private StackPane nwavCapaArrastre;
 
     @FXML private ToggleGroup nwavMenu;
+    @FXML private ToggleButton nwavNavInicio;
     @FXML private ToggleButton nwavNavVisor;
     @FXML private ToggleButton nwavNavRecientes;
     @FXML private ToggleButton nwavNavPreferencias;
@@ -118,9 +121,11 @@ public class NwavMainController {
     @FXML private HBox nwavZonaProgreso;
     @FXML private ProgressBar nwavBarraProgreso;
     @FXML private Label nwavLblProgreso;
+    @FXML private Button nwavBtnCancelarTarea;
 
     private boolean nwavOscuro;
     private boolean nwavContraido;
+    private boolean nwavMostrandoHerramienta;
 
     @FXML
     public void initialize() {
@@ -129,6 +134,7 @@ public class NwavMainController {
         nwavModalPanel.setAlignment(Pos.TOP_RIGHT);
         nwavModalDialogo.setAlignment(Pos.CENTER);
 
+        nwavNavInicio.setUserData(NWAV_VISTA_INICIO);
         nwavNavVisor.setUserData(NWAV_VISTA_VISOR);
         nwavNavRecientes.setUserData(NWAV_VISTA_RECIENTES);
         nwavNavPreferencias.setUserData(NWAV_VISTA_PREFERENCIAS);
@@ -147,11 +153,25 @@ public class NwavMainController {
                 nwavMenu.selectToggle(nwavAnterior);
                 return;
             }
+            if (nwavMostrandoHerramienta) {
+                return;
+            }
             nwavMostrar((String) nwavActual.getUserData());
             nwavMoverIndicador(nwavActual);
         });
+        // El visor se carga primero (lo usan los menus); el arranque muestra el inicio.
         nwavMenu.selectToggle(nwavNavVisor);
-        Platform.runLater(() -> nwavMoverIndicador(nwavNavVisor));
+        nwavMenu.selectToggle(nwavNavInicio);
+        Platform.runLater(() -> nwavMoverIndicador(nwavNavInicio));
+        // Volver a pulsar "Inicio" desde una herramienta vuelve a la cuadricula.
+        nwavNavInicio.setOnMouseClicked(nwavEvento -> {
+            if (nwavMenu.getSelectedToggle() == nwavNavInicio) {
+                nwavMostrar(NWAV_VISTA_INICIO);
+            }
+        });
+        nwavBtnCancelarTarea.visibleProperty().bind(nwavTareaFondo.nwavCancelableProperty().isNotNull());
+        nwavBtnCancelarTarea.managedProperty().bind(nwavBtnCancelarTarea.visibleProperty());
+        nwavBtnCancelarTarea.setOnAction(nwavEvento -> nwavTareaFondo.nwavCancelar());
 
         nwavOscuro = nwavConfiguracion.nwavTemaOscuro();
         nwavAplicarTema(nwavOscuro, false);
@@ -206,6 +226,64 @@ public class NwavMainController {
                 .filter(nwavBoton -> nwavNombreVista.equals(nwavBoton.getUserData()))
                 .findFirst()
                 .ifPresent(nwavMenu::selectToggle);
+    }
+
+    /**
+     * Abre una herramienta de la pantalla de inicio: su pagina (lotes), el editor con la
+     * accion correspondiente, o su vista propia.
+     */
+    public void nwavAbrirHerramienta(com.nwav.editorpdf.ui.NwavDefinicionHerramienta nwavDefinicion,
+                                     List<Path> nwavArchivos) {
+        switch (nwavDefinicion.getNwavModo()) {
+            case NWAV_LOTE -> {
+                nwavSeleccionarSinMostrar(nwavNavInicio);
+                NwavCargadorVistas.NwavVistaCargada nwavVista = nwavCargador.nwavObtener(NWAV_VISTA_HERRAMIENTA);
+                ((NwavHerramientaController) nwavVista.nwavControlador()).nwavPreparar(nwavDefinicion, nwavArchivos);
+                nwavContenido.getChildren().setAll(nwavVista.nwavNodo());
+                Animations.fadeIn(nwavVista.nwavNodo(), Duration.millis(220)).play();
+            }
+            case NWAV_VISTA -> {
+                nwavSeleccionarSinMostrar(nwavNavInicio);
+                NwavCargadorVistas.NwavVistaCargada nwavVista = nwavCargador.nwavObtener(nwavDefinicion.getNwavVista());
+                if (nwavVista.nwavControlador() instanceof com.nwav.editorpdf.ui.NwavVistaHerramienta nwavPropia) {
+                    nwavPropia.nwavPreparar(nwavDefinicion, nwavArchivos);
+                }
+                nwavContenido.getChildren().setAll(nwavVista.nwavNodo());
+            }
+            case NWAV_EDITOR -> {
+                Runnable nwavAccion = nwavDefinicion.getNwavAccionEditor();
+                if (!nwavDefinicion.isNwavNecesitaDocumento() || nwavVisor.nwavDocumentoActual().isPresent()
+                        && nwavArchivos.isEmpty()) {
+                    nwavIrA(NWAV_VISTA_VISOR);
+                    nwavAccion.run();
+                    return;
+                }
+                Path nwavArchivo = nwavArchivos.isEmpty() ? nwavElegirPdf(nwavDefinicion.getNwavNombre()) : nwavArchivos.get(0);
+                if (nwavArchivo != null) {
+                    nwavIrA(NWAV_VISTA_VISOR);
+                    nwavVisor.nwavAbrirYEjecutar(nwavArchivo, nwavAccion);
+                }
+            }
+        }
+    }
+
+    /** Marca una opcion del menu lateral sin recargar su vista. */
+    private void nwavSeleccionarSinMostrar(ToggleButton nwavBoton) {
+        if (nwavMenu.getSelectedToggle() != nwavBoton) {
+            nwavMostrandoHerramienta = true;
+            nwavMenu.selectToggle(nwavBoton);
+            nwavMostrandoHerramienta = false;
+        }
+        Platform.runLater(() -> nwavMoverIndicador(nwavBoton));
+    }
+
+    private Path nwavElegirPdf(String nwavTitulo) {
+        javafx.stage.FileChooser nwavSelector = new javafx.stage.FileChooser();
+        nwavSelector.setTitle(nwavTitulo + ": elige un PDF");
+        nwavSelector.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("Documentos PDF", "*.pdf", "*.PDF"));
+        nwavConfiguracion.nwavCarpetaInicial().map(Path::toFile).ifPresent(nwavSelector::setInitialDirectory);
+        File nwavElegido = nwavSelector.showOpenDialog(nwavRaiz.getScene() == null ? null : nwavRaiz.getScene().getWindow());
+        return nwavElegido == null ? null : nwavElegido.toPath();
     }
 
     /** Abre un PDF en el visor (desde recientes, menu o arrastrar y soltar). */
@@ -477,6 +555,13 @@ public class NwavMainController {
     private void nwavConfigurarArrastrarSoltar() {
         nwavCapaArrastre.setVisible(false);
         nwavRaiz.addEventFilter(DragEvent.DRAG_OVER, nwavEvento -> {
+            com.nwav.editorpdf.ui.NwavReceptorArchivos nwavReceptor = nwavReceptorActual();
+            if (nwavReceptor != null && nwavEvento.getDragboard().hasFiles()
+                    && nwavEvento.getDragboard().getFiles().stream().anyMatch(nwavReceptor::nwavAcepta)) {
+                nwavEvento.acceptTransferModes(TransferMode.COPY);
+                nwavCapaArrastre.setVisible(true);
+                return;
+            }
             if (!nwavPdfsArrastrados(nwavEvento.getDragboard()).isEmpty()) {
                 nwavEvento.acceptTransferModes(TransferMode.COPY);
                 nwavCapaArrastre.setVisible(true);
@@ -487,6 +572,13 @@ public class NwavMainController {
             nwavCapaArrastre.setVisible(false);
             if (!nwavEvento.getDragboard().hasFiles()) {
                 return; // arrastres internos (p. ej. reordenar miniaturas)
+            }
+            com.nwav.editorpdf.ui.NwavReceptorArchivos nwavReceptor = nwavReceptorActual();
+            if (nwavReceptor != null) {
+                nwavReceptor.nwavRecibir(nwavEvento.getDragboard().getFiles());
+                nwavEvento.setDropCompleted(true);
+                nwavEvento.consume();
+                return;
             }
             List<File> nwavPdfs = nwavPdfsArrastrados(nwavEvento.getDragboard());
             if (nwavPdfs.isEmpty()) {
@@ -501,6 +593,20 @@ public class NwavMainController {
             }
             nwavEvento.consume();
         });
+    }
+
+    /** La vista actual, si quiere recibir los archivos arrastrados (p. ej. una herramienta). */
+    private com.nwav.editorpdf.ui.NwavReceptorArchivos nwavReceptorActual() {
+        if (nwavContenido.getChildren().isEmpty()) {
+            return null;
+        }
+        Node nwavActual = nwavContenido.getChildren().get(0);
+        NwavCargadorVistas.NwavVistaCargada nwavHerramienta = nwavCargador.nwavObtener(NWAV_VISTA_HERRAMIENTA);
+        if (nwavHerramienta.nwavNodo() == nwavActual
+                && nwavHerramienta.nwavControlador() instanceof com.nwav.editorpdf.ui.NwavReceptorArchivos nwavReceptor) {
+            return nwavReceptor;
+        }
+        return null;
     }
 
     private static List<File> nwavPdfsArrastrados(Dragboard nwavPortapapeles) {
@@ -599,7 +705,7 @@ public class NwavMainController {
     }
 
     private List<ToggleButton> nwavBotonesMenu() {
-        return List.of(nwavNavVisor, nwavNavRecientes, nwavNavHistorial, nwavNavPreferencias);
+        return List.of(nwavNavInicio, nwavNavVisor, nwavNavRecientes, nwavNavHistorial, nwavNavPreferencias);
     }
 
     private List<ButtonBase> nwavTodosLosBotones() {

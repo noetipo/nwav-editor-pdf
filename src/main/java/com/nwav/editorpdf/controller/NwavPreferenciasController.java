@@ -41,6 +41,7 @@ public class NwavPreferenciasController implements NwavRefrescable {
     private final NwavNotificador nwavNotificador;
     private final NwavMainController nwavMain;
     private final Environment nwavEntorno;
+    private final com.nwav.editorpdf.service.herramienta.NwavDependenciasService nwavDependencias;
 
     @FXML private ComboBox<String> nwavCmbTema;
     @FXML private ComboBox<String> nwavCmbZoomDefecto;
@@ -48,6 +49,11 @@ public class NwavPreferenciasController implements NwavRefrescable {
     @FXML private TextField nwavTxtCarpeta;
     @FXML private Spinner<Integer> nwavSpnMaximoRecientes;
     @FXML private Label nwavLblRutaBase;
+    @FXML private TextField nwavTxtRutaTesseract;
+    @FXML private TextField nwavTxtRutaIdiomas;
+    @FXML private TextField nwavTxtRutaLibreOffice;
+    @FXML private Label nwavLblEstadoOcr;
+    @FXML private Label nwavLblEstadoOffice;
 
     @FXML
     public void initialize() {
@@ -70,6 +76,54 @@ public class NwavPreferenciasController implements NwavRefrescable {
         nwavChkRestaurar.setSelected(nwavConfiguracion.nwavRestaurarPosicion());
         nwavTxtCarpeta.setText(nwavConfiguracion.nwavCarpetaPorDefecto().map(Path::toString).orElse(""));
         nwavSpnMaximoRecientes.getValueFactory().setValue(nwavConfiguracion.nwavMaximoRecientes());
+        nwavTxtRutaTesseract.setText(nwavConfiguracion.nwavObtener(
+                com.nwav.editorpdf.service.herramienta.NwavDependenciasService.NWAV_CLAVE_RUTA_TESSERACT, ""));
+        nwavTxtRutaIdiomas.setText(nwavConfiguracion.nwavObtener(
+                com.nwav.editorpdf.service.herramienta.NwavDependenciasService.NWAV_CLAVE_RUTA_TESSDATA, ""));
+        nwavTxtRutaLibreOffice.setText(nwavConfiguracion.nwavObtener(
+                com.nwav.editorpdf.service.herramienta.NwavDependenciasService.NWAV_CLAVE_RUTA_LIBREOFFICE, ""));
+        nwavMostrarEstadoDependencias();
+    }
+
+    private void nwavMostrarEstadoDependencias() {
+        nwavLblEstadoOcr.setText("Comprobando…");
+        nwavLblEstadoOffice.setText("Comprobando…");
+        nwavTareaFondo.nwavEjecutarSilencioso(() -> List.of(nwavDependencias.nwavTesseract(), nwavDependencias.nwavLibreOffice()),
+                nwavEstados -> {
+                    nwavLblEstadoOcr.setText((nwavEstados.get(0).nwavDisponible() ? "✓ " : "✗ ") + nwavEstados.get(0).nwavDetalle()
+                            + (nwavEstados.get(0).nwavDisponible() ? "" : " " + nwavEstados.get(0).nwavInstrucciones()));
+                    nwavLblEstadoOffice.setText((nwavEstados.get(1).nwavDisponible() ? "✓ " : "✗ ") + nwavEstados.get(1).nwavDetalle()
+                            + (nwavEstados.get(1).nwavDisponible() ? "" : " " + nwavEstados.get(1).nwavInstrucciones()));
+                });
+    }
+
+    @FXML
+    private void nwavOnElegirRutaTesseract() {
+        nwavElegirCarpetaEn(nwavTxtRutaTesseract, "Carpeta de la librería de Tesseract (libtesseract)");
+    }
+
+    @FXML
+    private void nwavOnElegirRutaIdiomas() {
+        nwavElegirCarpetaEn(nwavTxtRutaIdiomas, "Carpeta con los idiomas del OCR (tessdata)");
+    }
+
+    @FXML
+    private void nwavOnElegirRutaLibreOffice() {
+        javafx.stage.FileChooser nwavSelector = new javafx.stage.FileChooser();
+        nwavSelector.setTitle("Ejecutable de LibreOffice (soffice)");
+        File nwavElegido = nwavSelector.showOpenDialog(nwavTxtCarpeta.getScene().getWindow());
+        if (nwavElegido != null) {
+            nwavTxtRutaLibreOffice.setText(nwavElegido.getAbsolutePath());
+        }
+    }
+
+    private void nwavElegirCarpetaEn(TextField nwavCampo, String nwavTitulo) {
+        DirectoryChooser nwavSelector = new DirectoryChooser();
+        nwavSelector.setTitle(nwavTitulo);
+        File nwavElegida = nwavSelector.showDialog(nwavTxtCarpeta.getScene().getWindow());
+        if (nwavElegida != null) {
+            nwavCampo.setText(nwavElegida.getAbsolutePath());
+        }
     }
 
     @FXML
@@ -95,6 +149,9 @@ public class NwavPreferenciasController implements NwavRefrescable {
         boolean nwavRestaurar = nwavChkRestaurar.isSelected();
         String nwavCarpeta = nwavTxtCarpeta.getText();
         int nwavMaximo = nwavSpnMaximoRecientes.getValue();
+        String nwavRutaTesseract = nwavTxtRutaTesseract.getText();
+        String nwavRutaIdiomas = nwavTxtRutaIdiomas.getText();
+        String nwavRutaOffice = nwavTxtRutaLibreOffice.getText();
 
         nwavTareaFondo.nwavEjecutar("Guardando preferencias…", () -> {
             nwavConfiguracion.nwavGuardarTemaOscuro(nwavOscuro);
@@ -104,13 +161,21 @@ public class NwavPreferenciasController implements NwavRefrescable {
                     nwavCarpeta == null || nwavCarpeta.isBlank() ? null : Path.of(nwavCarpeta));
             nwavConfiguracion.nwavGuardarMaximoRecientes(nwavMaximo);
             nwavRecientes.nwavRecortar();
+            nwavConfiguracion.nwavGuardar(com.nwav.editorpdf.service.herramienta.NwavDependenciasService.NWAV_CLAVE_RUTA_TESSERACT,
+                    nwavRutaTesseract);
+            nwavConfiguracion.nwavGuardar(com.nwav.editorpdf.service.herramienta.NwavDependenciasService.NWAV_CLAVE_RUTA_TESSDATA,
+                    nwavRutaIdiomas);
+            nwavConfiguracion.nwavGuardar(com.nwav.editorpdf.service.herramienta.NwavDependenciasService.NWAV_CLAVE_RUTA_LIBREOFFICE,
+                    nwavRutaOffice);
+            nwavDependencias.nwavRefrescar();
             return null;
         }, nwavNada -> {
             if (nwavOscuro != nwavMain.nwavEsOscuro()) {
                 nwavMain.nwavAplicarTema(nwavOscuro, false);
             }
             nwavMain.nwavActualizarMenuRecientes();
-            nwavNotificador.nwavExito("Preferencias guardadas.");
+            nwavNotificador.nwavExito("Preferencias guardadas. Si cambiaste la librería de Tesseract, reinicia la aplicación.");
+            nwavMostrarEstadoDependencias();
         }, null);
     }
 

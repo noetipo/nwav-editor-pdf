@@ -28,6 +28,9 @@ public class NwavJavaFxApplication extends Application {
 
     @Override
     public void init() {
+        if (Thread.currentThread().getContextClassLoader() == null) {
+            Thread.currentThread().setContextClassLoader(NwavJavaFxApplication.class.getClassLoader());
+        }
         try {
             this.nwavContexto = new SpringApplicationBuilder(NwavEditorPdfApplication.class)
                     .web(WebApplicationType.NONE)
@@ -40,6 +43,11 @@ public class NwavJavaFxApplication extends Application {
 
     @Override
     public void start(Stage nwavVentana) throws Exception {
+        // En macOS el hilo de JavaFX puede no tener class loader de contexto (lo necesitan
+        // AtlantaFX y FXML para cargar recursos).
+        if (Thread.currentThread().getContextClassLoader() == null) {
+            Thread.currentThread().setContextClassLoader(NwavJavaFxApplication.class.getClassLoader());
+        }
         if (nwavErrorArranque != null) {
             Alert nwavAlerta = new Alert(Alert.AlertType.ERROR);
             nwavAlerta.setTitle(NwavMainController.NWAV_TITULO_APP);
@@ -55,6 +63,7 @@ public class NwavJavaFxApplication extends Application {
                 ? new PrimerDark().getUserAgentStylesheet()
                 : new PrimerLight().getUserAgentStylesheet());
 
+        nwavContexto.getBean(com.nwav.editorpdf.ui.NwavEscritorio.class).nwavRegistrar(getHostServices());
         FXMLLoader nwavCargador = new FXMLLoader(getClass().getResource("/view/nwav-main-view.fxml"));
         // LINEA CLAVE: Spring entrega los controladores ya inyectados
         nwavCargador.setControllerFactory(nwavContexto::getBean);

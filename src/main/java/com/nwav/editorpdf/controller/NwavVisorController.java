@@ -246,6 +246,9 @@ public class NwavVisorController {
     private int nwavCoincidenciaActual = -1;
     private java.util.concurrent.atomic.AtomicBoolean nwavBusquedaCancelada = new java.util.concurrent.atomic.AtomicBoolean();
 
+    /** Accion a lanzar cuando termine de abrirse un archivo concreto (herramientas del inicio). */
+    private Path nwavPendienteRuta;
+    private Runnable nwavPendienteAccion;
     private Runnable nwavAccionVerRecientes = () -> { };
     private Runnable nwavAlCambiarRecientes = () -> { };
 
@@ -515,6 +518,13 @@ public class NwavVisorController {
         nwavAccionVerRecientes.run();
     }
 
+    /** Abre un PDF y, cuando este listo, ejecuta {@code nwavAccion} (p. ej. abrir un panel). */
+    public void nwavAbrirYEjecutar(Path nwavRuta, Runnable nwavAccion) {
+        nwavPendienteRuta = nwavRuta.toAbsolutePath().normalize();
+        nwavPendienteAccion = nwavAccion;
+        nwavAbrirArchivo(nwavRuta);
+    }
+
     /** Abre un PDF; si el actual tiene cambios sin guardar, pregunta antes. */
     public void nwavAbrirArchivo(Path nwavRuta) {
         nwavConfirmarSiHayCambios(() -> nwavAbrirArchivo(nwavRuta, null));
@@ -584,6 +594,12 @@ public class NwavVisorController {
             nwavNotificador.nwavAdvertencia(nwavApertura.nwavAviso());
         }
         nwavAlCambiarRecientes.run();
+        if (nwavPendienteAccion != null && nwavNuevo.getNwavRuta().equals(nwavPendienteRuta)) {
+            Runnable nwavAccion = nwavPendienteAccion;
+            nwavPendienteAccion = null;
+            nwavPendienteRuta = null;
+            Platform.runLater(nwavAccion);
+        }
     }
 
     /** Pone un documento en el visor con el zoom y la pagina indicados. */

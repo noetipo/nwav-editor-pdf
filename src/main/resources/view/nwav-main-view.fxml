@@ -35,6 +35,10 @@
                     <Region fx:id="nwavIndicador" styleClass="nwav-nav-indicador"
                             prefHeight="42.0" maxHeight="-Infinity"/>
                     <VBox spacing="3.0">
+                        <ToggleButton fx:id="nwavNavInicio" text="Herramientas" toggleGroup="$nwavMenu"
+                                      styleClass="nwav-nav-item" maxWidth="Infinity">
+                            <graphic><FontIcon iconLiteral="fth-grid"/></graphic>
+                        </ToggleButton>
                         <Label text="DOCUMENTO" styleClass="nwav-nav-seccion"/>
                         <ToggleButton fx:id="nwavNavVisor" text="Visor" toggleGroup="$nwavMenu"
                                       styleClass="nwav-nav-item" maxWidth="Infinity">
@@ -164,6 +168,9 @@
                         <HBox fx:id="nwavZonaProgreso" spacing="8.0" alignment="CENTER_RIGHT">
                             <Label fx:id="nwavLblProgreso" styleClass="nwav-estado-texto"/>
                             <ProgressBar fx:id="nwavBarraProgreso" prefWidth="150.0" styleClass="nwav-barra-fina"/>
+                            <Button fx:id="nwavBtnCancelarTarea" text="Cancelar" styleClass="button-outlined, danger, small">
+                                <graphic><FontIcon iconLiteral="fth-x-circle"/></graphic>
+                            </Button>
                         </HBox>
                     </HBox>
                 </bottom>

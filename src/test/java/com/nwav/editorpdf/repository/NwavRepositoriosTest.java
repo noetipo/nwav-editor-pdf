@@ -57,7 +57,7 @@ class NwavRepositoriosTest extends NwavPruebaConBaseDatos {
 
         assertThat(nwavTablas).containsExactlyInAnyOrder(
                 "nwav_archivo_reciente", "nwav_configuracion", "nwav_firma", "nwav_marca_agua",
-                "nwav_historial_operacion", "nwav_flyway_historial");
+                "nwav_historial_operacion", "nwav_flyway_historial", "nwav_opcion_herramienta");
         assertThat(nwavTablas).allMatch(nwavTabla -> nwavTabla.startsWith("nwav_"));
     }
 

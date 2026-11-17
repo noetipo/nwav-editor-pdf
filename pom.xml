@@ -24,6 +24,7 @@
         <ikonli.version>12.3.1</ikonli.version>
         <sqlite.version>3.45.3.0</sqlite.version>
         <pdfbox.version>3.0.8</pdfbox.version>
+        <tess4j.version>5.21.0</tess4j.version>
     </properties>
 
     <dependencies>
@@ -91,6 +92,19 @@
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
             <version>${pdfbox.version}</version>
+        </dependency>
+
+        <!-- OCR: Tesseract mediante Tess4J (Apache 2.0). Usa la misma version de PDFBox. -->
+        <dependency>
+            <groupId>net.sourceforge.tess4j</groupId>
+            <artifactId>tess4j</artifactId>
+            <version>${tess4j.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.pdfbox</groupId>
+                    <artifactId>pdfbox-tools</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Migraciones versionadas del esquema (version gestionada por Spring Boot) -->

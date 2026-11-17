@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<ScrollPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nwav.editorpdf.controller.NwavHerramientaController"
+            fitToWidth="true" styleClass="nwav-pagina-scroll">
+
+    <fx:define>
+        <ToggleGroup fx:id="nwavGrupoSalida"/>
+    </fx:define>
+
+    <VBox styleClass="nwav-pagina">
+        <HBox styleClass="nwav-pagina-cabecera">
+            <Button onAction="#nwavOnVolver" styleClass="flat">
+                <graphic><FontIcon iconLiteral="fth-arrow-left"/></graphic>
+                <tooltip><Tooltip text="Volver a todas las herramientas"/></tooltip>
+            </Button>
+            <StackPane fx:id="nwavIconoHerramienta" styleClass="nwav-icono-herramienta"/>
+            <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                <Label fx:id="nwavLblTitulo" styleClass="nwav-pagina-titulo"/>
+                <Label fx:id="nwavLblDescripcion" styleClass="nwav-pagina-subtitulo" wrapText="true"/>
+            </VBox>
+        </HBox>
+
+        <VBox fx:id="nwavAvisoDependencia" styleClass="nwav-aviso-dependencia" spacing="4.0">
+            <Label text="Esta herramienta no está disponible" styleClass="nwav-campo-label"/>
+            <Label fx:id="nwavLblDependencia" wrapText="true"/>
+        </VBox>
+        <Label fx:id="nwavLblAviso" styleClass="nwav-aviso-herramienta" wrapText="true"/>
+
+        <HBox spacing="20.0">
+            <VBox styleClass="nwav-tarjeta" HBox.hgrow="ALWAYS" minWidth="360.0">
+                <Label text="Archivos" styleClass="nwav-tarjeta-titulo"/>
+                <HBox spacing="6.0" alignment="CENTER_LEFT">
+                    <Button text="Añadir…" onAction="#nwavOnAnadir" styleClass="accent">
+                        <graphic><FontIcon iconLiteral="fth-plus"/></graphic>
+                    </Button>
+                    <Button fx:id="nwavBtnUsarAbierto" text="Usar el PDF abierto" onAction="#nwavOnUsarAbierto"
+                            styleClass="flat">
+                        <graphic><FontIcon iconLiteral="fth-book-open"/></graphic>
+                    </Button>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button fx:id="nwavBtnSubir" onAction="#nwavOnSubir" styleClass="button-icon, flat">
+                        <graphic><FontIcon iconLiteral="fth-arrow-up"/></graphic>
+                        <tooltip><Tooltip text="Subir"/></tooltip>
+                    </Button>
+                    <Button fx:id="nwavBtnBajar" onAction="#nwavOnBajar" styleClass="button-icon, flat">
+                        <graphic><FontIcon iconLiteral="fth-arrow-down"/></graphic>
+                        <tooltip><Tooltip text="Bajar"/></tooltip>
+                    </Button>
+                    <Button fx:id="nwavBtnQuitar" onAction="#nwavOnQuitar" styleClass="button-icon, flat">
+                        <graphic><FontIcon iconLiteral="fth-minus-circle"/></graphic>
+                        <tooltip><Tooltip text="Quitar de la lista"/></tooltip>
+                    </Button>
+                    <Button onAction="#nwavOnVaciar" styleClass="button-icon, flat">
+                        <graphic><FontIcon iconLiteral="fth-trash-2"/></graphic>
+                        <tooltip><Tooltip text="Vaciar la lista"/></tooltip>
+                    </Button>
+                </HBox>
+                <ListView fx:id="nwavListaArchivos" prefHeight="300.0" VBox.vgrow="ALWAYS" styleClass="nwav-lista-panel">
+                    <placeholder>
+                        <VBox alignment="CENTER" spacing="8.0">
+                            <FontIcon iconLiteral="fth-upload-cloud" styleClass="nwav-vacio-icono"/>
+                            <Label text="Arrastra aquí tus archivos o pulsa «Añadir…»" styleClass="nwav-texto-tenue"/>
+                        </VBox>
+                    </placeholder>
+                </ListView>
+                <Label fx:id="nwavLblAyudaArchivos" styleClass="nwav-panel-ayuda" wrapText="true"/>
+            </VBox>
+
+            <VBox styleClass="nwav-tarjeta" prefWidth="430.0" minWidth="340.0">
+                <Label text="Opciones" styleClass="nwav-tarjeta-titulo"/>
+                <VBox fx:id="nwavContenedorOpciones"/>
+                <VBox fx:id="nwavContenedorExtra"/>
+                <Separator/>
+                <Label text="Guardar en" styleClass="nwav-campo-label"/>
+                <RadioButton fx:id="nwavRdbMismaCarpeta" text="La misma carpeta que cada original"
+                             toggleGroup="$nwavGrupoSalida" selected="true"/>
+                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                    <RadioButton fx:id="nwavRdbOtraCarpeta" text="Otra carpeta" toggleGroup="$nwavGrupoSalida"/>
+                    <Button text="Elegir…" onAction="#nwavOnElegirCarpeta" styleClass="flat, small"/>
+                </HBox>
+                <Label fx:id="nwavLblCarpeta" styleClass="nwav-texto-ruta" wrapText="true"/>
+                <Button fx:id="nwavBtnProcesar" text="Procesar" onAction="#nwavOnProcesar" maxWidth="Infinity"
+                        styleClass="accent, nwav-boton-procesar" defaultButton="true">
+                    <graphic><FontIcon iconLiteral="fth-play"/></graphic>
+                </Button>
+            </VBox>
+        </HBox>
+
+        <VBox fx:id="nwavTarjetaResultados" styleClass="nwav-tarjeta" visible="false" managed="false">
+            <Label text="Resultados" styleClass="nwav-tarjeta-titulo"/>
+            <VBox fx:id="nwavListaResultados" spacing="8.0"/>
+        </VBox>
+    </VBox>
+</ScrollPane>
