@@ -3,9 +3,11 @@
 Editor de PDF local y sin conexión.
 
 ### Cómo usarlo
-1. Descarga `NWAV-Editor-PDF-…-windows-x64.zip`.
-2. Descomprímelo en una carpeta tuya (no lo abras desde dentro del ZIP).
-3. Haz doble clic en **«NWAV Editor PDF.cmd»**.
+**Instalador (recomendado):** descarga `NWAV-Editor-PDF-…-windows-x64-instalador.exe` y ábrelo. Se instala para tu
+usuario (no pide permisos de administrador) y crea accesos en el menú Inicio y en el Escritorio.
+
+**Portable:** descarga `NWAV-Editor-PDF-…-windows-x64.zip`, descomprímelo en una carpeta tuya (no lo abras desde
+dentro del ZIP) y haz doble clic en **«NWAV Editor PDF.cmd»**.
 
 No hace falta instalar Java: va incluido. Si no abre, usa **«NWAV Editor PDF (diagnostico).cmd»** para ver el error.
 

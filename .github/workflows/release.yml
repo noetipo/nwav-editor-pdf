@@ -3,15 +3,25 @@ name: Release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      etiqueta:
+        description: 'Etiqueta de la release (por ejemplo v1.0.1)'
+        required: true
 
 permissions:
   contents: write
+
+env:
+  ETIQUETA: ${{ github.event.inputs.etiqueta || github.ref_name }}
 
 jobs:
   windows-portable:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.ETIQUETA }}
 
       - uses: actions/setup-java@v5
         with:
@@ -26,11 +36,44 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" target/NWAV-Editor-PDF-*-windows-x64.zip --clobber
-            gh release edit "$GITHUB_REF_NAME" --notes-file empaquetado/notas-release.md
+          if gh release view "$ETIQUETA" >/dev/null 2>&1; then
+            gh release upload "$ETIQUETA" target/NWAV-Editor-PDF-*-windows-x64.zip --clobber
+            gh release edit "$ETIQUETA" --notes-file empaquetado/notas-release.md
           else
-            gh release create "$GITHUB_REF_NAME" target/NWAV-Editor-PDF-*-windows-x64.zip \
-              --title "NWAV Editor PDF $GITHUB_REF_NAME" \
+            gh release create "$ETIQUETA" target/NWAV-Editor-PDF-*-windows-x64.zip \
+              --title "NWAV Editor PDF $ETIQUETA" \
               --notes-file empaquetado/notas-release.md
           fi
+
+  windows-instalador:
+    needs: windows-portable
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.ETIQUETA }}
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: WiX Toolset
+        run: |
+          choco install wixtoolset --version 3.14.1 -y --no-progress
+          echo "C:\Program Files (x86)\WiX Toolset v3.14\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Instalador .exe
+        run: powershell -ExecutionPolicy Bypass -File empaquetado\instalador-windows.ps1 -SinPruebas
+
+      - name: Adjuntar el instalador a la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem target\instalador -Filter *.exe | Select-Object -First 1
+          if (-not $exe) { throw 'No se genero el instalador .exe' }
+          $nombre = "NWAV-Editor-PDF-$($env:ETIQUETA.TrimStart('v'))-windows-x64-instalador.exe"
+          Copy-Item $exe.FullName (Join-Path $env:RUNNER_TEMP $nombre)
+          gh release upload $env:ETIQUETA (Join-Path $env:RUNNER_TEMP $nombre) --clobber
