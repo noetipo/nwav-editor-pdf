@@ -47,6 +47,8 @@ public class NwavCatalogoHerramientas {
     private final com.nwav.editorpdf.service.NwavOrganizarService nwavOrganizar;
     private final NwavDependenciasService nwavDependencias;
     private final com.nwav.editorpdf.service.NwavConversionAPdfService nwavAPdf;
+    private final com.nwav.editorpdf.service.NwavConversionDesdePdfService nwavDesdePdf;
+    private final com.nwav.editorpdf.service.NwavPdfAService nwavPdfA;
     private final NwavTareaFondo nwavTareaFondo;
     private final NwavNotificador nwavNotificador;
     private final NwavVisorController nwavVisor;
@@ -69,6 +71,7 @@ public class NwavCatalogoHerramientas {
         nwavAgregarOrganizar(nwavLista);
         nwavAgregarOptimizar(nwavLista);
         nwavAgregarAPdf(nwavLista);
+        nwavAgregarDesdePdf(nwavLista);
         nwavAgregarEditar(nwavLista);
         nwavAgregarSeguridad(nwavLista);
         return nwavLista;
@@ -491,6 +494,131 @@ public class NwavCatalogoHerramientas {
         String nwavResumen = nwavCreados.size() + " de " + nwavResultados.size() + " documentos convertidos"
                 + (nwavFallos.isEmpty() ? "" : ". Fallaron: " + String.join(" · ", nwavFallos));
         return new NwavResultadoProceso(nwavCreados, nwavResumen, nwavResumen);
+    }
+
+    // ====================================================== Convertir desde PDF
+
+    private void nwavAgregarDesdePdf(List<NwavDefinicionHerramienta> nwavLista) {
+        nwavLista.add(new NwavDefinicionHerramienta("pdf-imagen", "PDF a imagen",
+                "Convierte cada página en una imagen JPG o PNG con la resolución que elijas.",
+                NwavCategoriaHerramienta.NWAV_CONVERTIR_DESDE_PDF, Feather.IMAGE)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_PDF_A_IMAGEN, true, nwavEntrada -> {
+                    List<Path> nwavCreadas = nwavDesdePdf.nwavAImagenes(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavEntrada.nwavTexto("formato", "jpg"),
+                            nwavEntrada.nwavEntero("dpi", 150), (float) nwavEntrada.nwavDecimal("calidad", 0.9),
+                            nwavEntrada.nwavTexto("paginas", ""), nwavEntrada.nwavCarpetaSalida(), nwavEntrada.nwavAvance(),
+                            nwavEntrada.nwavCancelacion());
+                    String nwavResumen = nwavCreadas.size() + " imágenes " + nwavEntrada.nwavTexto("formato", "jpg")
+                            .toUpperCase(java.util.Locale.ROOT) + " a " + nwavEntrada.nwavEntero("dpi", 150) + " ppp";
+                    return new NwavResultadoProceso(nwavCreadas, nwavResumen, nwavResumen);
+                }))
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavEleccion("formato", "Formato", "jpg", "jpg=JPG (fotos, menor tamaño)",
+                                "png=PNG (sin pérdida, admite transparencia)"),
+                        NwavCampoOpcion.nwavEleccion("dpi", "Resolución", "150", "72=72 ppp (pantalla)", "150=150 ppp (normal)",
+                                "300=300 ppp (impresión)", "600=600 ppp (máxima)"),
+                        NwavCampoOpcion.nwavDecimal("calidad", "Calidad JPG", 0.9, 0.3, 1, 0.05).nwavSi("formato", "jpg"),
+                        NwavCampoOpcion.nwavTexto("paginas", "Páginas (vacío = todas)", ""))
+                .nwavConPalabrasClave("jpg png jpeg foto convertir"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("extraer-imagenes", "Extraer imágenes",
+                "Guarda las imágenes incrustadas en el PDF tal como están, sin recomprimirlas.",
+                NwavCategoriaHerramienta.NWAV_CONVERTIR_DESDE_PDF, Feather.DOWNLOAD)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_EXTRAER_IMAGENES, true, nwavEntrada -> {
+                    List<Path> nwavCreadas = nwavDesdePdf.nwavExtraerImagenes(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavEntrada.nwavEntero("minimo", 50),
+                            nwavEntrada.nwavCarpetaSalida(), nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion());
+                    String nwavResumen = nwavCreadas.size() + " imágenes extraídas";
+                    return new NwavResultadoProceso(nwavCreadas, nwavResumen, nwavResumen);
+                }))
+                .nwavConOpciones(NwavCampoOpcion.nwavEntero("minimo", "Ignorar imágenes menores de (px)", 50, 1, 2000)
+                        .nwavConAyuda("Evita iconos, líneas y adornos."))
+                .nwavConPalabrasClave("fotos imagenes sacar"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("pdf-word", "PDF a Word",
+                "Crea un documento .docx editable con títulos, listas, tablas, enlaces e imágenes.",
+                NwavCategoriaHerramienta.NWAV_CONVERTIR_DESDE_PDF, Feather.FILE_TEXT)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_PDF_A_OFFICE, true, nwavEntrada ->
+                        NwavResultadoProceso.nwavDe(nwavDesdePdf.nwavAWord(nwavEntrada.nwavArchivo(),
+                                nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavEntrada.nwavSiNo("imagenes", true),
+                                NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
+                                        "", "docx"), nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion()),
+                                "Convertido a Word")))
+                .nwavConOpciones(NwavCampoOpcion.nwavCasilla("imagenes", "Incluir las imágenes", true))
+                .nwavConAviso(com.nwav.editorpdf.service.NwavConversionDesdePdfService.NWAV_AVISO_OFFICE
+                        + " Si el PDF es un escaneo, aplica antes OCR.")
+                .nwavConPalabrasClave("docx doc word editar office"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("pdf-excel", "PDF a Excel",
+                "Pasa las tablas del PDF a una hoja de cálculo .xlsx, con los números como números.",
+                NwavCategoriaHerramienta.NWAV_CONVERTIR_DESDE_PDF, Feather.GRID)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_PDF_A_OFFICE, true, nwavEntrada ->
+                        NwavResultadoProceso.nwavDe(nwavDesdePdf.nwavAExcel(nwavEntrada.nwavArchivo(),
+                                nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavEntrada.nwavSiNo("unaHoja", false),
+                                nwavEntrada.nwavSiNo("soloTablas", true),
+                                NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
+                                        "", "xlsx"), nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion()),
+                                "Convertido a Excel")))
+                .nwavConOpciones(NwavCampoOpcion.nwavCasilla("soloTablas", "Solo las tablas (sin el resto del texto)", true),
+                        NwavCampoOpcion.nwavCasilla("unaHoja", "Todo en una sola hoja (si no, una hoja por página)", false))
+                .nwavConAviso("Las tablas se detectan por la alineación del texto en columnas. Revisa el resultado: "
+                        + "las celdas combinadas o las tablas sin separación clara pueden necesitar ajustes.")
+                .nwavConPalabrasClave("xlsx xls hoja calculo tabla tablas office"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("pdf-powerpoint", "PDF a PowerPoint",
+                "Una diapositiva por página, con el texto editable sobre el diseño original.",
+                NwavCategoriaHerramienta.NWAV_CONVERTIR_DESDE_PDF, Feather.MONITOR)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_PDF_A_OFFICE, true, nwavEntrada ->
+                        NwavResultadoProceso.nwavDe(nwavDesdePdf.nwavAPowerPoint(nwavEntrada.nwavArchivo(),
+                                nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()),
+                                "editable".equals(nwavEntrada.nwavTexto("modo", "editable")),
+                                NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
+                                        "", "pptx"), nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion()),
+                                "Convertido a PowerPoint")))
+                .nwavConOpciones(NwavCampoOpcion.nwavEleccion("modo", "Diapositivas", "editable",
+                        "editable=Texto editable sobre el diseño", "imagen=Imagen de cada página (idéntica, no editable)"))
+                .nwavConAviso(com.nwav.editorpdf.service.NwavConversionDesdePdfService.NWAV_AVISO_OFFICE)
+                .nwavConPalabrasClave("pptx ppt presentacion diapositivas office"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("pdf-texto", "PDF a texto o Markdown",
+                "Extrae el texto; en Markdown conserva títulos, listas, tablas y enlaces.",
+                NwavCategoriaHerramienta.NWAV_CONVERTIR_DESDE_PDF, Feather.ALIGN_LEFT)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_PDF_A_TEXTO, true, nwavEntrada -> {
+                    boolean nwavMd = "md".equals(nwavEntrada.nwavTexto("formato", "md"));
+                    Path nwavDestino = NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavCarpetaSalida(), "", nwavMd ? "md" : "txt");
+                    String nwavClave = nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo());
+                    return NwavResultadoProceso.nwavDe(nwavMd
+                            ? nwavDesdePdf.nwavAMarkdown(nwavEntrada.nwavArchivo(), nwavClave, nwavDestino,
+                            nwavEntrada.nwavCancelacion())
+                            : nwavDesdePdf.nwavATexto(nwavEntrada.nwavArchivo(), nwavClave, nwavDestino),
+                            nwavMd ? "Convertido a Markdown" : "Texto extraído");
+                }))
+                .nwavConOpciones(NwavCampoOpcion.nwavEleccion("formato", "Formato", "md", "md=Markdown (.md)",
+                        "txt=Texto plano (.txt)"))
+                .nwavConPalabrasClave("txt md markdown extraer texto"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("pdf-a", "PDF a PDF/A",
+                "Convierte a PDF/A-1b para archivo a largo plazo y lo valida.",
+                NwavCategoriaHerramienta.NWAV_CONVERTIR_DESDE_PDF, Feather.ARCHIVE)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_PDF_A, true, nwavEntrada -> {
+                    var nwavResultado = nwavPdfA.nwavConvertir(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()),
+                            "rasterizar".equals(nwavEntrada.nwavTexto("modo", "conservar")),
+                            NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
+                                    "pdfa", "pdf"), nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion());
+                    if (!nwavResultado.nwavValido()) {
+                        throw new com.nwav.editorpdf.exception.NwavEditorException(nwavResultado.nwavResumen()
+                                + ". Elige «Si no cumple: páginas como imagen» para obtener igualmente un PDF/A.");
+                    }
+                    return NwavResultadoProceso.nwavDe(nwavResultado.nwavDestino(), nwavResultado.nwavResumen());
+                }))
+                .nwavConOpciones(NwavCampoOpcion.nwavEleccion("modo", "Si el documento no cumple", "conservar",
+                        "conservar=Explicar los motivos y no guardar",
+                        "rasterizar=Rehacer las páginas como imagen (pierde el texto seleccionable)"))
+                .nwavConAviso("Se valida con Apache PDFBox Preflight (PDF/A-1b). Si las páginas se rehacen como imagen, "
+                        + "puedes aplicar después OCR, aunque el resultado del OCR ya no será PDF/A.")
+                .nwavConPalabrasClave("pdfa archivo largo plazo preflight validar"));
     }
 
     // ================================================================== Editar
