@@ -241,6 +241,31 @@ class NwavOptimizarTest {
     }
 
     @Test
+    void nwavEnderezarSoloConAngulosFiables() throws Exception {
+        assertThat(NwavOcrService.nwavAnguloFiable(0.1)).isFalse();
+        assertThat(NwavOcrService.nwavAnguloFiable(2.5)).isTrue();
+        assertThat(NwavOcrService.nwavAnguloFiable(-7)).isTrue();
+        assertThat(NwavOcrService.nwavAnguloFiable(-20)).isFalse();
+        assertThat(NwavOcrService.nwavAnguloFiable(15)).isFalse();
+
+        Path nwavEscaneado = NwavPdfConImagenes.nwavCrearEscaneado(nwavCarpeta, "una_linea.pdf", "HOLA MUNDO 2026");
+        java.awt.image.BufferedImage nwavPagina;
+        try (org.apache.pdfbox.pdmodel.PDDocument nwavPd = org.apache.pdfbox.Loader.loadPDF(nwavEscaneado.toFile())) {
+            nwavPagina = new org.apache.pdfbox.rendering.PDFRenderer(nwavPd).renderImageWithDPI(0, 300,
+                    org.apache.pdfbox.rendering.ImageType.GRAY);
+        }
+        double nwavAngulo = new com.recognition.software.jdeskew.ImageDeskew(nwavPagina).getSkewAngle();
+        assertThat(NwavOcrService.nwavAnguloFiable(nwavAngulo)).as("angulo detectado " + nwavAngulo).isFalse();
+
+        java.awt.image.BufferedImage nwavGirada = NwavOcrService.nwavGirar(nwavPagina, 5);
+        assertThat(nwavGirada.getWidth()).isEqualTo(nwavPagina.getWidth());
+        assertThat(nwavGirada.getHeight()).isEqualTo(nwavPagina.getHeight());
+        assertThat(nwavGirada.getRaster().getSample(1, 1, 0)).isEqualTo(255);
+        assertThat(nwavGirada.getRaster().getSample(nwavGirada.getWidth() - 2, nwavGirada.getHeight() - 2, 0))
+                .isEqualTo(255);
+    }
+
+    @Test
     void nwavAgruparPalabrasEnLineas() {
         List<NwavOcrService.NwavPalabra> nwavPalabras = List.of(
                 new NwavOcrService.NwavPalabra("mundo", new java.awt.Rectangle(200, 100, 80, 30)),

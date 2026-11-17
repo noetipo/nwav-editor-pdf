@@ -47,6 +47,7 @@ public class NwavOcrService {
     public static final int NWAV_DPI_OCR = 300;
     public static final int NWAV_CARACTERES_MINIMOS = 25;
     private static final double NWAV_UMBRAL_INCLINACION = 0.3;
+    private static final double NWAV_INCLINACION_MAXIMA = 10.0;
     private static final List<String> NWAV_FUENTES_UNICODE = List.of(
             "/System/Library/Fonts/Supplemental/Arial Unicode.ttf", "/Library/Fonts/Arial Unicode.ttf",
             "C:\\Windows\\Fonts\\arialuni.ttf", "C:\\Windows\\Fonts\\arial.ttf",
@@ -233,21 +234,51 @@ public class NwavOcrService {
     static NwavPaginaReconocida nwavReconocerPagina(Tesseract nwavMotor, int nwavIndice, BufferedImage nwavOriginal,
                                                     NwavOpcionesOcr nwavOpciones) {
         BufferedImage nwavImagen = nwavOriginal;
+        boolean nwavPreprocesada = false;
         if (nwavOpciones.nwavGrises() || nwavOpciones.nwavContraste()) {
             nwavImagen = ImageHelper.convertImageToGrayscale(nwavImagen);
+            nwavPreprocesada = true;
         }
         if (nwavOpciones.nwavContraste()) {
             nwavImagen = nwavEstirarContraste(nwavImagen);
         }
         double nwavAngulo = 0;
         if (nwavOpciones.nwavEnderezar()) {
-            nwavAngulo = new com.recognition.software.jdeskew.ImageDeskew(nwavImagen).getSkewAngle();
-            if (Math.abs(nwavAngulo) > NWAV_UMBRAL_INCLINACION) {
-                nwavImagen = ImageHelper.rotateImage(nwavImagen, -nwavAngulo);
-            } else {
-                nwavAngulo = 0;
+            double nwavDetectado = new com.recognition.software.jdeskew.ImageDeskew(nwavImagen).getSkewAngle();
+            if (nwavAnguloFiable(nwavDetectado)) {
+                nwavAngulo = nwavDetectado;
+                nwavImagen = nwavGirar(nwavImagen, -nwavAngulo);
+                nwavPreprocesada = true;
             }
         }
+        List<NwavPalabra> nwavResultado = nwavPalabras(nwavMotor, nwavImagen, nwavAngulo);
+        if (nwavResultado.isEmpty() && nwavPreprocesada) {
+            nwavResultado = nwavPalabras(nwavMotor, nwavOriginal, 0);
+        }
+        return new NwavPaginaReconocida(nwavIndice, nwavOriginal.getWidth(), nwavOriginal.getHeight(), nwavResultado);
+    }
+
+    static boolean nwavAnguloFiable(double nwavAngulo) {
+        double nwavAbsoluto = Math.abs(nwavAngulo);
+        return nwavAbsoluto > NWAV_UMBRAL_INCLINACION && nwavAbsoluto <= NWAV_INCLINACION_MAXIMA;
+    }
+
+    static BufferedImage nwavGirar(BufferedImage nwavImagen, double nwavGrados) {
+        int nwavAncho = nwavImagen.getWidth();
+        int nwavAlto = nwavImagen.getHeight();
+        BufferedImage nwavGirada = new BufferedImage(nwavAncho, nwavAlto, BufferedImage.TYPE_BYTE_GRAY);
+        java.awt.Graphics2D nwavLienzo = nwavGirada.createGraphics();
+        nwavLienzo.setColor(java.awt.Color.WHITE);
+        nwavLienzo.fillRect(0, 0, nwavAncho, nwavAlto);
+        nwavLienzo.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION,
+                java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        nwavLienzo.rotate(Math.toRadians(nwavGrados), nwavAncho / 2.0, nwavAlto / 2.0);
+        nwavLienzo.drawImage(nwavImagen, 0, 0, null);
+        nwavLienzo.dispose();
+        return nwavGirada;
+    }
+
+    private static List<NwavPalabra> nwavPalabras(Tesseract nwavMotor, BufferedImage nwavImagen, double nwavAngulo) {
         List<Word> nwavPalabras = nwavMotor.getWords(List.of(nwavImagen), ITessAPI.TessPageIteratorLevel.RIL_WORD);
         List<NwavPalabra> nwavResultado = new ArrayList<>();
         double nwavCentroX = nwavImagen.getWidth() / 2.0;
@@ -269,7 +300,7 @@ public class NwavOcrService {
             }
             nwavResultado.add(new NwavPalabra(nwavTexto, nwavCaja));
         }
-        return new NwavPaginaReconocida(nwavIndice, nwavOriginal.getWidth(), nwavOriginal.getHeight(), nwavResultado);
+        return nwavResultado;
     }
 
     static BufferedImage nwavEstirarContraste(BufferedImage nwavGris) {
