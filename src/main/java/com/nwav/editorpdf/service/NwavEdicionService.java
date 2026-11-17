@@ -119,6 +119,11 @@ public class NwavEdicionService {
                 nwavDesde, nwavHasta, nwavColor, nwavGrosor));
     }
 
+    public NwavResultadoEdicion nwavRecortar(NwavDocumentoPdf nwavDocumento, List<Integer> nwavPaginasElegidas,
+                                             NwavRectangulo nwavZona) {
+        return nwavAplicar(nwavDocumento, nwavPaginas.nwavComandoRecortar(nwavDocumento, nwavPaginasElegidas, nwavZona));
+    }
+
     // ---------------------------------------------------- herramientas (Fase 4)
 
     public NwavResultadoEdicion nwavRellenarFormulario(NwavDocumentoPdf nwavDocumento,

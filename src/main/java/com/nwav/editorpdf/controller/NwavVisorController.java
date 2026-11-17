@@ -1655,6 +1655,20 @@ public class NwavVisorController {
             }
 
             @Override
+            public void nwavRecortar(int nwavPagina, NwavRectangulo nwavZona) {
+                nwavNotificador.nwavElegir("Recortar", "¿Aplicar este recorte solo a la página " + (nwavPagina + 1)
+                                + " o a todas? El contenido recortado no se borra: solo deja de verse.", false,
+                        NwavOpcion.nwavCancelar(),
+                        new NwavOpcion("Todas las páginas", Styles.BUTTON_OUTLINED, () -> nwavEditar("Recortando…",
+                                nwavDoc -> nwavEdicion.nwavRecortar(nwavDoc,
+                                        IntStream.range(0, nwavDoc.getNwavNumeroPaginas()).boxed().toList(), nwavZona),
+                                null, null), false),
+                        new NwavOpcion("Esta página", Styles.ACCENT, () -> nwavEditar("Recortando…",
+                                nwavDoc -> nwavEdicion.nwavRecortar(nwavDoc, List.of(nwavPagina), nwavZona), null, null),
+                                true));
+            }
+
+            @Override
             public Optional<Path> nwavElegirImagen() {
                 FileChooser nwavSelector = new FileChooser();
                 nwavSelector.setTitle("Imagen a insertar");

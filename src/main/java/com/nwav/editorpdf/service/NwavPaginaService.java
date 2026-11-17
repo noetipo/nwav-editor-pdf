@@ -205,6 +205,71 @@ public class NwavPaginaService {
         }
     }
 
+    // ---------------------------------------------------------------- recortar
+
+    /**
+     * Recorta (CropBox) las paginas indicadas al area visual dada (medida sobre como se ve
+     * la pagina). Cambia el tamano visible, asi que es un cambio estructural. Deshacer
+     * restaura la CropBox anterior de cada pagina.
+     */
+    public com.nwav.editorpdf.service.comando.NwavComando nwavComandoRecortar(NwavDocumentoPdf nwavDocumento,
+                                                                             List<Integer> nwavIndices,
+                                                                             com.nwav.editorpdf.model.NwavRectangulo nwavZona) {
+        List<Integer> nwavPaginas = List.copyOf(nwavIndices);
+        return new com.nwav.editorpdf.service.comando.NwavComando() {
+            private final java.util.Map<PDPage, org.apache.pdfbox.cos.COSBase> nwavAntes = new java.util.LinkedHashMap<>();
+            private final java.util.Map<PDPage, PDRectangle> nwavDespues = new java.util.LinkedHashMap<>();
+
+            @Override
+            public void nwavEjecutar() {
+                synchronized (nwavDocumento) {
+                    nwavDocumento.nwavVerificarAbierto();
+                    PDDocument nwavPd = nwavDocumento.nwavPdDocument();
+                    if (nwavDespues.isEmpty()) {
+                        for (int nwavIndice : nwavValidar(nwavPaginas, nwavPd.getNumberOfPages())) {
+                            PDPage nwavPagina = nwavPd.getPage(nwavIndice);
+                            nwavMaterializar(nwavPagina);
+                            nwavAntes.put(nwavPagina, nwavPagina.getCOSObject().getDictionaryObject(COSName.CROP_BOX));
+                            nwavDespues.put(nwavPagina, NwavOrganizarService.nwavCajaRecorte(nwavPagina, nwavZona));
+                        }
+                    }
+                    nwavDespues.forEach(PDPage::setCropBox);
+                    nwavDocumento.nwavActualizarEstructura();
+                }
+            }
+
+            @Override
+            public void nwavDeshacer() {
+                synchronized (nwavDocumento) {
+                    nwavAntes.forEach((nwavPagina, nwavCaja) -> {
+                        if (nwavCaja == null) {
+                            nwavPagina.getCOSObject().removeItem(COSName.CROP_BOX);
+                        } else {
+                            nwavPagina.getCOSObject().setItem(COSName.CROP_BOX, nwavCaja);
+                        }
+                    });
+                    nwavDocumento.nwavActualizarEstructura();
+                }
+            }
+
+            @Override
+            public com.nwav.editorpdf.model.NwavTipoOperacion nwavTipo() {
+                return com.nwav.editorpdf.model.NwavTipoOperacion.NWAV_RECORTAR;
+            }
+
+            @Override
+            public String nwavDescripcion() {
+                return nwavPaginas.size() == 1 ? "Recortar la página " + (nwavPaginas.get(0) + 1)
+                        : "Recortar " + nwavPaginas.size() + " páginas";
+            }
+
+            @Override
+            public int nwavPaginaDestacada() {
+                return nwavPaginas.get(0);
+            }
+        };
+    }
+
     // --------------------------------------------------------------- internos
 
     /** Carga una imagen (PNG, JPG, GIF, BMP…) para usarla en el documento. */

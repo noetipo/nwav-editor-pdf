@@ -29,6 +29,8 @@ public enum NwavHerramienta {
             "Arrastra desde el inicio hasta el final de la línea."),
     NWAV_FLECHA("Flecha", Feather.ARROW_UP_RIGHT, Color.rgb(220, 38, 38),
             "Arrastra desde el inicio hasta la punta de la flecha."),
+    NWAV_RECORTAR("Recortar", Feather.CROP, null,
+            "Arrastra para marcar el área que quieres conservar; luego elige si se aplica a esta página o a todas."),
     NWAV_CUBRIR("Cubrir zona", Feather.EYE_OFF, Color.WHITE,
             "Cobertura VISUAL: tapa la zona con un rectángulo, pero el contenido de debajo NO se elimina; "
                     + "sigue en el PDF y se puede copiar o buscar.");
@@ -77,6 +79,6 @@ public enum NwavHerramienta {
     /** Herramientas que se usan arrastrando un rectangulo. */
     public boolean nwavEsDeZona() {
         return this == NWAV_RESALTAR || this == NWAV_SUBRAYAR || this == NWAV_TACHAR || this == NWAV_RECTANGULO
-                || this == NWAV_ELIPSE || this == NWAV_CUBRIR || this == NWAV_TEXTO;
+                || this == NWAV_ELIPSE || this == NWAV_CUBRIR || this == NWAV_TEXTO || this == NWAV_RECORTAR;
     }
 }

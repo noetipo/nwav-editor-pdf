@@ -76,6 +76,8 @@ public class NwavEditorInteractivo {
 
         void nwavCubrir(int nwavPagina, NwavRectangulo nwavZona, NwavColorRgb nwavColor);
 
+        void nwavRecortar(int nwavPagina, NwavRectangulo nwavZona);
+
         Optional<Path> nwavElegirImagen();
 
         boolean nwavPuedeEditar();
@@ -158,6 +160,7 @@ public class NwavEditorInteractivo {
             case NWAV_RESALTAR -> nwavRectanguloPrevio(Color.color(nwavColor.getRed(), nwavColor.getGreen(),
                     nwavColor.getBlue(), 0.35), null);
             case NWAV_SUBRAYAR, NWAV_TACHAR, NWAV_TEXTO -> nwavRectanguloPrevio(Color.TRANSPARENT, Color.DODGERBLUE);
+            case NWAV_RECORTAR -> nwavRectanguloPrevio(Color.color(0.12, 0.56, 1, 0.08), Color.DODGERBLUE);
             case NWAV_CUBRIR -> nwavRectanguloPrevio(nwavColor, Color.DODGERBLUE);
             case NWAV_RECTANGULO -> nwavRectanguloPrevio(Color.TRANSPARENT, nwavColor);
             case NWAV_ELIPSE -> {
@@ -252,6 +255,11 @@ public class NwavEditorInteractivo {
             case NWAV_CUBRIR -> {
                 if (nwavHuboArrastre) {
                     nwavDestino.nwavCubrir(nwavPagina, nwavZona, nwavColor);
+                }
+            }
+            case NWAV_RECORTAR -> {
+                if (nwavHuboArrastre) {
+                    nwavDestino.nwavRecortar(nwavPagina, nwavZona);
                 }
             }
             case NWAV_RECTANGULO, NWAV_ELIPSE, NWAV_LINEA, NWAV_FLECHA -> {

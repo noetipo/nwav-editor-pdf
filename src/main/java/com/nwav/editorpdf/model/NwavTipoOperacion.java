@@ -27,6 +27,7 @@ public enum NwavTipoOperacion {
     NWAV_QUITAR_PROTECCION("Quitar protección"),
     NWAV_FIRMA("Insertar firma"),
     NWAV_METADATOS("Editar metadatos"),
+    NWAV_RECORTAR("Recortar páginas"),
     NWAV_COMPRIMIR("Comprimir PDF"),
     NWAV_OCR("OCR"),
     NWAV_REPARAR("Reparar PDF"),

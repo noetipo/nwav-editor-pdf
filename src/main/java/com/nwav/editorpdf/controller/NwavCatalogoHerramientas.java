@@ -44,6 +44,7 @@ public class NwavCatalogoHerramientas {
     private final NwavCompresorService nwavCompresor;
     private final NwavOcrService nwavOcr;
     private final NwavReparacionService nwavReparacion;
+    private final com.nwav.editorpdf.service.NwavOrganizarService nwavOrganizar;
     private final NwavDependenciasService nwavDependencias;
     private final NwavTareaFondo nwavTareaFondo;
     private final NwavNotificador nwavNotificador;
@@ -75,21 +76,140 @@ public class NwavCatalogoHerramientas {
 
     private void nwavAgregarOrganizar(List<NwavDefinicionHerramienta> nwavLista) {
         nwavLista.add(new NwavDefinicionHerramienta("unir", "Unir PDF",
-                "Combina varios PDF en uno, en el orden que elijas.", NwavCategoriaHerramienta.NWAV_ORGANIZAR,
-                Feather.GIT_MERGE).nwavEditor(nwavVisor::nwavOnUnir).nwavSinDocumento()
-                .nwavConPalabrasClave("juntar combinar fusionar"));
+                "Combina varios PDF en uno, en el orden de la lista.", NwavCategoriaHerramienta.NWAV_ORGANIZAR,
+                Feather.GIT_MERGE)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_UNIR, false, nwavEntrada -> NwavResultadoProceso.nwavDe(
+                        nwavOrganizar.nwavUnir(nwavEntrada.nwavArchivos(), nwavEntrada.nwavContrasenas(),
+                                NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
+                                        "unido", "pdf"), nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion()),
+                        nwavEntrada.nwavArchivos().size() + " archivos unidos")))
+                .nwavCombina(2).nwavConPalabrasClave("juntar combinar fusionar"));
+
         nwavLista.add(new NwavDefinicionHerramienta("dividir", "Dividir PDF",
-                "Separa un PDF en varios archivos por rangos o cada N páginas.", NwavCategoriaHerramienta.NWAV_ORGANIZAR,
-                Feather.SCISSORS).nwavEditor(nwavVisor::nwavOnDividir).nwavConPalabrasClave("separar partir"));
-        nwavLista.add(new NwavDefinicionHerramienta("organizar", "Organizar páginas",
-                "Reordena, rota, duplica o elimina páginas arrastrando las miniaturas.",
+                "Separa un PDF en varios: por rangos, cada N páginas o por tamaño.", NwavCategoriaHerramienta.NWAV_ORGANIZAR,
+                Feather.SCISSORS)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_DIVIDIR, true, this::nwavProcesoDividir))
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavEleccion("modo", "Cómo dividir", "rangos", "rangos=Por rangos (un archivo por rango)",
+                                "cada=Cada N páginas", "tamano=Por tamaño máximo"),
+                        NwavCampoOpcion.nwavTexto("rangos", "Rangos", "1-3, 4-").nwavSi("modo", "rangos")
+                                .nwavConAyuda("Ej.: 1-3, 4-6, 7- (cada rango es un archivo)."),
+                        NwavCampoOpcion.nwavEntero("cada", "Páginas por archivo", 10, 1, 10_000).nwavSi("modo", "cada"),
+                        NwavCampoOpcion.nwavDecimal("tamano", "Tamaño máximo por archivo (MB)", 5, 0.1, 2000, 0.5)
+                                .nwavSi("modo", "tamano").nwavConAyuda("Aproximado: las partes quedan por debajo del límite."))
+                .nwavConPalabrasClave("separar partir trocear"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("eliminar", "Eliminar páginas",
+                "Quita las páginas que no necesitas.", NwavCategoriaHerramienta.NWAV_ORGANIZAR, Feather.TRASH_2)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_ELIMINAR, true, nwavEntrada -> {
+                    String nwavRangos = nwavEntrada.nwavTexto("paginas", "");
+                    return NwavResultadoProceso.nwavDe(nwavOrganizar.nwavEliminarPaginas(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavRangos,
+                            NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
+                                    "sin_paginas", "pdf")), "Páginas eliminadas: " + nwavRangos);
+                }))
+                .nwavConOpciones(NwavCampoOpcion.nwavTexto("paginas", "Páginas a eliminar", "")
+                        .nwavConAyuda("Ej.: 2, 5-7, 10-"))
+                .nwavConPalabrasClave("borrar quitar"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("extraer", "Extraer páginas",
+                "Copia las páginas que elijas a un PDF nuevo (o una por archivo).", NwavCategoriaHerramienta.NWAV_ORGANIZAR,
+                Feather.EXTERNAL_LINK)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_EXTRAER, true, nwavEntrada -> {
+                    String nwavRangos = nwavEntrada.nwavTexto("paginas", "1");
+                    List<Path> nwavCreados = nwavOrganizar.nwavExtraerPaginas(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavRangos,
+                            nwavEntrada.nwavSiNo("porPagina", false), nwavEntrada.nwavCarpetaSalida(),
+                            nwavEntrada.nwavCancelacion());
+                    String nwavResumen = "Páginas " + nwavRangos + " → " + nwavCreados.size()
+                            + (nwavCreados.size() == 1 ? " archivo" : " archivos");
+                    return new NwavResultadoProceso(nwavCreados, nwavResumen, nwavResumen);
+                }))
+                .nwavConOpciones(NwavCampoOpcion.nwavTexto("paginas", "Páginas a extraer", "1-3")
+                                .nwavConAyuda("Ej.: 1-3, 5"),
+                        NwavCampoOpcion.nwavCasilla("porPagina", "Crear un PDF por cada página", false)));
+
+        nwavLista.add(new NwavDefinicionHerramienta("ordenar", "Ordenar páginas",
+                "Cambia el orden de las páginas con un patrón o invierte el documento.",
+                NwavCategoriaHerramienta.NWAV_ORGANIZAR, Feather.SHUFFLE)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_REORDENAR, true, nwavEntrada -> {
+                    boolean nwavInvertir = "invertir".equals(nwavEntrada.nwavTexto("modo", "orden"));
+                    String nwavOrden = nwavEntrada.nwavTexto("orden", "");
+                    return NwavResultadoProceso.nwavDe(nwavOrganizar.nwavOrdenar(nwavEntrada.nwavArchivo(),
+                                    nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavOrden, nwavInvertir,
+                                    NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(),
+                                            nwavEntrada.nwavCarpetaSalida(), "ordenado", "pdf")),
+                            nwavInvertir ? "Orden invertido" : "Nuevo orden: " + nwavOrden);
+                }))
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavEleccion("modo", "Orden", "orden", "orden=Orden personalizado",
+                                "invertir=Invertir (de la última a la primera)"),
+                        NwavCampoOpcion.nwavTexto("orden", "Nuevo orden", "1-").nwavSi("modo", "orden")
+                                .nwavConAyuda("Ej.: 3, 1, 2, 4- (las páginas que no nombres se quitan)."))
+                .nwavConPalabrasClave("reordenar invertir orden"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("rotar", "Rotar PDF",
+                "Gira las páginas de uno o varios documentos a la vez.", NwavCategoriaHerramienta.NWAV_ORGANIZAR,
+                Feather.ROTATE_CW)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_ROTAR, true, nwavEntrada -> {
+                    int nwavGrados = nwavEntrada.nwavEntero("grados", 90);
+                    return NwavResultadoProceso.nwavDe(nwavOrganizar.nwavRotar(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavGrados,
+                            nwavEntrada.nwavTexto("paginas", ""), NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(),
+                                    nwavEntrada.nwavCarpetaSalida(), "rotado", "pdf")), "Rotado " + nwavGrados + "°");
+                }))
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavEleccion("grados", "Giro", "90", "90=90° a la derecha", "270=90° a la izquierda",
+                                "180=180°"),
+                        NwavCampoOpcion.nwavTexto("paginas", "Páginas (vacío = todas)", ""))
+                .nwavConPalabrasClave("girar orientacion"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("recortar", "Recortar PDF",
+                "Recorta los márgenes de las páginas (el contenido recortado deja de verse).",
+                NwavCategoriaHerramienta.NWAV_ORGANIZAR, Feather.CROP)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_RECORTAR, true, nwavEntrada ->
+                        NwavResultadoProceso.nwavDe(nwavOrganizar.nwavRecortarMargenes(nwavEntrada.nwavArchivo(),
+                                nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavEntrada.nwavDecimal("arriba", 10),
+                                nwavEntrada.nwavDecimal("derecha", 10), nwavEntrada.nwavDecimal("abajo", 10),
+                                nwavEntrada.nwavDecimal("izquierda", 10), nwavEntrada.nwavTexto("paginas", ""),
+                                NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
+                                        "recortado", "pdf")), "Márgenes recortados")))
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavDecimal("arriba", "Margen superior (mm)", 10, 0, 300, 1),
+                        NwavCampoOpcion.nwavDecimal("derecha", "Margen derecho (mm)", 10, 0, 300, 1),
+                        NwavCampoOpcion.nwavDecimal("abajo", "Margen inferior (mm)", 10, 0, 300, 1),
+                        NwavCampoOpcion.nwavDecimal("izquierda", "Margen izquierdo (mm)", 10, 0, 300, 1),
+                        NwavCampoOpcion.nwavTexto("paginas", "Páginas (vacío = todas)", ""))
+                .nwavConPalabrasClave("margenes cortar"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("recortar-raton", "Recortar con el ratón",
+                "Marca en la página el área que quieres conservar.", NwavCategoriaHerramienta.NWAV_ORGANIZAR, Feather.CROP)
+                .nwavEditor(() -> nwavVisor.nwavHerramientas().nwavHerramientaProperty().set(NwavHerramienta.NWAV_RECORTAR))
+                .nwavConPalabrasClave("area seleccion recortar"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("organizar", "Organizar visualmente",
+                "Reordena, rota, duplica o elimina páginas arrastrando las miniaturas (con deshacer).",
                 NwavCategoriaHerramienta.NWAV_ORGANIZAR, Feather.LAYERS).nwavEditor(() -> {
                     nwavVisor.nwavMiniaturasVisiblesProperty().set(true);
                     nwavNotificador.nwavInfo("Arrastra las miniaturas para reordenar; clic derecho para rotar o eliminar.");
-                }).nwavConPalabrasClave("ordenar rotar eliminar borrar paginas"));
-        nwavLista.add(new NwavDefinicionHerramienta("extraer", "Extraer páginas",
-                "Copia las páginas que elijas a un PDF nuevo.", NwavCategoriaHerramienta.NWAV_ORGANIZAR,
-                Feather.EXTERNAL_LINK).nwavEditor(nwavVisor::nwavOnExtraer));
+                }).nwavConPalabrasClave("ordenar rotar eliminar borrar paginas miniaturas"));
+    }
+
+    private NwavResultadoProceso nwavProcesoDividir(NwavEntradaProceso nwavEntrada) {
+        Path nwavArchivo = nwavEntrada.nwavArchivo();
+        String nwavClave = nwavEntrada.nwavContrasena(nwavArchivo);
+        String nwavModo = nwavEntrada.nwavTexto("modo", "rangos");
+        List<Path> nwavPartes = switch (nwavModo) {
+            case "cada" -> nwavOrganizar.nwavDividirCada(nwavArchivo, nwavClave, nwavEntrada.nwavEntero("cada", 10),
+                    nwavEntrada.nwavCarpetaSalida(), nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion());
+            case "tamano" -> nwavOrganizar.nwavDividirPorTamano(nwavArchivo, nwavClave,
+                    (long) (nwavEntrada.nwavDecimal("tamano", 5) * 1024 * 1024), nwavEntrada.nwavCarpetaSalida(),
+                    nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion());
+            default -> nwavOrganizar.nwavDividirPorRangos(nwavArchivo, nwavClave, nwavEntrada.nwavTexto("rangos", "1-"),
+                    nwavEntrada.nwavCarpetaSalida(), nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion());
+        };
+        String nwavResumen = nwavPartes.size() + (nwavPartes.size() == 1 ? " parte creada" : " partes creadas");
+        return new NwavResultadoProceso(nwavPartes, nwavResumen, nwavResumen + " (" + nwavModo + ")");
     }
 
     // ================================================================ Optimizar
