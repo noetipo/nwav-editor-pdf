@@ -46,6 +46,7 @@ public class NwavCatalogoHerramientas {
     private final NwavReparacionService nwavReparacion;
     private final com.nwav.editorpdf.service.NwavOrganizarService nwavOrganizar;
     private final NwavDependenciasService nwavDependencias;
+    private final com.nwav.editorpdf.service.NwavConversionAPdfService nwavAPdf;
     private final NwavTareaFondo nwavTareaFondo;
     private final NwavNotificador nwavNotificador;
     private final NwavVisorController nwavVisor;
@@ -67,6 +68,7 @@ public class NwavCatalogoHerramientas {
         List<NwavDefinicionHerramienta> nwavLista = new ArrayList<>();
         nwavAgregarOrganizar(nwavLista);
         nwavAgregarOptimizar(nwavLista);
+        nwavAgregarAPdf(nwavLista);
         nwavAgregarEditar(nwavLista);
         nwavAgregarSeguridad(nwavLista);
         return nwavLista;
@@ -338,6 +340,157 @@ public class NwavCatalogoHerramientas {
                 NwavEscrituraSegura.nwavRutaSalida(nwavArchivo, nwavEntrada.nwavCarpetaSalida(), "reparado", "pdf"),
                 nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion());
         return NwavResultadoProceso.nwavDe(nwavResultado.nwavDestino(), nwavResultado.nwavResumen());
+    }
+
+    // ========================================================== Convertir a PDF
+
+    private void nwavAgregarAPdf(List<NwavDefinicionHerramienta> nwavLista) {
+        String[] nwavImagenes = com.nwav.editorpdf.service.NwavConversionAPdfService.NWAV_EXTENSIONES_IMAGEN
+                .toArray(String[]::new);
+        nwavLista.add(new NwavDefinicionHerramienta("imagenes-pdf", "Imágenes a PDF",
+                "Convierte JPG, PNG, TIFF… en un PDF, con tamaño de hoja, orientación y márgenes.",
+                NwavCategoriaHerramienta.NWAV_CONVERTIR_A_PDF, Feather.IMAGE)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_IMAGENES_A_PDF, false, this::nwavProcesoImagenes))
+                .nwavConExtensiones(nwavImagenes).nwavCombina(1)
+                .nwavConOpciones(nwavOpcionesHoja())
+                .nwavConPalabrasClave("jpg png foto fotos tiff convertir"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("escaneos-pdf", "Escaneos a PDF",
+                "Importa una carpeta de escaneos (en orden de nombre) y crea un único PDF.",
+                NwavCategoriaHerramienta.NWAV_CONVERTIR_A_PDF, Feather.PRINTER)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_IMAGENES_A_PDF, false, this::nwavProcesoImagenes))
+                .nwavConExtensiones(nwavImagenes).nwavCombina(1)
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavEleccion("hoja", "Tamaño de hoja", "NWAV_A4", "NWAV_A4=A4", "NWAV_CARTA=Carta",
+                                "NWAV_AJUSTAR=Igual que cada escaneo"),
+                        NwavCampoOpcion.nwavEleccion("orientacion", "Orientación", "NWAV_AUTO", "NWAV_AUTO=Automática",
+                                "NWAV_VERTICAL=Vertical", "NWAV_HORIZONTAL=Horizontal"),
+                        NwavCampoOpcion.nwavDecimal("margen", "Margen (mm)", 0, 0, 60, 1))
+                .nwavConAviso("Pulsa «Carpeta…» o arrastra la carpeta del escáner: se añaden sus imágenes por orden de nombre. "
+                        + "Después puedes aplicar OCR para poder buscar el texto.")
+                .nwavOfrecer(NWAV_OCR, "Aplicar OCR")
+                .nwavConPalabrasClave("escaner escanear carpeta"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("office-pdf", "Office a PDF",
+                "Word, Excel, PowerPoint y OpenDocument a PDF, usando LibreOffice en tu equipo.",
+                NwavCategoriaHerramienta.NWAV_CONVERTIR_A_PDF, Feather.FILE_TEXT)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_OFFICE_A_PDF, false, this::nwavProcesoOffice))
+                .nwavConExtensiones(com.nwav.editorpdf.service.NwavConversionAPdfService.NWAV_EXTENSIONES_OFFICE
+                        .toArray(String[]::new))
+                .nwavRequiere(nwavDependencias::nwavLibreOffice)
+                .nwavConPalabrasClave("word excel powerpoint docx xlsx pptx odt libreoffice"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("html-pdf", "HTML a PDF",
+                "Convierte archivos HTML guardados en tu equipo.", NwavCategoriaHerramienta.NWAV_CONVERTIR_A_PDF, Feather.CODE)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_HTML_A_PDF, true, nwavEntrada ->
+                        NwavResultadoProceso.nwavDe(nwavAPdf.nwavHtmlAPdf(nwavEntrada.nwavArchivo(), nwavOpcionesHtml(nwavEntrada),
+                                NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
+                                        "", "pdf")), "HTML convertido")))
+                .nwavConExtensiones("html", "htm", "xhtml")
+                .nwavConOpciones(nwavOpcionesPaginaHtml())
+                .nwavConPalabrasClave("web pagina"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("url-pdf", "Página web a PDF",
+                "Descarga una página por su dirección y la guarda como PDF.", NwavCategoriaHerramienta.NWAV_CONVERTIR_A_PDF,
+                Feather.GLOBE)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_HTML_A_PDF, false, nwavEntrada -> {
+                    String nwavUrl = nwavEntrada.nwavTexto("url", "");
+                    if (nwavUrl.isBlank()) {
+                        throw new com.nwav.editorpdf.exception.NwavEditorException("Escribe la dirección de la página.");
+                    }
+                    Path nwavCarpeta = nwavEntrada.nwavCarpetaSalida() != null ? nwavEntrada.nwavCarpetaSalida()
+                            : nwavCarpetaPorDefecto();
+                    Path nwavDestino = NwavEscrituraSegura.nwavSinColision(nwavCarpeta.resolve(
+                            com.nwav.editorpdf.service.NwavConversionAPdfService.nwavNombreParaUrl(nwavUrl)), null);
+                    return NwavResultadoProceso.nwavDe(nwavAPdf.nwavUrlAPdf(nwavUrl, nwavOpcionesHtml(nwavEntrada), nwavDestino),
+                            "Página guardada: " + nwavUrl);
+                }))
+                .nwavSinArchivos()
+                .nwavConOpciones(nwavConUrl(nwavOpcionesPaginaHtml()))
+                .nwavConAviso("No necesita archivos: escribe la dirección en «Opciones» y pulsa Procesar. Esta herramienta "
+                        + "SÍ usa Internet para descargar la página. Las páginas que se construyen con JavaScript "
+                        + "pueden salir incompletas. Si no eliges carpeta, se guarda en Descargas.")
+                .nwavConPalabrasClave("url web internet enlace"));
+    }
+
+    private static NwavCampoOpcion[] nwavConUrl(NwavCampoOpcion[] nwavResto) {
+        NwavCampoOpcion[] nwavTodos = new NwavCampoOpcion[nwavResto.length + 1];
+        nwavTodos[0] = NwavCampoOpcion.nwavTexto("url", "Dirección (URL)", "https://");
+        System.arraycopy(nwavResto, 0, nwavTodos, 1, nwavResto.length);
+        return nwavTodos;
+    }
+
+    private static Path nwavCarpetaPorDefecto() {
+        Path nwavDescargas = Path.of(System.getProperty("user.home"), "Downloads");
+        return java.nio.file.Files.isDirectory(nwavDescargas) ? nwavDescargas : Path.of(System.getProperty("user.home"));
+    }
+
+    private static NwavCampoOpcion[] nwavOpcionesHoja() {
+        return new NwavCampoOpcion[]{
+                NwavCampoOpcion.nwavEleccion("hoja", "Tamaño de hoja", "NWAV_A4", "NWAV_A4=A4", "NWAV_CARTA=Carta",
+                        "NWAV_AJUSTAR=Igual que la imagen"),
+                NwavCampoOpcion.nwavEleccion("orientacion", "Orientación", "NWAV_AUTO", "NWAV_AUTO=Según la imagen",
+                        "NWAV_VERTICAL=Vertical", "NWAV_HORIZONTAL=Horizontal"),
+                NwavCampoOpcion.nwavDecimal("margen", "Margen (mm)", 10, 0, 60, 1),
+                NwavCampoOpcion.nwavEleccion("porPagina", "Imágenes por página", "1", "1=Una", "2=Dos", "4=Cuatro"),
+                NwavCampoOpcion.nwavCasilla("separados", "Un PDF por imagen (en lugar de uno solo)", false)};
+    }
+
+    private static NwavCampoOpcion[] nwavOpcionesPaginaHtml() {
+        return new NwavCampoOpcion[]{
+                NwavCampoOpcion.nwavEleccion("hoja", "Tamaño de hoja", "A4", "A4=A4", "letter=Carta"),
+                NwavCampoOpcion.nwavCasilla("horizontal", "Horizontal", false),
+                NwavCampoOpcion.nwavDecimal("margen", "Margen (mm)", 15, 0, 60, 1),
+                NwavCampoOpcion.nwavCasilla("fondos", "Imprimir colores e imágenes de fondo", true)};
+    }
+
+    private static com.nwav.editorpdf.service.NwavConversionAPdfService.NwavOpcionesHtml nwavOpcionesHtml(
+            NwavEntradaProceso nwavEntrada) {
+        return new com.nwav.editorpdf.service.NwavConversionAPdfService.NwavOpcionesHtml(nwavEntrada.nwavTexto("hoja", "A4"),
+                nwavEntrada.nwavSiNo("horizontal", false), nwavEntrada.nwavDecimal("margen", 15),
+                nwavEntrada.nwavSiNo("fondos", true));
+    }
+
+    private NwavResultadoProceso nwavProcesoImagenes(NwavEntradaProceso nwavEntrada) {
+        var nwavOpciones = new com.nwav.editorpdf.service.NwavConversionAPdfService.NwavOpcionesImagenes(
+                com.nwav.editorpdf.service.NwavConversionAPdfService.NwavTamanoHoja.valueOf(
+                        nwavEntrada.nwavTexto("hoja", "NWAV_A4")),
+                com.nwav.editorpdf.service.NwavConversionAPdfService.NwavOrientacion.valueOf(
+                        nwavEntrada.nwavTexto("orientacion", "NWAV_AUTO")),
+                nwavEntrada.nwavDecimal("margen", 10), nwavEntrada.nwavEntero("porPagina", 1));
+        List<Path> nwavImagenes = nwavEntrada.nwavArchivos();
+        if (nwavEntrada.nwavSiNo("separados", false)) {
+            List<Path> nwavCreados = new ArrayList<>();
+            for (int nwavIndice = 0; nwavIndice < nwavImagenes.size(); nwavIndice++) {
+                Path nwavImagen = nwavImagenes.get(nwavIndice);
+                nwavCreados.add(nwavAPdf.nwavImagenesAPdf(List.of(nwavImagen), nwavOpciones,
+                        NwavEscrituraSegura.nwavRutaSalida(nwavImagen, nwavEntrada.nwavCarpetaSalida(), "", "pdf"),
+                        com.nwav.editorpdf.service.NwavAvance.NWAV_NINGUNO, nwavEntrada.nwavCancelacion()));
+                nwavEntrada.nwavAvance().nwavInformar(nwavIndice + 1, nwavImagenes.size(), null);
+            }
+            String nwavResumen = nwavCreados.size() + " PDF creados";
+            return new NwavResultadoProceso(nwavCreados, nwavResumen, nwavResumen);
+        }
+        Path nwavDestino = NwavEscrituraSegura.nwavRutaSalida(nwavImagenes.get(0), nwavEntrada.nwavCarpetaSalida(),
+                nwavImagenes.size() > 1 ? "imagenes" : "", "pdf");
+        return NwavResultadoProceso.nwavDe(nwavAPdf.nwavImagenesAPdf(nwavImagenes, nwavOpciones, nwavDestino,
+                nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion()), nwavImagenes.size() + " imágenes en un PDF");
+    }
+
+    private NwavResultadoProceso nwavProcesoOffice(NwavEntradaProceso nwavEntrada) {
+        var nwavResultados = nwavAPdf.nwavOfficeAPdf(nwavEntrada.nwavArchivos(), nwavEntrada.nwavCarpetaSalida(),
+                nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion());
+        List<Path> nwavCreados = nwavResultados.stream().filter(nwavR -> nwavR.nwavPdf() != null)
+                .map(com.nwav.editorpdf.service.NwavConversionAPdfService.NwavConvertido::nwavPdf).toList();
+        List<String> nwavFallos = nwavResultados.stream().filter(nwavR -> nwavR.nwavError() != null)
+                .map(nwavR -> nwavR.nwavOrigen().getFileName() + ": " + nwavR.nwavError().getMessage()).toList();
+        if (nwavCreados.isEmpty()) {
+            throw new com.nwav.editorpdf.exception.NwavEditorException("No se pudo convertir ningún documento. "
+                    + String.join(" · ", nwavFallos));
+        }
+        String nwavResumen = nwavCreados.size() + " de " + nwavResultados.size() + " documentos convertidos"
+                + (nwavFallos.isEmpty() ? "" : ". Fallaron: " + String.join(" · ", nwavFallos));
+        return new NwavResultadoProceso(nwavCreados, nwavResumen, nwavResumen);
     }
 
     // ================================================================== Editar

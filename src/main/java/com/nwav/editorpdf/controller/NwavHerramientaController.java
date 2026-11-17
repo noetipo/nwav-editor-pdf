@@ -185,17 +185,68 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
 
     @Override
     public boolean nwavAcepta(File nwavArchivo) {
-        return nwavDefinicion != null && nwavArchivo.isFile() && nwavDefinicion.nwavAceptaArchivo(nwavArchivo.getName());
+        return nwavDefinicion != null && (nwavArchivo.isDirectory()
+                || nwavArchivo.isFile() && nwavDefinicion.nwavAceptaArchivo(nwavArchivo.getName()));
     }
 
     @Override
-    public void nwavRecibir(List<File> nwavArchivos) {
+    public void nwavRecibir(List<File> nwavRecibidos) {
+        // Las carpetas se expanden a sus archivos compatibles, por orden natural de nombre
+        // (asi "escaneo2" va antes que "escaneo10").
+        List<File> nwavArchivos = new java.util.ArrayList<>();
+        for (File nwavRecibido : nwavRecibidos) {
+            if (nwavRecibido.isDirectory()) {
+                File[] nwavHijos = nwavRecibido.listFiles(nwavHijo -> nwavHijo.isFile() && !nwavHijo.isHidden()
+                        && nwavDefinicion.nwavAceptaArchivo(nwavHijo.getName()));
+                if (nwavHijos != null) {
+                    java.util.Arrays.stream(nwavHijos)
+                            .sorted(java.util.Comparator.comparing(File::getName, NwavHerramientaController::nwavCompararNatural))
+                            .forEach(nwavArchivos::add);
+                }
+            } else {
+                nwavArchivos.add(nwavRecibido);
+            }
+        }
+        if (nwavArchivos.isEmpty() && !nwavRecibidos.isEmpty()) {
+            nwavNotificador.nwavAdvertencia("No se encontraron archivos compatibles con esta herramienta.");
+            return;
+        }
         List<File> nwavValidos = nwavArchivos.stream().filter(this::nwavAcepta).toList();
         if (nwavValidos.size() < nwavArchivos.size()) {
             nwavNotificador.nwavAdvertencia("Se ignoraron " + (nwavArchivos.size() - nwavValidos.size())
                     + " archivos con un formato que esta herramienta no admite.");
         }
         nwavRecibirRutas(nwavValidos.stream().map(File::toPath).toList());
+    }
+
+    /** Compara nombres tratando los numeros como numeros ("p2" &lt; "p10"). */
+    static int nwavCompararNatural(String nwavA, String nwavB) {
+        java.util.regex.Matcher nwavTrozosA = java.util.regex.Pattern.compile("\\d+|\\D+").matcher(nwavA.toLowerCase(Locale.ROOT));
+        java.util.regex.Matcher nwavTrozosB = java.util.regex.Pattern.compile("\\d+|\\D+").matcher(nwavB.toLowerCase(Locale.ROOT));
+        while (nwavTrozosA.find() && nwavTrozosB.find()) {
+            String nwavParteA = nwavTrozosA.group();
+            String nwavParteB = nwavTrozosB.group();
+            int nwavComparacion;
+            if (Character.isDigit(nwavParteA.charAt(0)) && Character.isDigit(nwavParteB.charAt(0))) {
+                nwavComparacion = new java.math.BigInteger(nwavParteA).compareTo(new java.math.BigInteger(nwavParteB));
+            } else {
+                nwavComparacion = nwavParteA.compareTo(nwavParteB);
+            }
+            if (nwavComparacion != 0) {
+                return nwavComparacion;
+            }
+        }
+        return Integer.compare(nwavA.length(), nwavB.length());
+    }
+
+    @FXML
+    private void nwavOnAnadirCarpeta() {
+        javafx.stage.DirectoryChooser nwavSelector = new javafx.stage.DirectoryChooser();
+        nwavSelector.setTitle("Elegir una carpeta (se añaden sus archivos compatibles)");
+        File nwavCarpetaElegida = nwavSelector.showDialog(nwavListaArchivos.getScene().getWindow());
+        if (nwavCarpetaElegida != null) {
+            nwavRecibir(List.of(nwavCarpetaElegida));
+        }
     }
 
     private void nwavRecibirRutas(List<Path> nwavRutas) {
@@ -294,7 +345,7 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
     }
 
     private void nwavProcesar(List<Path> nwavArchivos, boolean nwavReintento) {
-        if (nwavArchivos.isEmpty()) {
+        if (nwavArchivos.isEmpty() && nwavDefinicion.getNwavMinimoArchivos() > 0) {
             nwavNotificador.nwavAdvertencia("Añade al menos un archivo.");
             return;
         }

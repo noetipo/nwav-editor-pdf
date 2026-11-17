@@ -86,6 +86,12 @@ public final class NwavDefinicionHerramienta {
     }
 
     /** Herramienta que combina archivos: hace falta un minimo y el orden cuenta. */
+    /** La herramienta no necesita archivos de entrada (p. ej. convertir una URL). */
+    public NwavDefinicionHerramienta nwavSinArchivos() {
+        this.nwavMinimoArchivos = 0;
+        return this;
+    }
+
     public NwavDefinicionHerramienta nwavCombina(int nwavMinimo) {
         this.nwavMinimoArchivos = nwavMinimo;
         this.nwavOrdenImporta = true;

@@ -39,6 +39,10 @@
                     <Button text="Añadir…" onAction="#nwavOnAnadir" styleClass="accent">
                         <graphic><FontIcon iconLiteral="fth-plus"/></graphic>
                     </Button>
+                    <Button text="Carpeta…" onAction="#nwavOnAnadirCarpeta" styleClass="flat">
+                        <graphic><FontIcon iconLiteral="fth-folder-plus"/></graphic>
+                        <tooltip><Tooltip text="Añadir todos los archivos compatibles de una carpeta (p. ej. escaneos)"/></tooltip>
+                    </Button>
                     <Button fx:id="nwavBtnUsarAbierto" text="Usar el PDF abierto" onAction="#nwavOnUsarAbierto"
                             styleClass="flat">
                         <graphic><FontIcon iconLiteral="fth-book-open"/></graphic>

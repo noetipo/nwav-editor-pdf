@@ -107,6 +107,60 @@
             </exclusions>
         </dependency>
 
+        <!-- PDF/A: validacion (Preflight) y metadatos XMP. Apache 2.0 -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>preflight</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>xmpbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
+
+        <!-- Office -> PDF con LibreOffice local (JODConverter, Apache 2.0; LibreOffice es externo) -->
+        <dependency>
+            <groupId>org.jodconverter</groupId>
+            <artifactId>jodconverter-local</artifactId>
+            <version>4.4.9</version>
+        </dependency>
+
+        <!-- HTML -> PDF (openhtmltopdf, LGPL 2.1+, sobre PDFBox 3) -->
+        <dependency>
+            <groupId>io.github.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>1.1.28</version>
+        </dependency>
+
+        <!-- HTML tolerante (HTML5 real -> DOM para openhtmltopdf). MIT -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.18.3</version>
+        </dependency>
+
+        <!-- PDF -> Word / Excel / PowerPoint (Apache POI, Apache 2.0) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.4.1</version>
+        </dependency>
+
+        <!-- Comparar PDF: diferencias de texto (Apache 2.0) -->
+        <dependency>
+            <groupId>io.github.java-diff-utils</groupId>
+            <artifactId>java-diff-utils</artifactId>
+            <version>4.15</version>
+        </dependency>
+
+        <!-- Firma digital PKCS#12 y verificacion (Bouncy Castle, licencia MIT) -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <version>1.80</version>
+        </dependency>
+
         <!-- Migraciones versionadas del esquema (version gestionada por Spring Boot) -->
         <dependency>
             <groupId>org.flywaydb</groupId>
