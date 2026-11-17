@@ -1,5 +1,6 @@
 package com.nwav.editorpdf.service;
 
+import com.nwav.editorpdf.model.NwavPosicionMarca;
 import com.nwav.editorpdf.exception.NwavEditorException;
 import com.nwav.editorpdf.model.NwavAlineacion;
 import com.nwav.editorpdf.model.NwavEstiloTexto;
@@ -81,9 +82,13 @@ public class NwavSelloService {
                     float nwavAncho = (float) (nwavGeometria.nwavAnchoVisual() * nwavOpciones.nwavEscala());
                     float nwavAlto = nwavAncho * nwavImagen.getHeight() / Math.max(1f, nwavImagen.getWidth());
                     nwavFlujo.setGraphicsStateParameters(nwavTransparencia);
-                    nwavFlujo.transform(Matrix.getRotateInstance(nwavAngulo, nwavGeometria.nwavAnchoVisual() / 2,
-                            nwavGeometria.nwavAltoVisual() / 2));
-                    nwavFlujo.drawImage(nwavImagen, -nwavAncho / 2, -nwavAlto / 2, nwavAncho, nwavAlto);
+                    for (float[] nwavCentro : nwavCentros(nwavOpciones.nwavPosicion(), nwavGeometria.nwavAnchoVisual(),
+                            nwavGeometria.nwavAltoVisual(), nwavAncho, nwavAlto, nwavAngulo)) {
+                        nwavFlujo.saveGraphicsState();
+                        nwavFlujo.transform(Matrix.getRotateInstance(nwavAngulo, nwavCentro[0], nwavCentro[1]));
+                        nwavFlujo.drawImage(nwavImagen, -nwavAncho / 2, -nwavAlto / 2, nwavAncho, nwavAlto);
+                        nwavFlujo.restoreGraphicsState();
+                    }
                 });
             }
             return;
@@ -97,18 +102,63 @@ public class NwavSelloService {
         float[] nwavColor = nwavOpciones.nwavColor().nwavComponentes();
         for (int nwavPagina : nwavPaginas) {
             NwavContenidoService.nwavDibujarEnPagina(nwavDocumento, nwavPagina, (nwavFlujo, nwavGeometria) -> {
-                Matrix nwavMatriz = Matrix.getRotateInstance(nwavAngulo, nwavGeometria.nwavAnchoVisual() / 2,
-                        nwavGeometria.nwavAltoVisual() / 2);
-                nwavMatriz.translate(-nwavAnchoTexto / 2, -nwavTamano * 0.35f);
                 nwavFlujo.setGraphicsStateParameters(nwavTransparencia);
                 nwavFlujo.setNonStrokingColor(nwavColor[0], nwavColor[1], nwavColor[2]);
-                nwavFlujo.beginText();
-                nwavFlujo.setFont(nwavFuente, nwavTamano);
-                nwavFlujo.setTextMatrix(nwavMatriz);
-                nwavFlujo.showText(nwavTexto);
-                nwavFlujo.endText();
+                for (float[] nwavCentro : nwavCentros(nwavOpciones.nwavPosicion(), nwavGeometria.nwavAnchoVisual(),
+                        nwavGeometria.nwavAltoVisual(), nwavAnchoTexto, nwavTamano, nwavAngulo)) {
+                    Matrix nwavMatriz = Matrix.getRotateInstance(nwavAngulo, nwavCentro[0], nwavCentro[1]);
+                    nwavMatriz.translate(-nwavAnchoTexto / 2, -nwavTamano * 0.35f);
+                    nwavFlujo.beginText();
+                    nwavFlujo.setFont(nwavFuente, nwavTamano);
+                    nwavFlujo.setTextMatrix(nwavMatriz);
+                    nwavFlujo.showText(nwavTexto);
+                    nwavFlujo.endText();
+                }
             });
         }
+    }
+
+    /**
+     * Centros (x, y con Y hacia arriba) donde dibujar la marca: uno segun la posicion, con un
+     * margen, o una rejilla al tresbolillo para el mosaico. Tiene en cuenta el giro para que
+     * la marca no se salga de la pagina.
+     */
+    static List<float[]> nwavCentros(NwavPosicionMarca nwavPosicion, float nwavAnchoPagina, float nwavAltoPagina,
+                                     float nwavAncho, float nwavAlto, float nwavAngulo) {
+        double nwavCos = Math.abs(Math.cos(nwavAngulo));
+        double nwavSen = Math.abs(Math.sin(nwavAngulo));
+        float nwavCajaAncho = (float) (nwavAncho * nwavCos + nwavAlto * nwavSen);
+        float nwavCajaAlto = (float) (nwavAncho * nwavSen + nwavAlto * nwavCos);
+        List<float[]> nwavCentros = new java.util.ArrayList<>();
+        if (nwavPosicion == NwavPosicionMarca.NWAV_MOSAICO) {
+            float nwavPasoX = nwavCajaAncho + Math.max(36, nwavCajaAncho * 0.35f);
+            float nwavPasoY = nwavCajaAlto + Math.max(36, nwavCajaAlto * 0.6f);
+            int nwavFila = 0;
+            for (float nwavY = nwavAltoPagina - nwavCajaAlto / 2; nwavY > -nwavCajaAlto / 2; nwavY -= nwavPasoY, nwavFila++) {
+                float nwavDesfase = nwavFila % 2 == 0 ? 0 : nwavPasoX / 2;
+                for (float nwavX = nwavCajaAncho / 2 - nwavDesfase; nwavX < nwavAnchoPagina + nwavCajaAncho / 2;
+                     nwavX += nwavPasoX) {
+                    nwavCentros.add(new float[]{nwavX, nwavY});
+                }
+                if (nwavCentros.size() > 400) {
+                    break; // marca diminuta en pagina enorme: limite razonable
+                }
+            }
+            return nwavCentros;
+        }
+        float nwavMargen = 28;
+        float nwavMitadAncho = Math.min(nwavCajaAncho / 2, nwavAnchoPagina / 2);
+        float nwavMitadAlto = Math.min(nwavCajaAlto / 2, nwavAltoPagina / 2);
+        float nwavX = (float) (nwavMargen + nwavMitadAncho
+                + (nwavAnchoPagina - 2 * (nwavMargen + nwavMitadAncho)) * nwavPosicion.getNwavFraccionX());
+        float nwavYAbajo = (float) (nwavMargen + nwavMitadAlto
+                + (nwavAltoPagina - 2 * (nwavMargen + nwavMitadAlto)) * nwavPosicion.getNwavFraccionY());
+        if (nwavPosicion == NwavPosicionMarca.NWAV_CENTRO) {
+            nwavX = nwavAnchoPagina / 2;
+            nwavYAbajo = nwavAltoPagina / 2;
+        }
+        nwavCentros.add(new float[]{nwavX, nwavAltoPagina - nwavYAbajo});
+        return nwavCentros;
     }
 
     // ===================================================== encabezado, pie y numeros

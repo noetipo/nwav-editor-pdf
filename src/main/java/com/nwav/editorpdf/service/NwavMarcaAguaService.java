@@ -59,6 +59,7 @@ public class NwavMarcaAguaService {
         nwavPlantilla.setNwavOpacidad(nwavOpciones.nwavOpacidad());
         nwavPlantilla.setNwavRotacion(nwavOpciones.nwavRotacion());
         nwavPlantilla.setNwavEscala(nwavOpciones.nwavEscala());
+        nwavPlantilla.setNwavPosicion(nwavOpciones.nwavPosicion());
         nwavPlantilla.setNwavFechaCreacion(LocalDateTime.now());
         return nwavRepositorio.save(nwavPlantilla);
     }
@@ -80,7 +81,7 @@ public class NwavMarcaAguaService {
                 nwavPlantilla.getNwavImagen(), nwavFuente,
                 nwavPlantilla.getNwavTamanoFuente() == null ? 60 : nwavPlantilla.getNwavTamanoFuente(),
                 nwavDeHex(nwavPlantilla.getNwavColor()), nwavPlantilla.getNwavOpacidad(),
-                nwavPlantilla.getNwavRotacion(), nwavPlantilla.getNwavEscala(), "");
+                nwavPlantilla.getNwavRotacion(), nwavPlantilla.getNwavEscala(), "", nwavPlantilla.getNwavPosicion());
     }
 
     static NwavColorRgb nwavDeHex(String nwavHex) {

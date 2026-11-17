@@ -36,6 +36,7 @@ public enum NwavTipoOperacion {
     NWAV_PDF_A_OFFICE("PDF a Office"),
     NWAV_PDF_A_TEXTO("PDF a texto"),
     NWAV_PDF_A("PDF a PDF/A"),
+    NWAV_COMPARAR("Comparar PDF"),
     NWAV_COMPRIMIR("Comprimir PDF"),
     NWAV_OCR("OCR"),
     NWAV_REPARAR("Reparar PDF"),

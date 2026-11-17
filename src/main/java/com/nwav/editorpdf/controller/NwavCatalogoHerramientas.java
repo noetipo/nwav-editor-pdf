@@ -49,6 +49,7 @@ public class NwavCatalogoHerramientas {
     private final com.nwav.editorpdf.service.NwavConversionAPdfService nwavAPdf;
     private final com.nwav.editorpdf.service.NwavConversionDesdePdfService nwavDesdePdf;
     private final com.nwav.editorpdf.service.NwavPdfAService nwavPdfA;
+    private final com.nwav.editorpdf.service.NwavEdicionLoteService nwavLote;
     private final NwavTareaFondo nwavTareaFondo;
     private final NwavNotificador nwavNotificador;
     private final NwavVisorController nwavVisor;
@@ -641,6 +642,85 @@ public class NwavCatalogoHerramientas {
         nwavLista.add(new NwavDefinicionHerramienta("propiedades", "Propiedades del documento",
                 "Cambia el título, el autor y otros metadatos.", NwavCategoriaHerramienta.NWAV_EDITAR, Feather.INFO)
                 .nwavEditor(nwavVisor::nwavOnMetadatos).nwavConPalabrasClave("metadatos titulo autor"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("crear-formulario", "Crear formulario",
+                "Añade campos rellenables: texto, casillas, listas, opciones y firma.", NwavCategoriaHerramienta.NWAV_EDITAR,
+                Feather.PLUS_SQUARE)
+                .nwavEditor(() -> nwavVisor.nwavHerramientas().nwavHerramientaProperty().set(NwavHerramienta.NWAV_CAMPO))
+                .nwavConPalabrasClave("campos rellenable formulario casilla lista firma acroform"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("marca-agua-lote", "Marca de agua en varios PDF",
+                "El mismo texto en todos los archivos: centrado, en una esquina o en mosaico.",
+                NwavCategoriaHerramienta.NWAV_EDITAR, Feather.DROPLET)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_MARCA_AGUA, true, nwavEntrada -> {
+                    var nwavOpciones = new com.nwav.editorpdf.model.NwavOpcionesMarcaAgua(
+                            com.nwav.editorpdf.model.NwavTipoMarcaAgua.NWAV_TEXTO, nwavEntrada.nwavTexto("texto", "BORRADOR"),
+                            null, com.nwav.editorpdf.model.NwavFuente.NWAV_HELVETICA, nwavEntrada.nwavDecimal("tamano", 48),
+                            nwavColor(nwavEntrada.nwavTexto("color", "#9CA3AF")), nwavEntrada.nwavDecimal("opacidad", 0.3),
+                            nwavEntrada.nwavDecimal("giro", 45), 0.4, nwavEntrada.nwavTexto("paginas", ""),
+                            com.nwav.editorpdf.model.NwavPosicionMarca.valueOf(nwavEntrada.nwavTexto("posicion", "NWAV_CENTRO")));
+                    return NwavResultadoProceso.nwavDe(nwavLote.nwavMarcaAgua(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavOpciones,
+                            NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
+                                    "marca", "pdf")), "Marca «" + nwavOpciones.nwavTexto() + "»");
+                }))
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavTexto("texto", "Texto", "BORRADOR"),
+                        NwavCampoOpcion.nwavEleccion("posicion", "Posición", "NWAV_CENTRO",
+                                Arrays.stream(com.nwav.editorpdf.model.NwavPosicionMarca.values())
+                                        .map(nwavP -> nwavP.name() + "=" + nwavP.getNwavDescripcion()).toArray(String[]::new)),
+                        NwavCampoOpcion.nwavDecimal("tamano", "Tamaño de letra", 48, 8, 200, 2),
+                        NwavCampoOpcion.nwavColor("color", "Color", "#9CA3AF"),
+                        NwavCampoOpcion.nwavDecimal("opacidad", "Opacidad", 0.3, 0.05, 1, 0.05),
+                        NwavCampoOpcion.nwavDecimal("giro", "Giro (grados)", 45, -90, 90, 5),
+                        NwavCampoOpcion.nwavTexto("paginas", "Páginas (vacío = todas)", ""))
+                .nwavConPalabrasClave("sello confidencial borrador lote varios mosaico"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("numeros-lote", "Numerar varios PDF",
+                "Añade «Página n de total» (o tu formato) a muchos archivos a la vez.", NwavCategoriaHerramienta.NWAV_EDITAR,
+                Feather.HASH)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_ENCABEZADO, true, nwavEntrada -> {
+                    String nwavPosicion = nwavEntrada.nwavTexto("posicion", "pie");
+                    String nwavFormato = nwavEntrada.nwavTexto("formato", "Página {n} de {total}");
+                    var nwavAlineacion = com.nwav.editorpdf.model.NwavAlineacion.valueOf(
+                            nwavEntrada.nwavTexto("alineacion", "NWAV_CENTRO"));
+                    var nwavOpciones = new com.nwav.editorpdf.model.NwavOpcionesEncabezado(
+                            "encabezado".equals(nwavPosicion) ? nwavFormato : "", nwavAlineacion,
+                            "pie".equals(nwavPosicion) ? nwavFormato : "", nwavAlineacion,
+                            com.nwav.editorpdf.model.NwavFuente.NWAV_HELVETICA, nwavEntrada.nwavDecimal("tamano", 10), null,
+                            nwavEntrada.nwavDecimal("margen", 28), nwavEntrada.nwavEntero("inicio", 1),
+                            nwavEntrada.nwavTexto("paginas", ""));
+                    return NwavResultadoProceso.nwavDe(nwavLote.nwavEncabezado(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavOpciones,
+                            NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
+                                    "numerado", "pdf")), "Numerado: " + nwavFormato);
+                }))
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavTexto("formato", "Formato", "Página {n} de {total}")
+                                .nwavConAyuda("{n} = número, {total} = páginas, {archivo} = nombre, {fecha} = hoy"),
+                        NwavCampoOpcion.nwavEleccion("posicion", "Dónde", "pie", "pie=Pie de página", "encabezado=Encabezado"),
+                        NwavCampoOpcion.nwavEleccion("alineacion", "Alineación", "NWAV_CENTRO", "NWAV_IZQUIERDA=Izquierda",
+                                "NWAV_CENTRO=Centro", "NWAV_DERECHA=Derecha"),
+                        NwavCampoOpcion.nwavDecimal("tamano", "Tamaño de letra", 10, 5, 72, 1),
+                        NwavCampoOpcion.nwavDecimal("margen", "Distancia al borde (pt)", 28, 0, 200, 2),
+                        NwavCampoOpcion.nwavEntero("inicio", "Empezar a contar en", 1, 0, 100_000),
+                        NwavCampoOpcion.nwavTexto("paginas", "Páginas (vacío = todas)", ""))
+                .nwavConPalabrasClave("numerar paginacion pie encabezado lote varios"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("comparar", "Comparar PDF",
+                "Muestra dos versiones lado a lado con las diferencias resaltadas.", NwavCategoriaHerramienta.NWAV_EDITAR,
+                Feather.COLUMNS)
+                .nwavVistaPropia("nwav-comparar-view")
+                .nwavConPalabrasClave("diferencias versiones cambios diff"));
+    }
+
+    private static com.nwav.editorpdf.model.NwavColorRgb nwavColor(String nwavHex) {
+        String nwavDigitos = nwavHex == null ? "" : nwavHex.replace("#", "");
+        if (!nwavDigitos.matches("[0-9a-fA-F]{6}([0-9a-fA-F]{2})?")) {
+            return new com.nwav.editorpdf.model.NwavColorRgb(156, 163, 175);
+        }
+        return new com.nwav.editorpdf.model.NwavColorRgb(Integer.parseInt(nwavDigitos.substring(0, 2), 16),
+                Integer.parseInt(nwavDigitos.substring(2, 4), 16), Integer.parseInt(nwavDigitos.substring(4, 6), 16));
     }
 
     // ================================================================ Seguridad

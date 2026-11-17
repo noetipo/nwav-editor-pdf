@@ -40,6 +40,7 @@ public class NwavEdicionService {
     private final NwavFormularioService nwavFormularios;
     private final NwavMetadatosService nwavMetadatos;
     private final NwavHistorialService nwavHistorial;
+    private final NwavCreacionCamposService nwavCreacionCampos;
 
     /** Lo que la interfaz necesita saber tras una edicion. */
     public record NwavResultadoEdicion(String nwavDescripcion, int nwavPaginaDestacada, boolean nwavTuvoEfecto,
@@ -117,6 +118,11 @@ public class NwavEdicionService {
                                                  double nwavGrosor) {
         return nwavAplicar(nwavDocumento, nwavContenido.nwavComandoForma(nwavDocumento, nwavPagina, nwavTipo,
                 nwavDesde, nwavHasta, nwavColor, nwavGrosor));
+    }
+
+    public NwavResultadoEdicion nwavCrearCampo(NwavDocumentoPdf nwavDocumento, int nwavPagina, NwavRectangulo nwavZona,
+                                               NwavCreacionCamposService.NwavCampoNuevo nwavCampo) {
+        return nwavAplicar(nwavDocumento, nwavCreacionCampos.nwavComandoCrear(nwavDocumento, nwavPagina, nwavZona, nwavCampo));
     }
 
     public NwavResultadoEdicion nwavRecortar(NwavDocumentoPdf nwavDocumento, List<Integer> nwavPaginasElegidas,

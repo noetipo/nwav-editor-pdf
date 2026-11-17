@@ -59,6 +59,10 @@ public class NwavMarcaAgua {
     @Column(name = "nwav_escala", nullable = false)
     private double nwavEscala = 1.0;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "nwav_posicion", nullable = false, length = 30)
+    private NwavPosicionMarca nwavPosicion = NwavPosicionMarca.NWAV_CENTRO;
+
     @Column(name = "nwav_fecha_creacion", nullable = false)
     private LocalDateTime nwavFechaCreacion;
 }

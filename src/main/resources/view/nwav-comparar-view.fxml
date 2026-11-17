@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nwav.editorpdf.controller.NwavCompararController"
+      styleClass="nwav-pagina" spacing="12.0">
+
+    <fx:define>
+        <ToggleGroup fx:id="nwavGrupoModo"/>
+    </fx:define>
+
+    <HBox styleClass="nwav-pagina-cabecera">
+        <Button onAction="#nwavOnVolver" styleClass="flat">
+            <graphic><FontIcon iconLiteral="fth-arrow-left"/></graphic>
+            <tooltip><Tooltip text="Volver a todas las herramientas"/></tooltip>
+        </Button>
+        <StackPane styleClass="nwav-icono-herramienta, nwav-cat-editar">
+            <FontIcon iconLiteral="fth-columns"/>
+        </StackPane>
+        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+            <Label text="Comparar PDF" styleClass="nwav-pagina-titulo"/>
+            <Label text="Lado a lado con desplazamiento sincronizado: en rojo lo que se quitó, en verde lo que se añadió."
+                   styleClass="nwav-pagina-subtitulo" wrapText="true"/>
+        </VBox>
+    </HBox>
+
+    <HBox spacing="10.0" alignment="CENTER_LEFT" styleClass="nwav-tarjeta">
+        <Button text="Original…" onAction="#nwavOnElegirOriginal" styleClass="button-outlined">
+            <graphic><FontIcon iconLiteral="fth-file"/></graphic>
+        </Button>
+        <Label fx:id="nwavLblOriginal" text="Sin elegir" styleClass="nwav-texto-ruta" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        <Button text="Nuevo…" onAction="#nwavOnElegirNuevo" styleClass="button-outlined">
+            <graphic><FontIcon iconLiteral="fth-file-plus"/></graphic>
+        </Button>
+        <Label fx:id="nwavLblNuevo" text="Sin elegir" styleClass="nwav-texto-ruta" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        <Button fx:id="nwavBtnComparar" text="Comparar" onAction="#nwavOnComparar" styleClass="accent">
+            <graphic><FontIcon iconLiteral="fth-play"/></graphic>
+        </Button>
+    </HBox>
+
+    <HBox spacing="10.0" alignment="CENTER_LEFT">
+        <ToggleButton fx:id="nwavTglTexto" text="Lado a lado" toggleGroup="$nwavGrupoModo" selected="true"
+                      styleClass="left-pill"/>
+        <ToggleButton fx:id="nwavTglVisual" text="Superposición visual" toggleGroup="$nwavGrupoModo"
+                      styleClass="right-pill"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="nwavLblResumen" styleClass="nwav-texto-tenue"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="nwavBtnAnterior" onAction="#nwavOnAnterior" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-chevron-left"/></graphic>
+        </Button>
+        <Label fx:id="nwavLblPagina" text="—" minWidth="110.0" alignment="CENTER"/>
+        <Button fx:id="nwavBtnSiguiente" onAction="#nwavOnSiguiente" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-chevron-right"/></graphic>
+        </Button>
+        <Button onAction="#nwavOnAlejar" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-zoom-out"/></graphic>
+        </Button>
+        <Button onAction="#nwavOnAcercar" styleClass="button-icon, flat">
+            <graphic><FontIcon iconLiteral="fth-zoom-in"/></graphic>
+        </Button>
+    </HBox>
+
+    <HBox spacing="10.0" VBox.vgrow="ALWAYS">
+        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+            <Label fx:id="nwavLblTituloIzquierda" text="Original" styleClass="nwav-campo-label"/>
+            <ScrollPane fx:id="nwavScrollIzquierda" VBox.vgrow="ALWAYS" styleClass="nwav-marco-vista-previa" pannable="true">
+                <StackPane fx:id="nwavLienzoIzquierda"/>
+            </ScrollPane>
+        </VBox>
+        <VBox fx:id="nwavColumnaDerecha" spacing="4.0" HBox.hgrow="ALWAYS">
+            <Label text="Nuevo" styleClass="nwav-campo-label"/>
+            <ScrollPane fx:id="nwavScrollDerecha" VBox.vgrow="ALWAYS" styleClass="nwav-marco-vista-previa" pannable="true">
+                <StackPane fx:id="nwavLienzoDerecha"/>
+            </ScrollPane>
+        </VBox>
+    </HBox>
+</VBox>

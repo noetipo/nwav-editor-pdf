@@ -67,6 +67,7 @@ public class NwavPanelMarcaAguaController implements NwavPanel {
     @FXML private Slider nwavSldRotacion;
     @FXML private Label nwavLblRotacion;
     @FXML private TextField nwavTxtPaginas;
+    @FXML private javafx.scene.control.ComboBox<com.nwav.editorpdf.model.NwavPosicionMarca> nwavCmbPosicion;
     @FXML private TextField nwavTxtNombrePlantilla;
 
     private byte[] nwavImagen;
@@ -83,6 +84,8 @@ public class NwavPanelMarcaAguaController implements NwavPanel {
             }
         });
         nwavCmbFuente.getItems().setAll(NwavFuente.values());
+        nwavCmbPosicion.getItems().setAll(com.nwav.editorpdf.model.NwavPosicionMarca.values());
+        nwavCmbPosicion.setValue(com.nwav.editorpdf.model.NwavPosicionMarca.NWAV_CENTRO);
         nwavCmbFuente.setValue(NwavFuente.NWAV_HELVETICA);
         nwavSpnTamano.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(8, 300, 60));
         nwavSelectorColor.setValue(Color.rgb(150, 150, 150));
@@ -130,6 +133,7 @@ public class NwavPanelMarcaAguaController implements NwavPanel {
         nwavSldOpacidad.setValue(nwavOpciones.nwavOpacidad());
         nwavSldRotacion.setValue(nwavOpciones.nwavRotacion());
         nwavSldEscala.setValue(nwavOpciones.nwavEscala());
+        nwavCmbPosicion.setValue(nwavOpciones.nwavPosicion());
         nwavPonerImagen(nwavOpciones.nwavImagen(), nwavPlantilla.getNwavNombre());
         nwavTxtNombrePlantilla.setText(nwavPlantilla.getNwavNombre());
     }
@@ -161,7 +165,7 @@ public class NwavPanelMarcaAguaController implements NwavPanel {
         return new NwavOpcionesMarcaAgua(nwavTglImagen.isSelected() ? NwavTipoMarcaAgua.NWAV_IMAGEN : NwavTipoMarcaAgua.NWAV_TEXTO,
                 nwavTxtTexto.getText(), nwavImagen, nwavCmbFuente.getValue(), nwavSpnTamano.getValue(),
                 NwavEstadoHerramientas.nwavConvertir(nwavSelectorColor.getValue()), nwavSldOpacidad.getValue(),
-                nwavSldRotacion.getValue(), nwavSldEscala.getValue(), nwavTxtPaginas.getText());
+                nwavSldRotacion.getValue(), nwavSldEscala.getValue(), nwavTxtPaginas.getText(), nwavCmbPosicion.getValue());
     }
 
     @FXML

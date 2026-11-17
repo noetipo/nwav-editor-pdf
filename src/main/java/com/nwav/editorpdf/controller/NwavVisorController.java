@@ -1570,6 +1570,86 @@ public class NwavVisorController {
     }
 
     /** Edicion pedida desde el editor interactivo: aviso de error y, si falla, el elemento vuelve. */
+    /** Pide el tipo y las opciones del campo de formulario nuevo. */
+    private Optional<com.nwav.editorpdf.service.NwavCreacionCamposService.NwavCampoNuevo> nwavDialogoCampo() {
+        javafx.scene.control.Dialog<com.nwav.editorpdf.service.NwavCreacionCamposService.NwavCampoNuevo> nwavDialogo =
+                new javafx.scene.control.Dialog<>();
+        nwavDialogo.setTitle("Nuevo campo de formulario");
+        nwavDialogo.setHeaderText("¿Qué tipo de campo quieres crear?");
+        if (nwavVentana() != null) {
+            nwavDialogo.initOwner(nwavVentana());
+        }
+        ComboBox<com.nwav.editorpdf.model.NwavTipoCampo> nwavTipo = new ComboBox<>();
+        nwavTipo.getItems().setAll(com.nwav.editorpdf.model.NwavTipoCampo.values());
+        nwavTipo.setValue(com.nwav.editorpdf.model.NwavTipoCampo.NWAV_TEXTO);
+        nwavTipo.setConverter(new javafx.util.StringConverter<>() {
+            @Override
+            public String toString(com.nwav.editorpdf.model.NwavTipoCampo nwavValor) {
+                if (nwavValor == null) {
+                    return "";
+                }
+                return switch (nwavValor) {
+                    case NWAV_TEXTO -> "Texto";
+                    case NWAV_CASILLA -> "Casilla de verificación";
+                    case NWAV_OPCION -> "Grupo de opciones (elegir una)";
+                    case NWAV_LISTA -> "Lista desplegable";
+                    case NWAV_FIRMA_DIGITAL -> "Espacio para firma digital";
+                };
+            }
+
+            @Override
+            public com.nwav.editorpdf.model.NwavTipoCampo fromString(String nwavTexto) {
+                return null;
+            }
+        });
+        nwavTipo.setMaxWidth(Double.MAX_VALUE);
+        TextField nwavNombre = new TextField();
+        nwavNombre.setPromptText("p. ej. nombre, fecha, acepto");
+        javafx.scene.control.TextArea nwavOpciones = new javafx.scene.control.TextArea();
+        nwavOpciones.setPromptText("Una opción por línea");
+        nwavOpciones.setPrefRowCount(4);
+        TextField nwavValor = new TextField();
+        nwavValor.setPromptText("Opcional");
+        javafx.scene.control.CheckBox nwavMultilinea = new javafx.scene.control.CheckBox("Varias líneas");
+        javafx.scene.control.CheckBox nwavObligatorio = new javafx.scene.control.CheckBox("Obligatorio");
+        Label nwavLblOpciones = new Label("Opciones");
+        Label nwavLblValor = new Label("Valor inicial");
+        javafx.scene.layout.GridPane nwavRejilla = new javafx.scene.layout.GridPane();
+        nwavRejilla.setHgap(12);
+        nwavRejilla.setVgap(10);
+        nwavRejilla.addRow(0, new Label("Tipo"), nwavTipo);
+        nwavRejilla.addRow(1, new Label("Nombre"), nwavNombre);
+        nwavRejilla.addRow(2, nwavLblOpciones, nwavOpciones);
+        nwavRejilla.addRow(3, nwavLblValor, nwavValor);
+        nwavRejilla.addRow(4, new Label(""), new VBox(6, nwavMultilinea, nwavObligatorio));
+        Runnable nwavActualizar = () -> {
+            com.nwav.editorpdf.model.NwavTipoCampo nwavActual = nwavTipo.getValue();
+            boolean nwavConOpciones = nwavActual == com.nwav.editorpdf.model.NwavTipoCampo.NWAV_LISTA
+                    || nwavActual == com.nwav.editorpdf.model.NwavTipoCampo.NWAV_OPCION;
+            nwavOpciones.setVisible(nwavConOpciones);
+            nwavLblOpciones.setVisible(nwavConOpciones);
+            nwavOpciones.setManaged(nwavConOpciones);
+            nwavLblOpciones.setManaged(nwavConOpciones);
+            boolean nwavConValor = nwavActual != com.nwav.editorpdf.model.NwavTipoCampo.NWAV_FIRMA_DIGITAL
+                    && nwavActual != com.nwav.editorpdf.model.NwavTipoCampo.NWAV_CASILLA;
+            nwavValor.setVisible(nwavConValor);
+            nwavLblValor.setVisible(nwavConValor);
+            nwavMultilinea.setVisible(nwavActual == com.nwav.editorpdf.model.NwavTipoCampo.NWAV_TEXTO);
+        };
+        nwavTipo.valueProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> nwavActualizar.run());
+        nwavActualizar.run();
+        nwavDialogo.getDialogPane().setContent(nwavRejilla);
+        javafx.scene.control.ButtonType nwavCrear = new javafx.scene.control.ButtonType("Crear campo",
+                javafx.scene.control.ButtonBar.ButtonData.OK_DONE);
+        nwavDialogo.getDialogPane().getButtonTypes().setAll(javafx.scene.control.ButtonType.CANCEL, nwavCrear);
+        nwavDialogo.setResultConverter(nwavBoton -> nwavBoton != nwavCrear ? null
+                : new com.nwav.editorpdf.service.NwavCreacionCamposService.NwavCampoNuevo(nwavTipo.getValue(),
+                nwavNombre.getText(), List.of(nwavOpciones.getText().split("\\R")), nwavValor.getText(),
+                nwavMultilinea.isSelected(), nwavObligatorio.isSelected()));
+        javafx.application.Platform.runLater(nwavNombre::requestFocus);
+        return nwavDialogo.showAndWait();
+    }
+
     private void nwavEditarContenido(String nwavMensaje, Function<NwavDocumentoPdf, NwavResultadoEdicion> nwavOperacion,
                                      Runnable nwavSiAplica, Runnable nwavSiFalla) {
         if (!nwavPuedeEditar.get()) {
@@ -1652,6 +1732,12 @@ public class NwavVisorController {
             public void nwavCubrir(int nwavPagina, NwavRectangulo nwavZona, NwavColorRgb nwavColor) {
                 nwavEditarContenido("Cubriendo zona…",
                         nwavDoc -> nwavEdicion.nwavCubrir(nwavDoc, nwavPagina, nwavZona, nwavColor), null, null);
+            }
+
+            @Override
+            public void nwavCrearCampo(int nwavPagina, NwavRectangulo nwavZona) {
+                nwavDialogoCampo().ifPresent(nwavCampo -> nwavEditarContenido("Creando campo…",
+                        nwavDoc -> nwavEdicion.nwavCrearCampo(nwavDoc, nwavPagina, nwavZona, nwavCampo), null, null));
             }
 
             @Override

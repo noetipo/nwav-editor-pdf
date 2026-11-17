@@ -7,12 +7,25 @@ package com.nwav.editorpdf.model;
  * @param nwavOpacidad entre 0.05 y 1
  * @param nwavRotacion grados en sentido antihorario
  * @param nwavPaginas  rango de paginas ("1-3, 5"); vacio = todas
+ * @param nwavPosicion donde se coloca (o mosaico); por defecto, el centro
  */
 public record NwavOpcionesMarcaAgua(NwavTipoMarcaAgua nwavTipo, String nwavTexto, byte[] nwavImagen,
                                     NwavFuente nwavFuente, double nwavTamano, NwavColorRgb nwavColor,
-                                    double nwavOpacidad, double nwavRotacion, double nwavEscala, String nwavPaginas) {
+                                    double nwavOpacidad, double nwavRotacion, double nwavEscala, String nwavPaginas,
+                                    NwavPosicionMarca nwavPosicion) {
+
+    /** Compatibilidad: marca centrada. */
+    public NwavOpcionesMarcaAgua(NwavTipoMarcaAgua nwavTipo, String nwavTexto, byte[] nwavImagen, NwavFuente nwavFuente,
+                                 double nwavTamano, NwavColorRgb nwavColor, double nwavOpacidad, double nwavRotacion,
+                                 double nwavEscala, String nwavPaginas) {
+        this(nwavTipo, nwavTexto, nwavImagen, nwavFuente, nwavTamano, nwavColor, nwavOpacidad, nwavRotacion, nwavEscala,
+                nwavPaginas, NwavPosicionMarca.NWAV_CENTRO);
+    }
 
     public NwavOpcionesMarcaAgua {
+        if (nwavPosicion == null) {
+            nwavPosicion = NwavPosicionMarca.NWAV_CENTRO;
+        }
         if (nwavTipo == null) {
             nwavTipo = NwavTipoMarcaAgua.NWAV_TEXTO;
         }
