@@ -10,9 +10,9 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -20,6 +20,24 @@ jobs:
 
       - name: Pruebas en Windows
         run: .\mvnw.cmd -B test
+
+      - name: Publicar los fallos de las pruebas como anotaciones
+        if: failure()
+        shell: pwsh
+        run: |
+          $n = 0
+          Get-ChildItem target/surefire-reports -Filter 'TEST-*.xml' -ErrorAction SilentlyContinue | ForEach-Object {
+            [xml]$x = Get-Content $_.FullName -Raw
+            foreach ($c in $x.testsuite.testcase) {
+              foreach ($f in @($c.failure) + @($c.error)) {
+                if ($f -and $n -lt 10) {
+                  $n++
+                  $texto = (($f.message + "`n" + $f.'#text') -split "`n" | Select-Object -First 12) -join '%0A'
+                  Write-Output "::error title=$($c.classname).$($c.name)::$texto"
+                }
+              }
+            }
+          }
 
       - name: WiX Toolset (para el instalador .exe)
         run: |
@@ -30,7 +48,7 @@ jobs:
       - name: Instalador
         run: powershell -ExecutionPolicy Bypass -File empaquetado\instalador-windows.ps1 -SinPruebas
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: nwav-editor-pdf-windows
           path: |
@@ -38,7 +56,7 @@ jobs:
             target/instalador/*.zip
           if-no-files-found: warn
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: informes-de-pruebas
