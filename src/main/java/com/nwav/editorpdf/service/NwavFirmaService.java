@@ -66,6 +66,60 @@ public class NwavFirmaService {
      * blanco (util para firmas escaneadas), la recorta a su contenido y la reduce si es
      * muy grande. Devuelve PNG.
      */
+    /** Fuentes de aspecto manuscrito disponibles en este equipo (la primera es la recomendada). */
+    public static java.util.List<String> nwavFuentesManuscritas() {
+        java.util.Set<String> nwavInstaladas = new java.util.HashSet<>(java.util.Arrays.asList(
+                java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()));
+        java.util.List<String> nwavElegidas = new java.util.ArrayList<>();
+        for (String nwavCandidata : java.util.List.of("Snell Roundhand", "Brush Script MT", "Segoe Script", "Apple Chancery",
+                "Lucida Handwriting", "Bradley Hand", "Savoye LET", "Ink Free", "Zapfino", "URW Chancery L",
+                "Z003", "Comic Sans MS")) {
+            if (nwavInstaladas.contains(nwavCandidata)) {
+                nwavElegidas.add(nwavCandidata);
+            }
+        }
+        nwavElegidas.add("Serif"); // siempre existe (cursiva)
+        return nwavElegidas;
+    }
+
+    /** Firma escrita: el texto en una fuente manuscrita, como PNG transparente. */
+    public byte[] nwavFirmaEscrita(String nwavTexto, String nwavFamilia, java.awt.Color nwavColor) {
+        String nwavLimpio = nwavTexto == null ? "" : nwavTexto.strip();
+        if (nwavLimpio.isEmpty()) {
+            throw new NwavEditorException("Escribe tu nombre para crear la firma.");
+        }
+        int nwavEstilo = "Serif".equals(nwavFamilia) ? java.awt.Font.ITALIC : java.awt.Font.PLAIN;
+        java.awt.Font nwavFuente = new java.awt.Font(nwavFamilia == null ? "Serif" : nwavFamilia, nwavEstilo, 96);
+        java.awt.image.BufferedImage nwavMedida = new java.awt.image.BufferedImage(1, 1,
+                java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D nwavG = nwavMedida.createGraphics();
+        java.awt.font.FontRenderContext nwavContexto = nwavG.getFontRenderContext();
+        java.awt.geom.Rectangle2D nwavCaja = new java.awt.font.TextLayout(nwavLimpio, nwavFuente, nwavContexto).getBounds();
+        nwavG.dispose();
+        int nwavMargen = 24;
+        int nwavAncho = Math.min(NWAV_LADO_MAXIMO, (int) Math.ceil(nwavCaja.getWidth()) + 2 * nwavMargen);
+        int nwavAlto = (int) Math.ceil(nwavCaja.getHeight()) + 2 * nwavMargen;
+        java.awt.image.BufferedImage nwavImagen = new java.awt.image.BufferedImage(nwavAncho, nwavAlto,
+                java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D nwavLienzo = nwavImagen.createGraphics();
+        nwavLienzo.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+        nwavLienzo.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING,
+                java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        nwavLienzo.setRenderingHint(java.awt.RenderingHints.KEY_FRACTIONALMETRICS,
+                java.awt.RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        nwavLienzo.setColor(nwavColor == null ? new java.awt.Color(20, 40, 110) : nwavColor);
+        nwavLienzo.setFont(nwavFuente);
+        nwavLienzo.drawString(nwavLimpio, (float) (nwavMargen - nwavCaja.getX()), (float) (nwavMargen - nwavCaja.getY()));
+        nwavLienzo.dispose();
+        try {
+            java.io.ByteArrayOutputStream nwavBytes = new java.io.ByteArrayOutputStream();
+            javax.imageio.ImageIO.write(nwavImagen, "png", nwavBytes);
+            return nwavBytes.toByteArray();
+        } catch (java.io.IOException nwavError) {
+            throw new NwavEditorException("No se pudo crear la firma escrita.", nwavError);
+        }
+    }
+
     public byte[] nwavPrepararImagen(byte[] nwavOriginal, boolean nwavQuitarFondo) {
         BufferedImage nwavFuente = nwavLeer(nwavOriginal);
         int nwavAncho = nwavFuente.getWidth();

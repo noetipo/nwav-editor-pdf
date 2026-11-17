@@ -33,6 +33,9 @@ public enum NwavHerramienta {
             "Arrastra para marcar dónde va el campo; luego elige el tipo (texto, casilla, lista, opciones o firma)."),
     NWAV_RECORTAR("Recortar", Feather.CROP, null,
             "Arrastra para marcar el área que quieres conservar; luego elige si se aplica a esta página o a todas."),
+    NWAV_REDACTAR("Redactar (eliminar)", Feather.SLASH, null,
+            "Arrastra sobre lo que quieres ELIMINAR de verdad: el texto, la imagen y las notas de la zona se borran "
+                    + "del archivo al guardar y se tapa con negro."),
     NWAV_CUBRIR("Cubrir zona", Feather.EYE_OFF, Color.WHITE,
             "Cobertura VISUAL: tapa la zona con un rectángulo, pero el contenido de debajo NO se elimina; "
                     + "sigue en el PDF y se puede copiar o buscar.");
@@ -82,6 +85,6 @@ public enum NwavHerramienta {
     public boolean nwavEsDeZona() {
         return this == NWAV_RESALTAR || this == NWAV_SUBRAYAR || this == NWAV_TACHAR || this == NWAV_RECTANGULO
                 || this == NWAV_ELIPSE || this == NWAV_CUBRIR || this == NWAV_TEXTO || this == NWAV_RECORTAR
-                || this == NWAV_CAMPO;
+                || this == NWAV_CAMPO || this == NWAV_REDACTAR;
     }
 }

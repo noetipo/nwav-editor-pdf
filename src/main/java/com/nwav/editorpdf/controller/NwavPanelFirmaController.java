@@ -57,6 +57,11 @@ public class NwavPanelFirmaController implements NwavPanel {
     @FXML private javafx.scene.control.ToggleGroup nwavGrupoNueva;
     @FXML private ToggleButton nwavTglDibujar;
     @FXML private ToggleButton nwavTglCargar;
+    @FXML private ToggleButton nwavTglEscribir;
+    @FXML private VBox nwavSeccionEscribir;
+    @FXML private TextField nwavTxtEscrita;
+    @FXML private javafx.scene.control.ComboBox<String> nwavCmbFuenteEscrita;
+    @FXML private ImageView nwavVistaEscrita;
     @FXML private VBox nwavSeccionDibujar;
     @FXML private VBox nwavSeccionCargar;
     @FXML private Canvas nwavLienzo;
@@ -74,11 +79,26 @@ public class NwavPanelFirmaController implements NwavPanel {
         nwavSeccionDibujar.managedProperty().bind(nwavSeccionDibujar.visibleProperty());
         nwavSeccionCargar.visibleProperty().bind(nwavTglCargar.selectedProperty());
         nwavSeccionCargar.managedProperty().bind(nwavSeccionCargar.visibleProperty());
+        nwavSeccionEscribir.visibleProperty().bind(nwavTglEscribir.selectedProperty());
+        nwavSeccionEscribir.managedProperty().bind(nwavSeccionEscribir.visibleProperty());
         nwavGrupoNueva.selectedToggleProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
             if (nwavAhora == null) {
                 nwavGrupoNueva.selectToggle(nwavAntes);
             }
         });
+        nwavCmbFuenteEscrita.getItems().setAll(NwavFirmaService.nwavFuentesManuscritas());
+        nwavCmbFuenteEscrita.getSelectionModel().selectFirst();
+        nwavCmbFuenteEscrita.setCellFactory(nwavLista -> new javafx.scene.control.ListCell<>() {
+            @Override
+            protected void updateItem(String nwavFamilia, boolean nwavVacia) {
+                super.updateItem(nwavFamilia, nwavVacia);
+                setText(nwavVacia || nwavFamilia == null ? null : nwavFamilia);
+                setFont(nwavVacia || nwavFamilia == null ? javafx.scene.text.Font.getDefault()
+                        : javafx.scene.text.Font.font(nwavFamilia, 18));
+            }
+        });
+        nwavTxtEscrita.textProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> nwavPrevisualizarEscrita());
+        nwavCmbFuenteEscrita.valueProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> nwavPrevisualizarEscrita());
         nwavListaFirmas.setCellFactory(nwavLista -> new NwavCeldaFirma());
         nwavListaFirmas.setPlaceholder(new Label("Aún no hay firmas guardadas. Dibuja o carga una abajo."));
         nwavListaFirmas.getSelectionModel().selectedItemProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
@@ -91,6 +111,16 @@ public class NwavPanelFirmaController implements NwavPanel {
             }
         });
         nwavConfigurarLienzo();
+    }
+
+    private void nwavPrevisualizarEscrita() {
+        String nwavTexto = nwavTxtEscrita.getText();
+        if (nwavTexto == null || nwavTexto.isBlank()) {
+            nwavVistaEscrita.setImage(null);
+            return;
+        }
+        byte[] nwavPng = nwavFirmas.nwavFirmaEscrita(nwavTexto, nwavCmbFuenteEscrita.getValue(), null);
+        nwavVistaEscrita.setImage(new javafx.scene.image.Image(new java.io.ByteArrayInputStream(nwavPng)));
     }
 
     private void nwavConfigurarLienzo() {
@@ -158,7 +188,14 @@ public class NwavPanelFirmaController implements NwavPanel {
         String nwavNombre = nwavTxtNombre.getText();
         byte[] nwavOrigen;
         boolean nwavQuitarFondo;
-        if (nwavTglDibujar.isSelected()) {
+        if (nwavTglEscribir.isSelected()) {
+            if (nwavTxtEscrita.getText().isBlank()) {
+                nwavNotificador.nwavAdvertencia("Escribe tu nombre para crear la firma.");
+                return;
+            }
+            nwavOrigen = nwavFirmas.nwavFirmaEscrita(nwavTxtEscrita.getText(), nwavCmbFuenteEscrita.getValue(), null);
+            nwavQuitarFondo = false;
+        } else if (nwavTglDibujar.isSelected()) {
             if (!nwavHayTrazos) {
                 nwavNotificador.nwavAdvertencia("Dibuja la firma en el recuadro.");
                 return;
@@ -181,6 +218,7 @@ public class NwavPanelFirmaController implements NwavPanel {
                     nwavNotificador.nwavExito("Firma «" + nwavGuardada.getNwavNombre() + "» guardada.");
                     nwavOnLimpiarLienzo();
                     nwavTxtNombre.clear();
+                    nwavTxtEscrita.clear();
                     nwavImagenCargada = null;
                     nwavVistaCargada.setImage(null);
                     nwavLblCargada.setText("Ninguna imagen elegida");

@@ -50,6 +50,10 @@ public class NwavCatalogoHerramientas {
     private final com.nwav.editorpdf.service.NwavConversionDesdePdfService nwavDesdePdf;
     private final com.nwav.editorpdf.service.NwavPdfAService nwavPdfA;
     private final com.nwav.editorpdf.service.NwavEdicionLoteService nwavLote;
+    private final com.nwav.editorpdf.service.NwavProteccionLoteService nwavProteccion;
+    private final com.nwav.editorpdf.service.NwavFirmaDigitalService nwavFirmaDigital;
+    private final com.nwav.editorpdf.service.NwavRedaccionService nwavRedaccion;
+    private final com.nwav.editorpdf.service.NwavPdfDocumentoService nwavDocumentosPdf;
     private final NwavTareaFondo nwavTareaFondo;
     private final NwavNotificador nwavNotificador;
     private final NwavVisorController nwavVisor;
@@ -732,6 +736,210 @@ public class NwavCatalogoHerramientas {
                 .nwavConPalabrasClave("contraseña cifrar permisos desbloquear quitar"));
         nwavLista.add(new NwavDefinicionHerramienta("firmar", "Firmar PDF",
                 "Firma con una firma dibujada o cargada desde una imagen.", NwavCategoriaHerramienta.NWAV_SEGURIDAD,
-                Feather.FEATHER).nwavEditor(nwavVisor::nwavOnFirma).nwavConPalabrasClave("firma rubrica"));
+                Feather.FEATHER).nwavEditor(nwavVisor::nwavOnFirma).nwavConPalabrasClave("firma rubrica escrita dibujada"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("proteger-lote", "Proteger varios PDF",
+                "Pon la misma contraseña y los mismos permisos a muchos archivos (AES-256).",
+                NwavCategoriaHerramienta.NWAV_SEGURIDAD, Feather.LOCK)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_PROTEGER, true, nwavEntrada -> {
+                    String nwavClave = nwavEntrada.nwavTexto("clave", "");
+                    if (!nwavClave.equals(nwavEntrada.nwavTexto("repetir", ""))) {
+                        throw new com.nwav.editorpdf.exception.NwavEditorException("Las contraseñas no coinciden.");
+                    }
+                    boolean nwavRestringir = nwavEntrada.nwavSiNo("restringir", false);
+                    var nwavOpciones = new com.nwav.editorpdf.model.NwavOpcionesProteccion(nwavClave,
+                            nwavRestringir ? nwavEntrada.nwavTexto("propietario", "") : "", nwavEntrada.nwavSiNo("imprimir", true),
+                            nwavEntrada.nwavSiNo("copiar", false), nwavEntrada.nwavSiNo("modificar", false),
+                            nwavEntrada.nwavSiNo("anotar", false), nwavEntrada.nwavSiNo("rellenar", true));
+                    if (nwavRestringir && !nwavOpciones.nwavTienePropietario()) {
+                        throw new com.nwav.editorpdf.exception.NwavEditorException(
+                                "Escribe la contraseña de propietario para limitar los permisos.");
+                    }
+                    return NwavResultadoProceso.nwavDe(nwavProteccion.nwavProteger(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavOpciones,
+                            NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
+                                    "protegido", "pdf")), nwavRestringir ? "Protegido con permisos limitados" : "Protegido");
+                }))
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavContrasena("clave", "Contraseña para abrir"),
+                        NwavCampoOpcion.nwavContrasena("repetir", "Repite la contraseña"),
+                        NwavCampoOpcion.nwavCasilla("restringir", "Limitar lo que se puede hacer (contraseña de propietario)",
+                                false),
+                        NwavCampoOpcion.nwavContrasena("propietario", "Contraseña de propietario").nwavSi("restringir", "true"),
+                        NwavCampoOpcion.nwavCasilla("imprimir", "Permitir imprimir", true).nwavSi("restringir", "true"),
+                        NwavCampoOpcion.nwavCasilla("copiar", "Permitir copiar texto e imágenes", false)
+                                .nwavSi("restringir", "true"),
+                        NwavCampoOpcion.nwavCasilla("modificar", "Permitir modificar", false).nwavSi("restringir", "true"),
+                        NwavCampoOpcion.nwavCasilla("anotar", "Permitir comentarios", false).nwavSi("restringir", "true"),
+                        NwavCampoOpcion.nwavCasilla("rellenar", "Permitir rellenar formularios", true)
+                                .nwavSi("restringir", "true"))
+                .nwavConAviso("Las contraseñas no se guardan en ningún sitio: si las olvidas, no se podrán recuperar.")
+                .nwavConPalabrasClave("contraseña cifrar encriptar permisos lote"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("desbloquear", "Quitar contraseña",
+                "Crea una copia sin contraseña de los PDF protegidos (necesitas la contraseña).",
+                NwavCategoriaHerramienta.NWAV_SEGURIDAD, Feather.UNLOCK)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_DESBLOQUEAR, true, nwavEntrada -> {
+                    String nwavClave = nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo());
+                    if (nwavClave == null || nwavClave.isEmpty()) {
+                        nwavClave = nwavEntrada.nwavTexto("clave", "");
+                    }
+                    return NwavResultadoProceso.nwavDe(nwavProteccion.nwavDesbloquear(nwavEntrada.nwavArchivo(),
+                            nwavClave.isEmpty() ? null : nwavClave, NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(),
+                                    nwavEntrada.nwavCarpetaSalida(), "sin_clave", "pdf")), "Contraseña quitada");
+                }))
+                .nwavConOpciones(NwavCampoOpcion.nwavContrasena("clave", "Contraseña (de propietario)")
+                        .nwavConAyuda("Si cada archivo tiene una distinta, pulsa «Escribir contraseña» en sus resultados."))
+                .nwavConPalabrasClave("desproteger quitar contraseña desbloquear descifrar"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("firma-digital", "Firma digital",
+                "Firma con tu certificado (.p12/.pfx); cualquier cambio posterior se detecta.",
+                NwavCategoriaHerramienta.NWAV_SEGURIDAD, Feather.AWARD)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_FIRMA_DIGITAL, true, this::nwavProcesoFirmaDigital))
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavArchivo("certificado", "Certificado (.p12 o .pfx)", "p12", "pfx"),
+                        NwavCampoOpcion.nwavContrasena("claveCertificado", "Contraseña del certificado"),
+                        NwavCampoOpcion.nwavTexto("motivo", "Motivo (opcional)", ""),
+                        NwavCampoOpcion.nwavTexto("lugar", "Lugar (opcional)", ""),
+                        NwavCampoOpcion.nwavCasilla("visible", "Mostrar un sello de firma en la página", true),
+                        NwavCampoOpcion.nwavEleccion("pagina", "Página del sello", "ultima", "primera=Primera",
+                                "ultima=Última").nwavSi("visible", "true"),
+                        NwavCampoOpcion.nwavEleccion("esquina", "Posición del sello", "abajo-derecha",
+                                "abajo-derecha=Abajo a la derecha", "abajo-izquierda=Abajo a la izquierda",
+                                "arriba-derecha=Arriba a la derecha", "arriba-izquierda=Arriba a la izquierda")
+                                .nwavSi("visible", "true"))
+                .nwavConAviso("¿No tienes certificado? Crea uno personal con «Crear certificado». Los certificados "
+                        + "autofirmados prueban que el documento no cambió, pero no tienen validez legal como los de una "
+                        + "autoridad (FNMT, DNIe…).")
+                .nwavConPalabrasClave("certificado p12 pfx pkcs12 firmar digitalmente electronica"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("verificar-firmas", "Verificar firmas",
+                "Comprueba si las firmas digitales de un PDF son válidas y si se cambió después.",
+                NwavCategoriaHerramienta.NWAV_SEGURIDAD, Feather.CHECK_CIRCLE)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_VERIFICAR_FIRMAS, true, nwavEntrada -> {
+                    var nwavFirmas = nwavFirmaDigital.nwavVerificar(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()));
+                    if (nwavFirmas.isEmpty()) {
+                        return new NwavResultadoProceso(List.of(), "No tiene firmas digitales", "Sin firmas");
+                    }
+                    String nwavDetalle = nwavFirmas.stream().map(
+                            com.nwav.editorpdf.service.NwavFirmaDigitalService.NwavFirmaVerificada::nwavResumen)
+                            .collect(java.util.stream.Collectors.joining(" · "));
+                    long nwavValidas = nwavFirmas.stream().filter(
+                            com.nwav.editorpdf.service.NwavFirmaDigitalService.NwavFirmaVerificada::nwavValida).count();
+                    String nwavResumen = (nwavValidas == nwavFirmas.size() ? "✓ " : "✗ ") + nwavValidas + " de "
+                            + nwavFirmas.size() + " firmas válidas. " + nwavDetalle;
+                    return new NwavResultadoProceso(List.of(), nwavResumen, nwavResumen);
+                }))
+                .nwavConPalabrasClave("comprobar validar firma certificado"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("crear-certificado", "Crear certificado",
+                "Genera un certificado personal (.p12) para firmar digitalmente.", NwavCategoriaHerramienta.NWAV_SEGURIDAD,
+                Feather.KEY)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_CERTIFICADO, false, nwavEntrada -> {
+                    String nwavClave = nwavEntrada.nwavTexto("clave", "");
+                    if (!nwavClave.equals(nwavEntrada.nwavTexto("repetir", ""))) {
+                        throw new com.nwav.editorpdf.exception.NwavEditorException("Las contraseñas no coinciden.");
+                    }
+                    String nwavNombre = nwavEntrada.nwavTexto("nombre", "");
+                    Path nwavCarpeta = nwavEntrada.nwavCarpetaSalida() != null ? nwavEntrada.nwavCarpetaSalida()
+                            : Path.of(System.getProperty("user.home"));
+                    Path nwavDestino = NwavEscrituraSegura.nwavSinColision(nwavCarpeta.resolve(
+                            (nwavNombre.isBlank() ? "certificado" : nwavNombre.strip().replaceAll("[^\\p{L}\\p{N}._-]+", "_"))
+                                    + ".p12"), null);
+                    Path nwavCreado = nwavFirmaDigital.nwavCrearCertificado(nwavNombre, nwavEntrada.nwavTexto("organizacion", ""),
+                            nwavEntrada.nwavTexto("correo", ""), nwavClave.toCharArray(), nwavEntrada.nwavEntero("anios", 3),
+                            nwavDestino);
+                    return new NwavResultadoProceso(List.of(nwavCreado), "Certificado creado. Guárdalo en un lugar "
+                            + "seguro y no compartas su contraseña.", "Certificado de " + nwavNombre);
+                }))
+                .nwavSinArchivos()
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavTexto("nombre", "Nombre y apellidos", ""),
+                        NwavCampoOpcion.nwavTexto("organizacion", "Organización (opcional)", ""),
+                        NwavCampoOpcion.nwavTexto("correo", "Correo (opcional)", ""),
+                        NwavCampoOpcion.nwavContrasena("clave", "Contraseña del certificado (mín. 6)"),
+                        NwavCampoOpcion.nwavContrasena("repetir", "Repite la contraseña"),
+                        NwavCampoOpcion.nwavEntero("anios", "Años de validez", 3, 1, 10))
+                .nwavConAviso("No necesita archivos. Si no eliges carpeta, se guarda en tu carpeta personal.")
+                .nwavConPalabrasClave("p12 pfx clave certificado generar"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("redactar", "Redactar",
+                "Elimina de verdad la información sensible que marques (no solo la tapa).",
+                NwavCategoriaHerramienta.NWAV_SEGURIDAD, Feather.SLASH)
+                .nwavEditor(() -> nwavVisor.nwavHerramientas().nwavHerramientaProperty().set(NwavHerramienta.NWAV_REDACTAR))
+                .nwavConPalabrasClave("censurar tachar ocultar anonimizar eliminar datos sensibles"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("redactar-busqueda", "Redactar por búsqueda",
+                "Busca palabras o datos personales (correos, DNI, IBAN…) y los elimina en muchos PDF.",
+                NwavCategoriaHerramienta.NWAV_SEGURIDAD, Feather.SEARCH)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_REDACTAR, true, nwavEntrada -> {
+                    List<String> nwavTerminos = Arrays.stream(nwavEntrada.nwavTexto("terminos", "").split("[,;\\n]"))
+                            .map(String::strip).filter(nwavT -> !nwavT.isEmpty()).toList();
+                    java.util.Set<com.nwav.editorpdf.service.NwavRedaccionService.NwavPatron> nwavPatrones =
+                            Arrays.stream(nwavEntrada.nwavTexto("patrones", "").split(",")).map(String::strip)
+                                    .filter(nwavP -> !nwavP.isEmpty())
+                                    .map(com.nwav.editorpdf.service.NwavRedaccionService.NwavPatron::valueOf)
+                                    .collect(java.util.stream.Collectors.toSet());
+                    var nwavResultado = nwavRedaccion.nwavRedactarBusqueda(nwavEntrada.nwavArchivo(),
+                            nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), nwavTerminos, nwavPatrones,
+                            nwavEntrada.nwavSiNo("limpiar", true), NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(),
+                                    nwavEntrada.nwavCarpetaSalida(), "redactado", "pdf"), nwavEntrada.nwavCancelacion());
+                    return NwavResultadoProceso.nwavDe(nwavResultado.nwavDestino(), nwavResultado.nwavZonas()
+                            + " coincidencias eliminadas en " + nwavResultado.nwavPaginas() + " páginas");
+                }))
+                .nwavConOpciones(
+                        NwavCampoOpcion.nwavTexto("terminos", "Palabras o frases (separadas por comas)", ""),
+                        NwavCampoOpcion.nwavMultiple("patrones", "Datos personales", "NWAV_CORREOS,NWAV_DNI",
+                                () -> Arrays.stream(com.nwav.editorpdf.service.NwavRedaccionService.NwavPatron.values())
+                                        .map(nwavP -> nwavP.name() + "=" + nwavP.getNwavDescripcion()).toList()),
+                        NwavCampoOpcion.nwavCasilla("limpiar", "Quitar también metadatos y datos ocultos", true))
+                .nwavConAviso("Revisa el resultado: la búsqueda de patrones (teléfonos, tarjetas…) es automática y puede "
+                        + "dejarse alguno o marcar de más. Los escaneos sin OCR no tienen texto que buscar.")
+                .nwavConPalabrasClave("anonimizar rgpd datos personales censurar correos dni iban"));
+
+        nwavLista.add(new NwavDefinicionHerramienta("limpiar-metadatos", "Quitar metadatos",
+                "Borra autor, programa, fechas, XMP, adjuntos, JavaScript y miniaturas ocultas.",
+                NwavCategoriaHerramienta.NWAV_SEGURIDAD, Feather.WIND)
+                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_LIMPIAR, true, nwavEntrada ->
+                        NwavResultadoProceso.nwavDe(nwavRedaccion.nwavLimpiarArchivo(nwavEntrada.nwavArchivo(),
+                                nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()),
+                                NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
+                                        "limpio", "pdf")), "Metadatos y datos ocultos eliminados")))
+                .nwavConPalabrasClave("privacidad anonimizar metadatos autor xmp limpiar"));
+    }
+
+    private NwavResultadoProceso nwavProcesoFirmaDigital(NwavEntradaProceso nwavEntrada) {
+        String nwavCertificado = nwavEntrada.nwavTexto("certificado", "");
+        if (nwavCertificado.isBlank()) {
+            throw new com.nwav.editorpdf.exception.NwavEditorException("Elige el archivo del certificado (.p12 o .pfx).");
+        }
+        com.nwav.editorpdf.model.NwavRectangulo nwavZona = null;
+        int nwavPagina = "primera".equals(nwavEntrada.nwavTexto("pagina", "ultima")) ? 0 : -1;
+        if (nwavEntrada.nwavSiNo("visible", true)) {
+            // tamano del sello: 200 x 60 pt, a 36 pt del borde (coordenadas visuales)
+            Path nwavArchivo = nwavEntrada.nwavArchivo();
+            float[] nwavTamano = nwavTamanoPagina(nwavArchivo, nwavEntrada.nwavContrasena(nwavArchivo), nwavPagina);
+            String nwavEsquina = nwavEntrada.nwavTexto("esquina", "abajo-derecha");
+            double nwavX = nwavEsquina.endsWith("derecha") ? nwavTamano[0] - 36 - 200 : 36;
+            double nwavY = nwavEsquina.startsWith("abajo") ? nwavTamano[1] - 36 - 60 : 36;
+            nwavZona = new com.nwav.editorpdf.model.NwavRectangulo(nwavX, nwavY, 200, 60);
+        }
+        Path nwavFirmado = nwavFirmaDigital.nwavFirmar(nwavEntrada.nwavArchivo(),
+                nwavEntrada.nwavContrasena(nwavEntrada.nwavArchivo()), Path.of(nwavCertificado),
+                nwavEntrada.nwavTexto("claveCertificado", "").toCharArray(),
+                new com.nwav.editorpdf.service.NwavFirmaDigitalService.NwavOpcionesFirma(nwavEntrada.nwavTexto("motivo", ""),
+                        nwavEntrada.nwavTexto("lugar", ""), null, nwavPagina, nwavZona, null),
+                NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(), "firmado", "pdf"));
+        return NwavResultadoProceso.nwavDe(nwavFirmado, "Firmado digitalmente");
+    }
+
+    /** Ancho y alto visibles de una pagina (-1 = la ultima). */
+    private float[] nwavTamanoPagina(Path nwavArchivo, String nwavClave, int nwavPagina) {
+        try (var nwavDocumento = nwavDocumentosPdf.nwavAbrir(nwavArchivo, nwavClave)) {
+            int nwavIndice = nwavPagina < 0 ? nwavDocumento.getNwavNumeroPaginas() - 1 : nwavPagina;
+            var nwavTamano = nwavDocumento.nwavTamano(nwavIndice);
+            return new float[]{nwavTamano.nwavAncho(), nwavTamano.nwavAlto()};
+        }
     }
 }

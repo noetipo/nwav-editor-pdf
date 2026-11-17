@@ -1735,6 +1735,17 @@ public class NwavVisorController {
             }
 
             @Override
+            public void nwavRedactar(int nwavPagina, NwavRectangulo nwavZona) {
+                nwavNotificador.nwavElegir("Redactar", "Se eliminará todo lo que haya en la zona (texto, partes de "
+                                + "imágenes, notas y campos) y se tapará con negro. Al guardar, ya no se podrá recuperar ni "
+                                + "copiar. Puedes deshacerlo mientras no guardes. Te recomendamos «Guardar como» para "
+                                + "conservar el original.", false,
+                        NwavOpcion.nwavCancelar(),
+                        new NwavOpcion("Redactar", Styles.DANGER, () -> nwavEditarContenido("Redactando…",
+                                nwavDoc -> nwavEdicion.nwavRedactar(nwavDoc, nwavPagina, nwavZona), null, null), true));
+            }
+
+            @Override
             public void nwavCrearCampo(int nwavPagina, NwavRectangulo nwavZona) {
                 nwavDialogoCampo().ifPresent(nwavCampo -> nwavEditarContenido("Creando campo…",
                         nwavDoc -> nwavEdicion.nwavCrearCampo(nwavDoc, nwavPagina, nwavZona, nwavCampo), null, null));

@@ -48,7 +48,11 @@
                               styleClass="left-pill" maxWidth="Infinity" HBox.hgrow="ALWAYS">
                     <graphic><FontIcon iconLiteral="fth-pen-tool"/></graphic>
                 </ToggleButton>
-                <ToggleButton fx:id="nwavTglCargar" text="Cargar imagen" toggleGroup="$nwavGrupoNueva"
+                <ToggleButton fx:id="nwavTglEscribir" text="Escribir" toggleGroup="$nwavGrupoNueva"
+                              styleClass="center-pill" maxWidth="Infinity" HBox.hgrow="ALWAYS">
+                    <graphic><FontIcon iconLiteral="fth-type"/></graphic>
+                </ToggleButton>
+                <ToggleButton fx:id="nwavTglCargar" text="Imagen" toggleGroup="$nwavGrupoNueva"
                               styleClass="right-pill" maxWidth="Infinity" HBox.hgrow="ALWAYS">
                     <graphic><FontIcon iconLiteral="fth-upload"/></graphic>
                 </ToggleButton>
@@ -62,6 +66,13 @@
                            maxWidth="Infinity"/>
                     <Button text="Limpiar" onAction="#nwavOnLimpiarLienzo" styleClass="flat, small"/>
                 </HBox>
+            </VBox>
+            <VBox fx:id="nwavSeccionEscribir" spacing="8.0">
+                <TextField fx:id="nwavTxtEscrita" promptText="Escribe tu nombre"/>
+                <ComboBox fx:id="nwavCmbFuenteEscrita" maxWidth="Infinity"/>
+                <StackPane styleClass="nwav-marco-lienzo" minHeight="90.0">
+                    <ImageView fx:id="nwavVistaEscrita" fitHeight="80.0" fitWidth="360.0" preserveRatio="true"/>
+                </StackPane>
             </VBox>
             <VBox fx:id="nwavSeccionCargar" spacing="8.0">
                 <HBox spacing="8.0" alignment="CENTER_LEFT">

@@ -158,6 +158,31 @@ public class NwavFormularioOpciones {
                 nwavCampoClave.textProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> nwavValor.set(nwavAhora));
                 return nwavCampoClave;
             }
+            case NWAV_ARCHIVO -> {
+                javafx.scene.control.TextField nwavRuta = new javafx.scene.control.TextField(nwavValor.get());
+                nwavRuta.setPromptText("Ningún archivo elegido");
+                nwavRuta.textProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> nwavValor.set(nwavAhora));
+                javafx.scene.control.Button nwavElegir = new javafx.scene.control.Button("Elegir…");
+                nwavElegir.getStyleClass().add("button-outlined");
+                nwavElegir.setOnAction(nwavEvento -> {
+                    javafx.stage.FileChooser nwavSelector = new javafx.stage.FileChooser();
+                    nwavSelector.setTitle(nwavCampo.getNwavEtiqueta());
+                    List<String> nwavExtensiones = nwavCampo.nwavValores();
+                    if (!nwavExtensiones.isEmpty()) {
+                        nwavSelector.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter(
+                                String.join(", ", nwavExtensiones).toUpperCase(java.util.Locale.ROOT),
+                                nwavExtensiones.stream().flatMap(nwavE -> java.util.stream.Stream.of("*." + nwavE,
+                                        "*." + nwavE.toUpperCase(java.util.Locale.ROOT))).toList()));
+                    }
+                    java.io.File nwavElegido = nwavSelector.showOpenDialog(nwavElegir.getScene().getWindow());
+                    if (nwavElegido != null) {
+                        nwavRuta.setText(nwavElegido.getAbsolutePath());
+                    }
+                });
+                javafx.scene.layout.HBox nwavFila = new javafx.scene.layout.HBox(6, nwavRuta, nwavElegir);
+                javafx.scene.layout.HBox.setHgrow(nwavRuta, javafx.scene.layout.Priority.ALWAYS);
+                return nwavFila;
+            }
             case NWAV_COLOR -> {
                 ColorPicker nwavSelector = new ColorPicker(nwavColor(nwavValor.get()));
                 nwavSelector.valueProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> nwavValor.set(nwavHex(nwavAhora)));

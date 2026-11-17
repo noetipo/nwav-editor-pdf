@@ -13,7 +13,8 @@ import java.util.function.Supplier;
 public final class NwavCampoOpcion {
 
     public enum NwavTipo {
-        NWAV_ELECCION, NWAV_ENTERO, NWAV_DECIMAL, NWAV_CASILLA, NWAV_TEXTO, NWAV_CONTRASENA, NWAV_MULTIPLE, NWAV_COLOR
+        NWAV_ELECCION, NWAV_ENTERO, NWAV_DECIMAL, NWAV_CASILLA, NWAV_TEXTO, NWAV_CONTRASENA, NWAV_MULTIPLE, NWAV_COLOR,
+        NWAV_ARCHIVO
     }
 
     private final String nwavClave;
@@ -77,6 +78,14 @@ public final class NwavCampoOpcion {
 
     public static NwavCampoOpcion nwavColor(String nwavClave, String nwavEtiqueta, String nwavDefectoHex) {
         return new NwavCampoOpcion(nwavClave, nwavEtiqueta, NwavTipo.NWAV_COLOR, nwavDefectoHex);
+    }
+
+    /** Ruta de un archivo con boton "Elegir..." (p. ej. un certificado .p12). */
+    public static NwavCampoOpcion nwavArchivo(String nwavClave, String nwavEtiqueta, String... nwavExtensiones) {
+        NwavCampoOpcion nwavCampo = new NwavCampoOpcion(nwavClave, nwavEtiqueta, NwavTipo.NWAV_ARCHIVO, "");
+        List<String> nwavLista = List.of(nwavExtensiones);
+        nwavCampo.nwavValores = () -> nwavLista;
+        return nwavCampo;
     }
 
     /** Varias casillas; el valor es la lista de valores marcados separados por comas. */
