@@ -13,11 +13,11 @@
         <ToggleGroup fx:id="nwavGrupoSalida"/>
     </fx:define>
 
-    <VBox styleClass="nwav-pagina">
+    <VBox fx:id="nwavPagina" styleClass="nwav-pagina">
         <HBox styleClass="nwav-pagina-cabecera">
-            <Button onAction="#nwavOnVolver" styleClass="flat">
-                <graphic><FontIcon iconLiteral="fth-arrow-left"/></graphic>
-                <tooltip><Tooltip text="Volver a todas las herramientas"/></tooltip>
+            <Button fx:id="nwavBtnVolver" onAction="#nwavOnVolver" styleClass="nwav-boton-volver">
+                <graphic><FontIcon iconLiteral="fth-arrow-left" mouseTransparent="true"/></graphic>
+                <tooltip><Tooltip text="Atrás, a todas las herramientas"/></tooltip>
             </Button>
             <StackPane fx:id="nwavIconoHerramienta" styleClass="nwav-icono-herramienta"/>
             <VBox spacing="4.0" HBox.hgrow="ALWAYS">
@@ -32,10 +32,10 @@
         </VBox>
         <Label fx:id="nwavLblAviso" styleClass="nwav-aviso-herramienta" wrapText="true"/>
 
-        <HBox spacing="20.0">
-            <VBox styleClass="nwav-tarjeta" HBox.hgrow="ALWAYS" minWidth="360.0">
+        <FlowPane fx:id="nwavColumnas" hgap="20.0" vgap="20.0">
+            <VBox fx:id="nwavTarjetaArchivos" styleClass="nwav-tarjeta">
                 <Label text="Archivos" styleClass="nwav-tarjeta-titulo"/>
-                <HBox spacing="6.0" alignment="CENTER_LEFT">
+                <FlowPane fx:id="nwavBarraArchivos" hgap="6.0" vgap="6.0" alignment="CENTER_LEFT">
                     <Button text="Añadir…" onAction="#nwavOnAnadir" styleClass="accent">
                         <graphic><FontIcon iconLiteral="fth-plus"/></graphic>
                     </Button>
@@ -47,7 +47,6 @@
                             styleClass="flat">
                         <graphic><FontIcon iconLiteral="fth-book-open"/></graphic>
                     </Button>
-                    <Region HBox.hgrow="ALWAYS"/>
                     <Button fx:id="nwavBtnSubir" onAction="#nwavOnSubir" styleClass="button-icon, flat">
                         <graphic><FontIcon iconLiteral="fth-arrow-up"/></graphic>
                         <tooltip><Tooltip text="Subir"/></tooltip>
@@ -64,7 +63,7 @@
                         <graphic><FontIcon iconLiteral="fth-trash-2"/></graphic>
                         <tooltip><Tooltip text="Vaciar la lista"/></tooltip>
                     </Button>
-                </HBox>
+                </FlowPane>
                 <ListView fx:id="nwavListaArchivos" prefHeight="300.0" VBox.vgrow="ALWAYS" styleClass="nwav-lista-panel">
                     <placeholder>
                         <VBox alignment="CENTER" spacing="8.0">
@@ -76,25 +75,25 @@
                 <Label fx:id="nwavLblAyudaArchivos" styleClass="nwav-panel-ayuda" wrapText="true"/>
             </VBox>
 
-            <VBox styleClass="nwav-tarjeta" prefWidth="430.0" minWidth="340.0">
+            <VBox fx:id="nwavTarjetaOpciones" styleClass="nwav-tarjeta, nwav-tarjeta-opciones">
                 <Label text="Opciones" styleClass="nwav-tarjeta-titulo"/>
                 <VBox fx:id="nwavContenedorOpciones"/>
                 <VBox fx:id="nwavContenedorExtra"/>
-                <Separator/>
-                <Label text="Guardar en" styleClass="nwav-campo-label"/>
-                <RadioButton fx:id="nwavRdbMismaCarpeta" text="La misma carpeta que cada original"
-                             toggleGroup="$nwavGrupoSalida" selected="true"/>
+                <Separator fx:id="nwavSeparadorOpciones"/>
+                <Label text="Dónde se guarda el archivo nuevo" styleClass="nwav-campo-label" wrapText="true"/>
+                <RadioButton fx:id="nwavRdbMismaCarpeta" text="En la misma carpeta del original"
+                             toggleGroup="$nwavGrupoSalida" selected="true" wrapText="true"/>
                 <HBox spacing="8.0" alignment="CENTER_LEFT">
-                    <RadioButton fx:id="nwavRdbOtraCarpeta" text="Otra carpeta" toggleGroup="$nwavGrupoSalida"/>
+                    <RadioButton fx:id="nwavRdbOtraCarpeta" text="En otra carpeta" toggleGroup="$nwavGrupoSalida"/>
                     <Button text="Elegir…" onAction="#nwavOnElegirCarpeta" styleClass="flat, small"/>
                 </HBox>
                 <Label fx:id="nwavLblCarpeta" styleClass="nwav-texto-ruta" wrapText="true"/>
-                <Button fx:id="nwavBtnProcesar" text="Procesar" onAction="#nwavOnProcesar" maxWidth="Infinity"
+                <Button fx:id="nwavBtnProcesar" text="Crear archivo nuevo" onAction="#nwavOnProcesar" maxWidth="Infinity"
                         styleClass="accent, nwav-boton-procesar" defaultButton="true">
                     <graphic><FontIcon iconLiteral="fth-play"/></graphic>
                 </Button>
             </VBox>
-        </HBox>
+        </FlowPane>
 
         <VBox fx:id="nwavTarjetaResultados" styleClass="nwav-tarjeta" visible="false" managed="false">
             <Label text="Resultados" styleClass="nwav-tarjeta-titulo"/>

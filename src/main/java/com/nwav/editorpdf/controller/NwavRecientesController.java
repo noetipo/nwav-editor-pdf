@@ -78,7 +78,8 @@ public class NwavRecientesController implements NwavRefrescable {
         nwavLblResumen.setText(nwavLista.size() + (nwavLista.size() == 1 ? " archivo" : " archivos")
                 + (nwavNoDisponibles > 0 ? " · " + nwavNoDisponibles + " no disponible"
                 + (nwavNoDisponibles == 1 ? "" : "s") : ""));
-        nwavBtnQuitarNoDisponibles.setDisable(nwavNoDisponibles == 0);
+        nwavBtnQuitarNoDisponibles.setVisible(nwavNoDisponibles > 0);
+        nwavBtnQuitarNoDisponibles.setManaged(nwavNoDisponibles > 0);
     }
 
     private void nwavAbrir(NwavRecienteVista nwavVista) {

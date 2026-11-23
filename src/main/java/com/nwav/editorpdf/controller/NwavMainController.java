@@ -20,6 +20,8 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringExpression;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -30,6 +32,7 @@ import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SeparatorMenuItem;
@@ -61,7 +64,7 @@ import java.util.Locale;
 @Component
 @RequiredArgsConstructor
 public class NwavMainController {
-    public static final String NWAV_TITULO_APP = "NWAV Editor PDF";
+    public static final String NWAV_TITULO_APP = "Editor PDF";
     public static final String NWAV_VISTA_INICIO = "nwav-inicio-view";
     public static final String NWAV_VISTA_HERRAMIENTA = "nwav-herramienta-view";
     public static final String NWAV_VISTA_VISOR = "nwav-visor-view";
@@ -97,9 +100,9 @@ public class NwavMainController {
     @FXML private ToggleButton nwavNavHistorial;
     @FXML private Region nwavIndicador;
     @FXML private VBox nwavMarcaTextos;
-    @FXML private Button nwavBtnTema;
     @FXML private Button nwavBtnContraer;
 
+    @FXML private MenuBar nwavBarraMenus;
     @FXML private Menu nwavMnuRecientes;
     @FXML private MenuItem nwavMnuCerrar;
     @FXML private MenuItem nwavMnuGuardar;
@@ -117,9 +120,12 @@ public class NwavMainController {
     @FXML private Label nwavLblProgreso;
     @FXML private Button nwavBtnCancelarTarea;
 
+    private final BooleanProperty nwavVistaVisor = new SimpleBooleanProperty(false);
     private boolean nwavOscuro;
     private boolean nwavContraido;
     private boolean nwavMostrandoHerramienta;
+    private boolean nwavVentanaEstrecha;
+    private boolean nwavContraidoPorAncho;
 
     @FXML
     public void initialize() {
@@ -137,9 +143,16 @@ public class NwavMainController {
             Tooltip nwavAyuda = new Tooltip(nwavBoton.getText());
             nwavAyuda.setShowDelay(Duration.millis(300));
             nwavBoton.setTooltip(nwavAyuda);
+            nwavBoton.boundsInParentProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
+                if (nwavMenu.getSelectedToggle() == nwavBoton) {
+                    nwavIndicador.setTranslateY(nwavAhora.getMinY());
+                    nwavIndicador.setPrefHeight(nwavAhora.getHeight());
+                }
+            });
         }
 
-        nwavVisor.nwavConfigurarAcciones(() -> nwavIrA(NWAV_VISTA_RECIENTES), this::nwavActualizarMenuRecientes);
+        nwavVisor.nwavConfigurarAcciones(
+                () -> nwavIrA(NWAV_VISTA_RECIENTES), this::nwavActualizarMenuRecientes, this::nwavVolverAlInicio);
 
         nwavMenu.selectedToggleProperty().addListener((nwavObs, nwavAnterior, nwavActual) -> {
             if (nwavActual == null) {
@@ -188,11 +201,14 @@ public class NwavMainController {
                 .filter(nwavItem -> !(nwavItem instanceof SeparatorMenuItem))
                 .forEach(nwavItem -> nwavItem.disableProperty().bind(nwavVisor.nwavPuedeEditarProperty().not()));
         nwavMnuMiniaturas.selectedProperty().bindBidirectional(nwavVisor.nwavMiniaturasVisiblesProperty());
+        nwavBarraMenus.visibleProperty().bind(nwavVistaVisor.and(nwavVisor.nwavHayDocumentoProperty()));
+        nwavBarraMenus.managedProperty().bind(nwavBarraMenus.visibleProperty());
 
         nwavConfigurarArrastrarSoltar();
         nwavRaiz.sceneProperty().addListener((nwavObs, nwavAntes, nwavEscena) -> {
             if (nwavEscena != null) {
                 nwavConfigurarAtajosExtra(nwavEscena);
+                nwavEscucharAncho(nwavEscena);
             }
         });
         nwavActualizarMenuRecientes();
@@ -214,10 +230,16 @@ public class NwavMainController {
                 .ifPresent(nwavMenu::selectToggle);
     }
 
+    public void nwavVolverAlInicio() {
+        nwavSeleccionarSinMostrar(nwavNavInicio);
+        nwavMostrar(NWAV_VISTA_INICIO);
+    }
+
     public void nwavAbrirHerramienta(com.nwav.editorpdf.ui.NwavDefinicionHerramienta nwavDefinicion,
                                      List<Path> nwavArchivos) {
         switch (nwavDefinicion.getNwavModo()) {
             case NWAV_LOTE -> {
+                nwavVistaVisor.set(false);
                 nwavSeleccionarSinMostrar(nwavNavInicio);
                 NwavCargadorVistas.NwavVistaCargada nwavVista = nwavCargador.nwavObtener(NWAV_VISTA_HERRAMIENTA);
                 ((NwavHerramientaController) nwavVista.nwavControlador()).nwavPreparar(nwavDefinicion, nwavArchivos);
@@ -225,6 +247,7 @@ public class NwavMainController {
                 Animations.fadeIn(nwavVista.nwavNodo(), Duration.millis(220)).play();
             }
             case NWAV_VISTA -> {
+                nwavVistaVisor.set(false);
                 nwavSeleccionarSinMostrar(nwavNavInicio);
                 NwavCargadorVistas.NwavVistaCargada nwavVista = nwavCargador.nwavObtener(nwavDefinicion.getNwavVista());
                 if (nwavVista.nwavControlador() instanceof com.nwav.editorpdf.ui.NwavVistaHerramienta nwavPropia) {
@@ -273,6 +296,7 @@ public class NwavMainController {
     }
 
     private void nwavMostrar(String nwavNombre) {
+        nwavVistaVisor.set(NWAV_VISTA_VISOR.equals(nwavNombre));
         NwavCargadorVistas.NwavVistaCargada nwavVista = nwavCargador.nwavObtener(nwavNombre);
         nwavContenido.getChildren().setAll(nwavVista.nwavNodo());
         if (nwavVista.nwavControlador() instanceof NwavRefrescable nwavRefrescable) {
@@ -590,6 +614,41 @@ public class NwavMainController {
                 .toList();
     }
 
+    private void nwavEscucharAncho(Scene nwavEscena) {
+        if (nwavEscena.getWindow() != null) {
+            nwavVigilarAncho(nwavEscena.getWindow());
+        }
+        nwavEscena.windowProperty().addListener((nwavObs, nwavAntes, nwavVentana) -> {
+            if (nwavVentana != null) {
+                nwavVigilarAncho(nwavVentana);
+            }
+        });
+    }
+
+    private void nwavVigilarAncho(javafx.stage.Window nwavVentana) {
+        nwavVentana.widthProperty().addListener((nwavObs, nwavAntes, nwavAncho) ->
+                nwavAjustarMenuAlAncho(nwavAncho.doubleValue()));
+        nwavAjustarMenuAlAncho(nwavVentana.getWidth());
+    }
+
+    private void nwavAjustarMenuAlAncho(double nwavAncho) {
+        boolean nwavEstrecha = nwavAncho > 0 && nwavAncho < 1000;
+        if (nwavEstrecha == nwavVentanaEstrecha) {
+            return;
+        }
+        boolean nwavEraEstrecha = nwavVentanaEstrecha;
+        nwavVentanaEstrecha = nwavEstrecha;
+        if (nwavEstrecha && !nwavEraEstrecha && !nwavContraido) {
+            nwavContraidoPorAncho = true;
+            nwavOnContraerMenu();
+        } else if (!nwavEstrecha && nwavEraEstrecha && nwavContraidoPorAncho) {
+            nwavContraidoPorAncho = false;
+            if (nwavContraido) {
+                nwavOnContraerMenu();
+            }
+        }
+    }
+
     private void nwavConfigurarAtajosExtra(Scene nwavEscena) {
         nwavEscena.addEventFilter(KeyEvent.KEY_PRESSED, nwavEvento -> {
             if (!nwavEvento.isShortcutDown() || !nwavVisor.nwavHayDocumentoProperty().get()) {
@@ -606,11 +665,6 @@ public class NwavMainController {
         });
     }
 
-    @FXML
-    private void nwavOnCambiarTema() {
-        nwavAplicarTema(!nwavOscuro, true);
-    }
-
     public void nwavAplicarTema(boolean nwavModoOscuro, boolean nwavGuardar) {
         nwavOscuro = nwavModoOscuro;
         Application.setUserAgentStylesheet(nwavOscuro
@@ -620,8 +674,6 @@ public class NwavMainController {
         if (nwavOscuro) {
             nwavRaiz.getStyleClass().add("nwav-oscuro");
         }
-        ((FontIcon) nwavBtnTema.getGraphic()).setIconCode(nwavOscuro ? Feather.SUN : Feather.MOON);
-        nwavBtnTema.setText(nwavOscuro ? "Modo claro" : "Modo oscuro");
         if (nwavGuardar) {
             nwavTareaFondo.nwavGuardarEnFondo(() -> nwavConfiguracion.nwavGuardarTemaOscuro(nwavModoOscuro));
         }
@@ -677,7 +729,6 @@ public class NwavMainController {
 
     private List<ButtonBase> nwavTodosLosBotones() {
         List<ButtonBase> nwavTodos = new ArrayList<>(nwavBotonesMenu());
-        nwavTodos.add(nwavBtnTema);
         nwavTodos.add(nwavBtnContraer);
         return nwavTodos;
     }

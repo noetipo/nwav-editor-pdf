@@ -9,8 +9,10 @@ import com.nwav.editorpdf.service.NwavConfiguracionService;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -83,9 +85,9 @@ public class NwavJavaFxApplication extends Application {
                 nwavMain.nwavSalir();
             }
         });
-        nwavVentana.setMinWidth(980);
-        nwavVentana.setMinHeight(640);
+        nwavEncajarEnPantalla(nwavVentana);
         nwavVentana.show();
+        Platform.runLater(() -> nwavEncajarEnPantalla(nwavVentana));
 
         getParameters().getUnnamed().stream()
                 .filter(nwavArgumento -> nwavArgumento.toLowerCase(Locale.ROOT).endsWith(".pdf"))
@@ -93,6 +95,21 @@ public class NwavJavaFxApplication extends Application {
                 .filter(Files::isRegularFile)
                 .findFirst()
                 .ifPresent(nwavMain::nwavAbrirArchivo);
+    }
+
+    static void nwavEncajarEnPantalla(Stage nwavVentana) {
+        Rectangle2D nwavPantalla = Screen.getPrimary().getVisualBounds();
+        double nwavMargen = 24;
+        double nwavTopeAncho = Math.max(720, nwavPantalla.getWidth() - nwavMargen);
+        double nwavTopeAlto = Math.max(520, nwavPantalla.getHeight() - nwavMargen);
+        nwavVentana.setMinWidth(Math.min(640, nwavTopeAncho));
+        nwavVentana.setMinHeight(Math.min(640, nwavTopeAlto));
+        double nwavAncho = Math.min(1100, nwavTopeAncho);
+        double nwavAlto = Math.min(700, nwavTopeAlto);
+        nwavVentana.setWidth(nwavAncho);
+        nwavVentana.setHeight(nwavAlto);
+        nwavVentana.setX(nwavPantalla.getMinX() + (nwavPantalla.getWidth() - nwavAncho) / 2.0);
+        nwavVentana.setY(nwavPantalla.getMinY() + (nwavPantalla.getHeight() - nwavAlto) / 2.0);
     }
 
     @Override

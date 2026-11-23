@@ -21,16 +21,20 @@
     </HBox>
 
     <VBox styleClass="nwav-tarjeta" VBox.vgrow="ALWAYS">
-        <HBox styleClass="nwav-barra-herramientas">
+        <HBox styleClass="nwav-barra-herramientas" alignment="CENTER_LEFT">
             <TextField fx:id="nwavTxtBuscar" promptText="Buscar por nombre o carpeta…"
                        styleClass="nwav-buscador" HBox.hgrow="ALWAYS"/>
+            <FontIcon iconLiteral="fth-search" styleClass="nwav-icono-tenue"/>
+        </HBox>
+        <ListView fx:id="nwavListaRecientes" VBox.vgrow="ALWAYS" styleClass="nwav-lista-recientes"/>
+        <HBox alignment="CENTER_LEFT" spacing="12.0">
             <Label fx:id="nwavLblResumen" styleClass="nwav-texto-tenue"/>
+            <Region HBox.hgrow="ALWAYS"/>
             <Button fx:id="nwavBtnQuitarNoDisponibles" text="Quitar no disponibles"
                     onAction="#nwavOnQuitarNoDisponibles" styleClass="button-outlined, danger">
                 <graphic><FontIcon iconLiteral="fth-trash-2"/></graphic>
                 <tooltip><Tooltip text="Quita de la lista los archivos que ya no existen (no borra nada del disco)"/></tooltip>
             </Button>
         </HBox>
-        <ListView fx:id="nwavListaRecientes" VBox.vgrow="ALWAYS" styleClass="nwav-lista-recientes"/>
     </VBox>
 </VBox>

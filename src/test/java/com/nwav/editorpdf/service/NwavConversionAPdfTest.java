@@ -1,21 +1,15 @@
 package com.nwav.editorpdf.service;
 
-import com.nwav.editorpdf.service.NwavConversionAPdfService.NwavOpcionesHtml;
 import com.nwav.editorpdf.service.NwavConversionAPdfService.NwavOpcionesImagenes;
 import com.nwav.editorpdf.service.NwavConversionAPdfService.NwavOrientacion;
 import com.nwav.editorpdf.service.NwavConversionAPdfService.NwavTamanoHoja;
-import com.nwav.editorpdf.service.herramienta.NwavDependenciasService;
-import com.nwav.editorpdf.soporte.NwavLectorPdf;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import org.apache.pdfbox.text.PDFTextStripper;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mockito;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -26,7 +20,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -35,8 +28,7 @@ class NwavConversionAPdfTest {
     @TempDir
     Path nwavCarpeta;
 
-    private final NwavDependenciasService nwavDependencias = Mockito.mock(NwavDependenciasService.class);
-    private final NwavConversionAPdfService nwavServicio = new NwavConversionAPdfService(nwavDependencias);
+    private final NwavConversionAPdfService nwavServicio = new NwavConversionAPdfService();
 
     private Path nwavImagen(String nwavNombre, int nwavAncho, int nwavAlto, String nwavFormato) throws Exception {
         BufferedImage nwavImagen = new BufferedImage(nwavAncho, nwavAlto, BufferedImage.TYPE_INT_RGB);
@@ -126,70 +118,6 @@ class NwavConversionAPdfTest {
             assertThat(nwavArribaDerecha.getBlue()).isGreaterThan(150);
             assertThat(nwavArribaDerecha.getRed()).isLessThan(100);
         }
-    }
-
-    @Test
-    void nwavHtmlLocalConImagenRelativa() throws Exception {
-        nwavImagen("logo.png", 120, 60, "png");
-        Path nwavHtml = nwavCarpeta.resolve("pagina.html");
-        Files.writeString(nwavHtml, """
-                <!DOCTYPE html>
-                <html><head><meta charset="utf-8"><title>Prueba</title>
-                <style>h1 { color: #2a78d6 } p { font-size: 14px }</style></head>
-                <body><h1>Informe anual</h1><p>Año con eñes y acentos: canción.<br>
-                <img src="logo.png" alt="logo"><p>Sin cerrar etiquetas, como el HTML real
-                <script>document.write('no')</script>
-                </body></html>""");
-
-        Path nwavPdf = nwavServicio.nwavHtmlAPdf(nwavHtml, new NwavOpcionesHtml("A4", false, 15, true),
-                nwavCarpeta.resolve("pagina.pdf"));
-
-        try (PDDocument nwavPd = Loader.loadPDF(nwavPdf.toFile())) {
-            String nwavTexto = new PDFTextStripper().getText(nwavPd);
-            assertThat(nwavTexto).contains("Informe anual").contains("canción").contains("Sin cerrar etiquetas")
-                    .doesNotContain("document.write");
-            assertThat(nwavPd.getPage(0).getMediaBox().getWidth()).isCloseTo(595.27f, within(1f));
-            assertThat(nwavImagenesDe(nwavPd.getPage(0))).isEqualTo(1);
-        }
-    }
-
-    @Test
-    void nwavHtmlHorizontalYCarta() throws Exception {
-        Path nwavHtml = nwavCarpeta.resolve("c.html");
-        Files.writeString(nwavHtml, "<p>Hola</p>");
-        Path nwavPdf = nwavServicio.nwavHtmlAPdf(nwavHtml, new NwavOpcionesHtml("letter", true, 10, false),
-                nwavCarpeta.resolve("c.pdf"));
-        try (PDDocument nwavPd = Loader.loadPDF(nwavPdf.toFile())) {
-            assertThat(nwavPd.getPage(0).getMediaBox().getWidth()).isCloseTo(792f, within(1f));
-            assertThat(nwavPd.getPage(0).getMediaBox().getHeight()).isCloseTo(612f, within(1f));
-        }
-        assertThat(NwavLectorPdf.nwavTextos(nwavPdf).get(0)).isEqualTo("Hola");
-    }
-
-    @Test
-    void nwavNombreDeArchivoParaUnaUrl() {
-        assertThat(NwavConversionAPdfService.nwavNombreParaUrl("https://www.ejemplo.com/docs/guía?x=1"))
-                .isEqualTo("ejemplo.com_docs_guía_x_1.pdf");
-        assertThat(NwavConversionAPdfService.nwavNombreParaUrl("https://")).isEqualTo("pagina.pdf");
-    }
-
-    @Test
-    void nwavOfficeConLibreOfficeInstalado() throws Exception {
-        NwavDependenciasService nwavReales = new NwavDependenciasService(
-                Mockito.mock(com.nwav.editorpdf.service.NwavConfiguracionService.class,
-                        nwavInvocacion -> nwavInvocacion.getMethod().getReturnType() == String.class ? ""
-                                : nwavInvocacion.getMethod().getReturnType() == Optional.class ? Optional.empty() : null),
-                nwavCarpeta.toString());
-        Optional<Path> nwavHome = nwavReales.nwavCarpetaLibreOffice();
-        Assumptions.assumeTrue(nwavHome.isPresent(), "LibreOffice no está instalado: se omite la prueba de Office");
-        Mockito.when(nwavDependencias.nwavCarpetaLibreOffice()).thenReturn(nwavHome);
-
-        Path nwavTxt = nwavCarpeta.resolve("carta.txt");
-        Files.writeString(nwavTxt, "Hola desde LibreOffice");
-        var nwavResultados = nwavServicio.nwavOfficeAPdf(List.of(nwavTxt), null, NwavAvance.NWAV_NINGUNO,
-                NwavCancelacion.NWAV_NUNCA);
-        assertThat(nwavResultados.get(0).nwavError()).isNull();
-        assertThat(NwavLectorPdf.nwavTextos(nwavResultados.get(0).nwavPdf()).get(0)).contains("HoladesdeLibreOffice");
     }
 
     private static int nwavImagenesDe(PDPage nwavPagina) {

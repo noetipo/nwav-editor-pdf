@@ -27,7 +27,6 @@ import java.util.stream.Stream;
 public class NwavDependenciasService {
     public static final String NWAV_CLAVE_RUTA_TESSERACT = "nwav.ocr.ruta.libreria";
     public static final String NWAV_CLAVE_RUTA_TESSDATA = "nwav.ocr.ruta.idiomas";
-    public static final String NWAV_CLAVE_RUTA_LIBREOFFICE = "nwav.office.ruta";
     public static final List<String> NWAV_IDIOMAS_INCLUIDOS = List.of("spa", "eng");
 
     public record NwavEstado(boolean nwavDisponible, String nwavDetalle, String nwavInstrucciones) {
@@ -38,27 +37,10 @@ public class NwavDependenciasService {
     private static final List<String> NWAV_IDIOMAS_SISTEMA = List.of(
             "/opt/homebrew/share/tessdata", "/usr/local/share/tessdata", "/usr/share/tesseract-ocr/5/tessdata",
             "/usr/share/tesseract-ocr/4.00/tessdata", "/usr/share/tessdata", "C:\\Program Files\\Tesseract-OCR\\tessdata");
-    private static final List<String> NWAV_RUTAS_LIBREOFFICE = List.of(
-            "/Applications/LibreOffice.app/Contents/MacOS/soffice", "/usr/bin/soffice", "/usr/bin/libreoffice",
-            "/usr/local/bin/soffice", "/opt/libreoffice/program/soffice", "/snap/bin/libreoffice",
-            "C:\\Program Files\\LibreOffice\\program\\soffice.exe",
-            "C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe");
-
-    public static List<String> nwavEnCarpetasDeProgramas(String nwavRelativa) {
-        List<String> nwavRutas = new ArrayList<>();
-        for (String nwavVariable : List.of("ProgramFiles", "ProgramW6432", "ProgramFiles(x86)", "LOCALAPPDATA")) {
-            String nwavBase = System.getenv(nwavVariable);
-            if (nwavBase != null && !nwavBase.isBlank()) {
-                nwavRutas.add(nwavBase + (nwavVariable.equals("LOCALAPPDATA") ? "\\Programs\\" : "\\") + nwavRelativa);
-            }
-        }
-        return nwavRutas;
-    }
 
     private final NwavConfiguracionService nwavConfiguracion;
     private final Path nwavCarpetaIdiomas;
     private volatile NwavEstado nwavTesseract;
-    private volatile NwavEstado nwavLibreOffice;
 
     public NwavDependenciasService(NwavConfiguracionService nwavConfiguracion,
                                    @Value("${nwav.datos.carpeta}") String nwavCarpetaDatos) {
@@ -72,16 +54,13 @@ public class NwavDependenciasService {
             nwavRutas.add(nwavActual);
         }
         System.setProperty("jna.library.path", String.join(java.io.File.pathSeparator, nwavRutas));
-        Thread nwavComprobacion = new Thread(() -> {
-            nwavTesseract();
-            nwavLibreOffice();
-        }, "nwav-dependencias");
+        Thread nwavComprobacion = new Thread(this::nwavTesseract, "nwav-dependencias");
         nwavComprobacion.setDaemon(true);
         nwavComprobacion.start();
     }
 
     public boolean nwavComprobado() {
-        return nwavTesseract != null && nwavLibreOffice != null;
+        return nwavTesseract != null;
     }
 
     public NwavEstado nwavTesseract() {
@@ -193,36 +172,7 @@ public class NwavDependenciasService {
         return nwavCarpeta;
     }
 
-    public NwavEstado nwavLibreOffice() {
-        NwavEstado nwavEstado = nwavLibreOffice;
-        if (nwavEstado == null) {
-            Optional<Path> nwavRuta = nwavRutaLibreOffice();
-            nwavEstado = nwavRuta.isPresent()
-                    ? new NwavEstado(true, "LibreOffice encontrado en " + nwavRuta.get(), "")
-                    : new NwavEstado(false, "No se encontró LibreOffice.",
-                    "Instala LibreOffice (gratuito, libreoffice.org) o indica la ruta de «soffice» en Preferencias.");
-            nwavLibreOffice = nwavEstado;
-        }
-        return nwavEstado;
-    }
-
-    public Optional<Path> nwavRutaLibreOffice() {
-        List<String> nwavCandidatos = new ArrayList<>();
-        nwavConfiguracion.nwavObtener(NWAV_CLAVE_RUTA_LIBREOFFICE).ifPresent(nwavCandidatos::add);
-        nwavCandidatos.addAll(NWAV_RUTAS_LIBREOFFICE);
-        nwavCandidatos.addAll(nwavEnCarpetasDeProgramas("LibreOffice\\program\\soffice.exe"));
-        return nwavCandidatos.stream().map(Path::of).filter(Files::isRegularFile).filter(Files::isExecutable).findFirst();
-    }
-
-    public Optional<Path> nwavCarpetaLibreOffice() {
-        return nwavRutaLibreOffice().map(nwavSoffice -> {
-            Path nwavPadre = nwavSoffice.getParent();
-            return nwavPadre != null && nwavPadre.getParent() != null ? nwavPadre.getParent() : nwavPadre;
-        });
-    }
-
     public void nwavRefrescar() {
-        nwavLibreOffice = null;
         if (nwavTesseract != null && !nwavTesseract.nwavDisponible()) {
             nwavTesseract = null;
         }

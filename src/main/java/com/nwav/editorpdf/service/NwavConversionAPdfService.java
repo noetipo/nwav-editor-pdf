@@ -2,10 +2,6 @@ package com.nwav.editorpdf.service;
 
 import com.nwav.editorpdf.exception.NwavEditorException;
 import com.nwav.editorpdf.exception.NwavTraductorErrores;
-import com.nwav.editorpdf.service.herramienta.NwavDependenciasService;
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -13,11 +9,6 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.image.JPEGFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import org.jodconverter.core.office.OfficeException;
-import org.jodconverter.local.LocalConverter;
-import org.jodconverter.local.office.LocalOfficeManager;
-import org.jsoup.Jsoup;
-import org.jsoup.helper.W3CDom;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -29,8 +20,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,15 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-@Slf4j(topic = "com.nwav.editorpdf.service.NwavConversionAPdfService")
 @Service
-@RequiredArgsConstructor
 public class NwavConversionAPdfService {
     public static final List<String> NWAV_EXTENSIONES_IMAGEN = List.of("jpg", "jpeg", "png", "bmp", "gif", "tif", "tiff");
-    public static final List<String> NWAV_EXTENSIONES_OFFICE = List.of("doc", "docx", "odt", "rtf", "txt", "xls", "xlsx",
-            "ods", "csv", "ppt", "pptx", "odp");
-
-    private final NwavDependenciasService nwavDependencias;
 
     public enum NwavTamanoHoja { NWAV_AJUSTAR, NWAV_A4, NWAV_CARTA }
 
@@ -249,111 +232,6 @@ public class NwavConversionAPdfService {
         nwavG.drawImage(nwavImagen, nwavT, null);
         nwavG.dispose();
         return nwavGirada;
-    }
-
-    public List<NwavConvertido> nwavOfficeAPdf(List<Path> nwavDocumentos, Path nwavCarpeta, NwavAvance nwavAvance,
-                                              NwavCancelacion nwavCancelacion) {
-        Path nwavHome = nwavDependencias.nwavCarpetaLibreOffice().orElseThrow(() -> new NwavEditorException(
-                "LibreOffice no está instalado. " + nwavDependencias.nwavLibreOffice().nwavInstrucciones()));
-        nwavAvance.nwavInformar(-1, 1, "Iniciando LibreOffice…");
-        LocalOfficeManager nwavOffice = LocalOfficeManager.builder().officeHome(nwavHome.toFile())
-                .processTimeout(120_000L).taskExecutionTimeout(300_000L).build();
-        List<NwavConvertido> nwavResultados = new ArrayList<>();
-        try {
-            nwavOffice.start();
-            LocalConverter nwavConversor = LocalConverter.make(nwavOffice);
-            for (int nwavIndice = 0; nwavIndice < nwavDocumentos.size(); nwavIndice++) {
-                nwavCancelacion.nwavVerificar();
-                Path nwavDocumento = nwavDocumentos.get(nwavIndice);
-                nwavAvance.nwavInformar(nwavIndice, nwavDocumentos.size(), "Convirtiendo «" + nwavDocumento.getFileName() + "»…");
-                Path nwavDestino = NwavEscrituraSegura.nwavRutaSalida(nwavDocumento, nwavCarpeta, "", "pdf");
-                try {
-                    NwavEscrituraSegura.nwavEscribir(nwavDestino, nwavTemporal -> {
-                        try {
-                            nwavConversor.convert(nwavDocumento.toFile()).to(nwavTemporal.toFile())
-                                    .as(org.jodconverter.core.document.DefaultDocumentFormatRegistry.PDF).execute();
-                        } catch (OfficeException nwavFallo) {
-                            throw new IOException("LibreOffice no pudo convertir el documento: " + nwavFallo.getMessage(),
-                                    nwavFallo);
-                        }
-                    });
-                    nwavResultados.add(new NwavConvertido(nwavDocumento, nwavDestino, null));
-                } catch (RuntimeException nwavError) {
-                    nwavResultados.add(new NwavConvertido(nwavDocumento, null, nwavError));
-                }
-            }
-        } catch (OfficeException nwavError) {
-            throw new NwavEditorException("No se pudo iniciar LibreOffice: " + nwavError.getMessage(), nwavError);
-        } finally {
-            try {
-                nwavOffice.stop();
-            } catch (OfficeException nwavError) {
-                nwavLog.warn("No se pudo detener LibreOffice", nwavError);
-            }
-        }
-        return nwavResultados;
-    }
-
-    public record NwavConvertido(Path nwavOrigen, Path nwavPdf, Throwable nwavError) {
-    }
-
-    public record NwavOpcionesHtml(String nwavTamano, boolean nwavHorizontal, double nwavMargenMm, boolean nwavFondos) {
-    }
-
-    public Path nwavHtmlAPdf(Path nwavHtml, NwavOpcionesHtml nwavOpciones, Path nwavDestino) {
-        try {
-            org.jsoup.nodes.Document nwavDoc = Jsoup.parse(nwavHtml.toFile(), null, nwavHtml.toUri().toString());
-            return nwavRenderizar(nwavDoc, nwavHtml.toUri().toString(), nwavOpciones, nwavDestino);
-        } catch (IOException nwavError) {
-            throw NwavTraductorErrores.nwavTraducir(nwavError, String.valueOf(nwavHtml.getFileName()));
-        }
-    }
-
-    public Path nwavUrlAPdf(String nwavUrl, NwavOpcionesHtml nwavOpciones, Path nwavDestino) {
-        URI nwavDireccion;
-        try {
-            nwavDireccion = URI.create(nwavUrl.trim().matches("(?i)^https?://.*") ? nwavUrl.trim() : "https://" + nwavUrl.trim());
-        } catch (IllegalArgumentException nwavError) {
-            throw new NwavEditorException("La dirección «" + nwavUrl + "» no es válida.");
-        }
-        try {
-            org.jsoup.nodes.Document nwavDoc = Jsoup.connect(nwavDireccion.toString())
-                    .userAgent("Mozilla/5.0 (compatible; NWAV-Editor-PDF)").timeout(30_000).followRedirects(true).get();
-            return nwavRenderizar(nwavDoc, nwavDireccion.toString(), nwavOpciones, nwavDestino);
-        } catch (java.net.UnknownHostException nwavError) {
-            throw new NwavEditorException("No se encontró «" + nwavDireccion.getHost() + "». ¿Hay conexión a Internet?");
-        } catch (org.jsoup.HttpStatusException nwavError) {
-            throw new NwavEditorException("La página respondió con el error " + nwavError.getStatusCode() + ".");
-        } catch (IOException nwavError) {
-            throw new NwavEditorException("No se pudo descargar la página: " + nwavError.getMessage(), nwavError);
-        }
-    }
-
-    public static String nwavNombreParaUrl(String nwavUrl) {
-        String nwavLimpio = nwavUrl.replaceFirst("(?i)^https?://", "").replaceFirst("^www\\.", "")
-                .replaceAll("[^\\p{L}\\p{N}._-]+", "_").replaceAll("_+$", "");
-        return (nwavLimpio.isBlank() ? "pagina" : nwavLimpio.length() > 60 ? nwavLimpio.substring(0, 60) : nwavLimpio) + ".pdf";
-    }
-
-    private Path nwavRenderizar(org.jsoup.nodes.Document nwavDoc, String nwavBase, NwavOpcionesHtml nwavOpciones,
-                                Path nwavDestino) {
-        String nwavTamano = ("letter".equalsIgnoreCase(nwavOpciones.nwavTamano()) ? "letter" : "A4")
-                + (nwavOpciones.nwavHorizontal() ? " landscape" : " portrait");
-        nwavDoc.head().appendElement("style").text("@page { size: " + nwavTamano + "; margin: "
-                + String.format(Locale.ROOT, "%.1f", nwavOpciones.nwavMargenMm()) + "mm; }"
-                + (nwavOpciones.nwavFondos() ? "" : " * { background: transparent !important; }")
-                + " img, svg, table { max-width: 100%; }");
-        nwavDoc.select("script, noscript, iframe").remove();
-        org.w3c.dom.Document nwavDom = new W3CDom().fromJsoup(nwavDoc);
-        return NwavEscrituraSegura.nwavEscribir(nwavDestino, nwavTemporal -> {
-            try (OutputStream nwavSalida = Files.newOutputStream(nwavTemporal)) {
-                PdfRendererBuilder nwavConstructor = new PdfRendererBuilder();
-                nwavConstructor.useFastMode();
-                nwavConstructor.withW3cDocument(nwavDom, nwavBase);
-                nwavConstructor.toStream(nwavSalida);
-                nwavConstructor.run();
-            }
-        });
     }
 
     static byte[] nwavPng(BufferedImage nwavImagen) throws IOException {

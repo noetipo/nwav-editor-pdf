@@ -60,6 +60,7 @@ public class NwavInicioController implements NwavRefrescable {
             nwavTitulo.getStyleClass().add("nwav-titulo-categoria");
             FlowPane nwavTarjetas = new FlowPane(14, 14);
             nwavHerramientas.forEach(nwavDefinicion -> nwavTarjetas.getChildren().add(nwavTarjeta(nwavDefinicion)));
+            nwavTarjetas.prefWrapLengthProperty().bind(nwavContenedorCategorias.widthProperty());
             nwavContenedorCategorias.getChildren().add(new VBox(10, nwavTitulo, nwavTarjetas));
             nwavMostradas += nwavHerramientas.size();
         }

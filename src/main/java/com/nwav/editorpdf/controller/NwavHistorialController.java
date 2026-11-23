@@ -127,6 +127,10 @@ public class NwavHistorialController implements NwavRefrescable {
 
         nwavCmbTipo.getItems().add(NWAV_TODAS);
         for (NwavTipoOperacion nwavTipo : NwavTipoOperacion.values()) {
+            if (nwavTipo == NwavTipoOperacion.NWAV_OFFICE_A_PDF || nwavTipo == NwavTipoOperacion.NWAV_HTML_A_PDF
+                    || nwavTipo == NwavTipoOperacion.NWAV_COMPARAR) {
+                continue;
+            }
             nwavCmbTipo.getItems().add(nwavTipo.getNwavDescripcion());
         }
         nwavCmbTipo.setValue(NWAV_TODAS);

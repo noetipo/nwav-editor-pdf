@@ -8,9 +8,9 @@ Pensado sobre todo para Windows.
 - **Editor:** texto, imágenes, formas, notas, resaltados, firmas, formularios y deshacer/rehacer.
 - **Organizar:** unir, dividir, eliminar, extraer, ordenar, rotar y recortar.
 - **Optimizar:** comprimir, OCR (Tesseract) y reparar.
-- **Convertir a PDF:** imágenes, escaneos, Office (con LibreOffice) y HTML o páginas web.
+- **Convertir a PDF:** imágenes y escaneos.
 - **Convertir desde PDF:** imagen, extraer imágenes, Word, Excel, PowerPoint, Markdown/texto y PDF/A.
-- **Editar:** crear formularios, marca de agua (también en mosaico), numerar y comparar PDF.
+- **Editar:** crear formularios, marca de agua (también en mosaico) y numerar.
 - **Seguridad:** proteger o quitar contraseña, firma digital (.p12) y verificación, redacción real y
   quitar metadatos.
 
@@ -32,5 +32,5 @@ Los PDF nunca se guardan en la base de datos, y el original no se sobrescribe si
 ./mvnw javafx:run           # ejecutar
 ```
 
-Opcionales: LibreOffice para «Office a PDF». En macOS y Linux, Tesseract (`brew install tesseract`)
+Opcional: en macOS y Linux, Tesseract (`brew install tesseract`)
 para el OCR; en Windows el motor va incluido.

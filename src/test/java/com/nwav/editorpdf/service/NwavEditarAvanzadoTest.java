@@ -14,11 +14,6 @@ import com.nwav.editorpdf.soporte.NwavLectorPdf;
 import com.nwav.editorpdf.soporte.NwavPdfDePrueba;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox;
 import org.apache.pdfbox.pdmodel.interactive.form.PDComboBox;
@@ -44,7 +39,6 @@ class NwavEditarAvanzadoTest {
     private final NwavSelloService nwavSellos = new NwavSelloService(new NwavContenidoService());
     private final NwavEdicionLoteService nwavLote = new NwavEdicionLoteService(nwavDocumentos, nwavSellos);
     private final NwavCreacionCamposService nwavCampos = new NwavCreacionCamposService();
-    private final NwavComparacionService nwavComparacion = new NwavComparacionService(nwavDocumentos);
 
     private static NwavOpcionesMarcaAgua nwavMarca(String nwavTexto, NwavPosicionMarca nwavPosicion, double nwavGiro) {
         return new NwavOpcionesMarcaAgua(NwavTipoMarcaAgua.NWAV_TEXTO, nwavTexto, null, NwavFuente.NWAV_HELVETICA, 24,
@@ -146,51 +140,6 @@ class NwavEditarAvanzadoTest {
                 assertThat(nwavDocumento.nwavPdDocument().getDocumentCatalog().getAcroForm()).isNull();
                 assertThat(nwavDocumento.nwavPdDocument().getPage(0).getAnnotations()).isEmpty();
             }
-        }
-    }
-
-    private Path nwavPdfConTexto(String nwavNombre, String... nwavLineas) throws Exception {
-        Path nwavRuta = nwavCarpeta.resolve(nwavNombre);
-        try (PDDocument nwavPd = new PDDocument()) {
-            PDPage nwavPagina = new PDPage(PDRectangle.A4);
-            nwavPd.addPage(nwavPagina);
-            try (PDPageContentStream nwavFlujo = new PDPageContentStream(nwavPd, nwavPagina)) {
-                nwavFlujo.beginText();
-                nwavFlujo.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12);
-                nwavFlujo.newLineAtOffset(72, 760);
-                for (String nwavLinea : nwavLineas) {
-                    nwavFlujo.showText(nwavLinea);
-                    nwavFlujo.newLineAtOffset(0, -18);
-                }
-                nwavFlujo.endText();
-            }
-            nwavPd.save(nwavRuta.toFile());
-        }
-        return nwavRuta;
-    }
-
-    @Test
-    void nwavCompararMarcaLasPalabrasQuitadasYAnadidas() throws Exception {
-        Path nwavA = nwavPdfConTexto("a.pdf", "El contrato vence en marzo", "Importe total 1000 euros");
-        Path nwavB = nwavPdfConTexto("b.pdf", "El contrato vence en abril", "Importe total 1000 euros", "Cláusula nueva");
-
-        try (NwavComparacionService.NwavSesion nwavSesion = nwavComparacion.nwavComparar(nwavA, null, nwavB, null,
-                NwavAvance.NWAV_NINGUNO, NwavCancelacion.NWAV_NUNCA)) {
-            assertThat(nwavSesion.nwavIguales()).isFalse();
-            assertThat(nwavSesion.nwavQuitadas()).isEqualTo(1);
-            assertThat(nwavSesion.nwavAnadidas()).isEqualTo(3);
-            NwavRectangulo nwavMarzo = nwavSesion.nwavMarcasA(0).nwavQuitadas().get(0);
-            assertThat(nwavMarzo.nwavY()).isBetween(70.0, 90.0);
-            assertThat(nwavMarzo.nwavX()).isGreaterThan(150);
-
-            NwavComparacionService.NwavSuperposicion nwavVisual = nwavSesion.nwavSuperponer(0, 1f);
-            assertThat(nwavVisual.nwavPorcentajeDistinto()).isGreaterThan(0).isLessThan(5);
-            assertThat(nwavVisual.nwavImagen().getWidth()).isEqualTo(595);
-        }
-        try (NwavComparacionService.NwavSesion nwavIguales = nwavComparacion.nwavComparar(nwavA, null, nwavA, null,
-                NwavAvance.NWAV_NINGUNO, NwavCancelacion.NWAV_NUNCA)) {
-            assertThat(nwavIguales.nwavIguales()).isTrue();
-            assertThat(nwavIguales.nwavSuperponer(0, 0.5f).nwavPorcentajeDistinto()).isZero();
         }
     }
 }

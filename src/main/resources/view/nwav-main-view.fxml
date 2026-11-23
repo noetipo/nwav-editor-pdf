@@ -10,7 +10,7 @@
            fx:id="nwavRaiz"
            fx:controller="com.nwav.editorpdf.controller.NwavMainController"
            styleClass="nwav-app"
-           prefWidth="1280.0" prefHeight="820.0">
+           prefWidth="1100.0" prefHeight="700.0">
 
     <fx:define>
         <ToggleGroup fx:id="nwavMenu"/>
@@ -24,13 +24,12 @@
                     <StackPane styleClass="nwav-marca-logo">
                         <FontIcon iconLiteral="fth-file-text"/>
                     </StackPane>
-                    <VBox fx:id="nwavMarcaTextos" spacing="1.0">
-                        <Label text="NWAV Editor" styleClass="nwav-marca-titulo"/>
-                        <Label text="Editor de PDF" styleClass="nwav-marca-subtitulo"/>
+                    <VBox fx:id="nwavMarcaTextos" spacing="1.0" alignment="CENTER_LEFT">
+                        <Label text="Editor PDF" styleClass="nwav-marca-titulo"/>
                     </VBox>
                 </HBox>
 
-                <StackPane alignment="TOP_LEFT">
+                <StackPane alignment="TOP_LEFT" VBox.vgrow="ALWAYS">
                     <Region fx:id="nwavIndicador" styleClass="nwav-nav-indicador"
                             prefHeight="42.0" maxHeight="-Infinity"/>
                     <VBox spacing="3.0">
@@ -52,32 +51,26 @@
                             <graphic><FontIcon iconLiteral="fth-list"/></graphic>
                         </ToggleButton>
 
+                        <Region VBox.vgrow="ALWAYS"/>
+                        <Separator styleClass="nwav-nav-separador"/>
                         <Label text="AJUSTES" styleClass="nwav-nav-seccion"/>
                         <ToggleButton fx:id="nwavNavPreferencias" text="Preferencias" toggleGroup="$nwavMenu"
                                       styleClass="nwav-nav-item" maxWidth="Infinity">
                             <graphic><FontIcon iconLiteral="fth-settings"/></graphic>
                         </ToggleButton>
+                        <Button fx:id="nwavBtnContraer" text="Contraer menú" onAction="#nwavOnContraerMenu"
+                                styleClass="nwav-nav-item" maxWidth="Infinity">
+                            <graphic><FontIcon iconLiteral="fth-chevrons-left"/></graphic>
+                        </Button>
                     </VBox>
                 </StackPane>
-
-                <Region VBox.vgrow="ALWAYS"/>
-
-                <Separator styleClass="nwav-nav-separador"/>
-                <Button fx:id="nwavBtnTema" text="Modo oscuro" onAction="#nwavOnCambiarTema"
-                        styleClass="nwav-nav-item" maxWidth="Infinity">
-                    <graphic><FontIcon iconLiteral="fth-moon"/></graphic>
-                </Button>
-                <Button fx:id="nwavBtnContraer" text="Contraer menú" onAction="#nwavOnContraerMenu"
-                        styleClass="nwav-nav-item" maxWidth="Infinity">
-                    <graphic><FontIcon iconLiteral="fth-chevrons-left"/></graphic>
-                </Button>
             </VBox>
         </left>
 
         <center>
             <BorderPane>
                 <top>
-                    <MenuBar useSystemMenuBar="true" styleClass="nwav-barra-menus">
+                    <MenuBar fx:id="nwavBarraMenus" useSystemMenuBar="true" styleClass="nwav-barra-menus">
                         <Menu text="Archivo">
                             <MenuItem text="Abrir…" onAction="#nwavOnAbrir" accelerator="Shortcut+O"/>
                             <Menu fx:id="nwavMnuRecientes" text="Abrir reciente"/>

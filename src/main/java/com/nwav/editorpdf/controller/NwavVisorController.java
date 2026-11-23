@@ -21,6 +21,7 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import com.nwav.editorpdf.model.NwavArchivoReciente;
@@ -154,6 +155,7 @@ public class NwavVisorController {
     @FXML private TextField nwavTxtPagina;
     @FXML private Label nwavLblTotalPaginas;
     @FXML private ComboBox<String> nwavCmbZoom;
+    @FXML private FlowPane nwavBarraVisor;
     @FXML private Label nwavLblArchivo;
     @FXML private VBox nwavPanelMiniaturas;
     @FXML private ListView<Integer> nwavListaMiniaturas;
@@ -234,10 +236,17 @@ public class NwavVisorController {
     private Path nwavPendienteRuta;
     private Runnable nwavPendienteAccion;
     private Runnable nwavAccionVerRecientes = () -> { };
+    private Runnable nwavAccionVolver = () -> { };
     private Runnable nwavAlCambiarRecientes = () -> { };
 
     @FXML
     public void initialize() {
+        nwavBarraVisor.widthProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> {
+            double nwavAncho = nwavAhora.doubleValue();
+            if (nwavAncho > 0 && Math.abs(nwavBarraVisor.getPrefWrapLength() - nwavAncho) > 1) {
+                nwavBarraVisor.setPrefWrapLength(nwavAncho);
+            }
+        });
         nwavPausaGuardado = new PauseTransition(Duration.millis(1200));
         nwavPausaGuardado.setOnFinished(nwavEvento -> nwavGuardarEstadoEnFondo());
         nwavPausaAjuste = new PauseTransition(Duration.millis(90));
@@ -405,8 +414,19 @@ public class NwavVisorController {
     }
 
     public void nwavConfigurarAcciones(Runnable nwavVerRecientes, Runnable nwavAlCambiarRecientes) {
+        nwavConfigurarAcciones(nwavVerRecientes, nwavAlCambiarRecientes, () -> { });
+    }
+
+    public void nwavConfigurarAcciones(Runnable nwavVerRecientes, Runnable nwavAlCambiarRecientes,
+                                       Runnable nwavVolver) {
         this.nwavAccionVerRecientes = nwavVerRecientes;
         this.nwavAlCambiarRecientes = nwavAlCambiarRecientes;
+        this.nwavAccionVolver = nwavVolver;
+    }
+
+    @FXML
+    private void nwavOnVolver() {
+        nwavAccionVolver.run();
     }
 
     public ReadOnlyBooleanProperty nwavHayDocumentoProperty() {

@@ -25,6 +25,8 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.Separator;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -65,6 +67,11 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
     @FXML private VBox nwavAvisoDependencia;
     @FXML private Label nwavLblDependencia;
     @FXML private Label nwavLblAviso;
+    @FXML private VBox nwavPagina;
+    @FXML private FlowPane nwavColumnas;
+    @FXML private FlowPane nwavBarraArchivos;
+    @FXML private VBox nwavTarjetaArchivos;
+    @FXML private VBox nwavTarjetaOpciones;
     @FXML private ListView<Path> nwavListaArchivos;
     @FXML private Label nwavLblAyudaArchivos;
     @FXML private Button nwavBtnUsarAbierto;
@@ -73,10 +80,12 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
     @FXML private Button nwavBtnQuitar;
     @FXML private VBox nwavContenedorOpciones;
     @FXML private VBox nwavContenedorExtra;
+    @FXML private Separator nwavSeparadorOpciones;
     @FXML private javafx.scene.control.ToggleGroup nwavGrupoSalida;
     @FXML private RadioButton nwavRdbMismaCarpeta;
     @FXML private RadioButton nwavRdbOtraCarpeta;
     @FXML private Label nwavLblCarpeta;
+    @FXML private Button nwavBtnVolver;
     @FXML private Button nwavBtnProcesar;
     @FXML private VBox nwavTarjetaResultados;
     @FXML private VBox nwavListaResultados;
@@ -88,6 +97,7 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
 
     @FXML
     public void initialize() {
+        nwavBtnVolver.setOnAction(nwavEvento -> nwavMain.nwavVolverAlInicio());
         nwavListaArchivos.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         nwavListaArchivos.setCellFactory(nwavLista -> new NwavCeldaArchivo());
         nwavListaArchivos.getItems().addListener((ListChangeListener<Path>) nwavCambio -> nwavActualizarBotones());
@@ -99,6 +109,49 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
             }
             nwavActualizarCarpeta();
         });
+        nwavBarraArchivos.getChildren().forEach(nwavNodo -> {
+            if (nwavNodo instanceof Button nwavBoton && !nwavBoton.getStyleClass().contains("button-icon")) {
+                nwavBoton.setMinWidth(Button.USE_PREF_SIZE);
+            }
+        });
+        nwavBarraArchivos.prefWrapLengthProperty().bind(nwavTarjetaArchivos.widthProperty().subtract(48));
+        nwavRdbMismaCarpeta.maxWidthProperty().bind(nwavTarjetaOpciones.widthProperty().subtract(48));
+        nwavColumnas.widthProperty().addListener((nwavObs, nwavAntes, nwavAhora) -> nwavAjustarColumnas());
+    }
+
+    private boolean nwavAjustandoColumnas;
+
+    private void nwavAjustarColumnas() {
+        if (nwavAjustandoColumnas) {
+            return;
+        }
+        double nwavAncho = nwavColumnas.getWidth();
+        if (nwavAncho < 40) {
+            return;
+        }
+        nwavAjustandoColumnas = true;
+        boolean nwavEstrecha = nwavAncho < 760;
+        double nwavOpciones = nwavEstrecha ? nwavAncho : Math.min(400, Math.max(280, nwavAncho * 0.40));
+        double nwavArchivos = nwavEstrecha ? nwavAncho : Math.max(280, nwavAncho - nwavOpciones - 20);
+        if (Math.abs(nwavTarjetaArchivos.getPrefWidth() - nwavArchivos) > 1) {
+            nwavTarjetaArchivos.setPrefWidth(nwavArchivos);
+            nwavTarjetaArchivos.setMaxWidth(nwavArchivos);
+        }
+        if (Math.abs(nwavTarjetaOpciones.getPrefWidth() - nwavOpciones) > 1) {
+            nwavTarjetaOpciones.setPrefWidth(nwavOpciones);
+            nwavTarjetaOpciones.setMaxWidth(nwavOpciones);
+        }
+        if (Math.abs(nwavColumnas.getPrefWrapLength() - nwavAncho) > 1) {
+            nwavColumnas.setPrefWrapLength(nwavAncho);
+        }
+        if (nwavEstrecha) {
+            if (!nwavPagina.getStyleClass().contains("nwav-pagina-estrecha")) {
+                nwavPagina.getStyleClass().add("nwav-pagina-estrecha");
+            }
+        } else {
+            nwavPagina.getStyleClass().remove("nwav-pagina-estrecha");
+        }
+        nwavAjustandoColumnas = false;
     }
 
     public void nwavPreparar(NwavDefinicionHerramienta nwavNueva, List<Path> nwavArchivos) {
@@ -126,12 +179,22 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
             nwavTarjetaResultados.setManaged(false);
             Map<String, String> nwavGuardadas = nwavOpcionesGuardadas.nwavCargar(nwavNueva.getNwavId());
             nwavFormulario = new NwavFormularioOpciones(nwavNueva.getNwavOpciones(), nwavGuardadas);
-            nwavContenedorOpciones.getChildren().setAll(nwavNueva.getNwavOpciones().isEmpty()
-                    ? List.of(new Label("Esta herramienta no tiene opciones.")) : List.of(nwavFormulario.nwavNodo()));
+            boolean nwavHayOpciones = !nwavNueva.getNwavOpciones().isEmpty();
+            if (nwavHayOpciones) {
+                nwavContenedorOpciones.getChildren().setAll(nwavFormulario.nwavNodo());
+            } else {
+                Label nwavAviso = new Label("El archivo original no se cambia. Solo se crea uno nuevo.");
+                nwavAviso.setWrapText(true);
+                nwavAviso.getStyleClass().add("nwav-texto-tenue");
+                nwavContenedorOpciones.getChildren().setAll(nwavAviso);
+            }
             nwavContenedorExtra.getChildren().clear();
             if (nwavNueva.getNwavExtra() != null) {
                 nwavContenedorExtra.getChildren().add(nwavNueva.getNwavExtra().apply(this));
             }
+            boolean nwavMostrarLinea = nwavHayOpciones || nwavNueva.getNwavExtra() != null;
+            nwavSeparadorOpciones.setVisible(nwavMostrarLinea);
+            nwavSeparadorOpciones.setManaged(nwavMostrarLinea);
         }
         nwavRecibirRutas(nwavArchivos);
         String nwavExtensiones = String.join(", ", nwavNueva.getNwavExtensiones().stream()
@@ -298,7 +361,7 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
         nwavBtnProcesar.setDisable(!nwavDisponible || nwavDefinicion == null
                 || nwavCantidad < nwavDefinicion.getNwavMinimoArchivos());
         nwavBtnProcesar.setText(nwavCantidad > 1 && nwavDefinicion != null && !nwavDefinicion.isNwavOrdenImporta()
-                ? "Procesar " + nwavCantidad + " archivos" : "Procesar");
+                ? "Crear " + nwavCantidad + " archivos nuevos" : "Crear archivo nuevo");
     }
 
     @FXML
@@ -316,8 +379,9 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
     }
 
     private void nwavActualizarCarpeta() {
-        nwavLblCarpeta.setText(nwavRdbOtraCarpeta.isSelected() && nwavCarpetaSalida != null
-                ? nwavCarpetaSalida.toString() : "Junto a cada archivo original");
+        nwavLblCarpeta.setText(nwavRdbOtraCarpeta.isSelected()
+                ? (nwavCarpetaSalida != null ? nwavCarpetaSalida.toString() : "Pulsa Elegir… para marcar la carpeta.")
+                : "El archivo nuevo queda al lado del original.");
     }
 
     private Path nwavCarpetaElegida() {
@@ -446,7 +510,7 @@ public class NwavHerramientaController implements NwavReceptorArchivos, NwavCont
 
     @FXML
     private void nwavOnVolver() {
-        nwavMain.nwavIrA(NwavMainController.NWAV_VISTA_INICIO);
+        nwavMain.nwavVolverAlInicio();
     }
 
     @Override

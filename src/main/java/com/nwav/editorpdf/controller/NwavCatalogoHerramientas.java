@@ -367,59 +367,6 @@ public class NwavCatalogoHerramientas {
                         + "Después puedes aplicar OCR para poder buscar el texto.")
                 .nwavOfrecer(NWAV_OCR, "Aplicar OCR")
                 .nwavConPalabrasClave("escaner escanear carpeta"));
-
-        nwavLista.add(new NwavDefinicionHerramienta("office-pdf", "Office a PDF",
-                "Word, Excel, PowerPoint y OpenDocument a PDF, usando LibreOffice en tu equipo.",
-                NwavCategoriaHerramienta.NWAV_CONVERTIR_A_PDF, Feather.FILE_TEXT)
-                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_OFFICE_A_PDF, false, this::nwavProcesoOffice))
-                .nwavConExtensiones(com.nwav.editorpdf.service.NwavConversionAPdfService.NWAV_EXTENSIONES_OFFICE
-                        .toArray(String[]::new))
-                .nwavRequiere(nwavDependencias::nwavLibreOffice)
-                .nwavConPalabrasClave("word excel powerpoint docx xlsx pptx odt libreoffice"));
-
-        nwavLista.add(new NwavDefinicionHerramienta("html-pdf", "HTML a PDF",
-                "Convierte archivos HTML guardados en tu equipo.", NwavCategoriaHerramienta.NWAV_CONVERTIR_A_PDF, Feather.CODE)
-                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_HTML_A_PDF, true, nwavEntrada ->
-                        NwavResultadoProceso.nwavDe(nwavAPdf.nwavHtmlAPdf(nwavEntrada.nwavArchivo(), nwavOpcionesHtml(nwavEntrada),
-                                NwavEscrituraSegura.nwavRutaSalida(nwavEntrada.nwavArchivo(), nwavEntrada.nwavCarpetaSalida(),
-                                        "", "pdf")), "HTML convertido")))
-                .nwavConExtensiones("html", "htm", "xhtml")
-                .nwavConOpciones(nwavOpcionesPaginaHtml())
-                .nwavConPalabrasClave("web pagina"));
-
-        nwavLista.add(new NwavDefinicionHerramienta("url-pdf", "Página web a PDF",
-                "Descarga una página por su dirección y la guarda como PDF.", NwavCategoriaHerramienta.NWAV_CONVERTIR_A_PDF,
-                Feather.GLOBE)
-                .nwavLote(new NwavTrabajo(NwavTipoOperacion.NWAV_HTML_A_PDF, false, nwavEntrada -> {
-                    String nwavUrl = nwavEntrada.nwavTexto("url", "");
-                    if (nwavUrl.isBlank()) {
-                        throw new com.nwav.editorpdf.exception.NwavEditorException("Escribe la dirección de la página.");
-                    }
-                    Path nwavCarpeta = nwavEntrada.nwavCarpetaSalida() != null ? nwavEntrada.nwavCarpetaSalida()
-                            : nwavCarpetaPorDefecto();
-                    Path nwavDestino = NwavEscrituraSegura.nwavSinColision(nwavCarpeta.resolve(
-                            com.nwav.editorpdf.service.NwavConversionAPdfService.nwavNombreParaUrl(nwavUrl)), null);
-                    return NwavResultadoProceso.nwavDe(nwavAPdf.nwavUrlAPdf(nwavUrl, nwavOpcionesHtml(nwavEntrada), nwavDestino),
-                            "Página guardada: " + nwavUrl);
-                }))
-                .nwavSinArchivos()
-                .nwavConOpciones(nwavConUrl(nwavOpcionesPaginaHtml()))
-                .nwavConAviso("No necesita archivos: escribe la dirección en «Opciones» y pulsa Procesar. Esta herramienta "
-                        + "SÍ usa Internet para descargar la página. Las páginas que se construyen con JavaScript "
-                        + "pueden salir incompletas. Si no eliges carpeta, se guarda en Descargas.")
-                .nwavConPalabrasClave("url web internet enlace"));
-    }
-
-    private static NwavCampoOpcion[] nwavConUrl(NwavCampoOpcion[] nwavResto) {
-        NwavCampoOpcion[] nwavTodos = new NwavCampoOpcion[nwavResto.length + 1];
-        nwavTodos[0] = NwavCampoOpcion.nwavTexto("url", "Dirección (URL)", "https://");
-        System.arraycopy(nwavResto, 0, nwavTodos, 1, nwavResto.length);
-        return nwavTodos;
-    }
-
-    private static Path nwavCarpetaPorDefecto() {
-        Path nwavDescargas = Path.of(System.getProperty("user.home"), "Downloads");
-        return java.nio.file.Files.isDirectory(nwavDescargas) ? nwavDescargas : Path.of(System.getProperty("user.home"));
     }
 
     private static NwavCampoOpcion[] nwavOpcionesHoja() {
@@ -431,21 +378,6 @@ public class NwavCatalogoHerramientas {
                 NwavCampoOpcion.nwavDecimal("margen", "Margen (mm)", 10, 0, 60, 1),
                 NwavCampoOpcion.nwavEleccion("porPagina", "Imágenes por página", "1", "1=Una", "2=Dos", "4=Cuatro"),
                 NwavCampoOpcion.nwavCasilla("separados", "Un PDF por imagen (en lugar de uno solo)", false)};
-    }
-
-    private static NwavCampoOpcion[] nwavOpcionesPaginaHtml() {
-        return new NwavCampoOpcion[]{
-                NwavCampoOpcion.nwavEleccion("hoja", "Tamaño de hoja", "A4", "A4=A4", "letter=Carta"),
-                NwavCampoOpcion.nwavCasilla("horizontal", "Horizontal", false),
-                NwavCampoOpcion.nwavDecimal("margen", "Margen (mm)", 15, 0, 60, 1),
-                NwavCampoOpcion.nwavCasilla("fondos", "Imprimir colores e imágenes de fondo", true)};
-    }
-
-    private static com.nwav.editorpdf.service.NwavConversionAPdfService.NwavOpcionesHtml nwavOpcionesHtml(
-            NwavEntradaProceso nwavEntrada) {
-        return new com.nwav.editorpdf.service.NwavConversionAPdfService.NwavOpcionesHtml(nwavEntrada.nwavTexto("hoja", "A4"),
-                nwavEntrada.nwavSiNo("horizontal", false), nwavEntrada.nwavDecimal("margen", 15),
-                nwavEntrada.nwavSiNo("fondos", true));
     }
 
     private NwavResultadoProceso nwavProcesoImagenes(NwavEntradaProceso nwavEntrada) {
@@ -472,22 +404,6 @@ public class NwavCatalogoHerramientas {
                 nwavImagenes.size() > 1 ? "imagenes" : "", "pdf");
         return NwavResultadoProceso.nwavDe(nwavAPdf.nwavImagenesAPdf(nwavImagenes, nwavOpciones, nwavDestino,
                 nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion()), nwavImagenes.size() + " imágenes en un PDF");
-    }
-
-    private NwavResultadoProceso nwavProcesoOffice(NwavEntradaProceso nwavEntrada) {
-        var nwavResultados = nwavAPdf.nwavOfficeAPdf(nwavEntrada.nwavArchivos(), nwavEntrada.nwavCarpetaSalida(),
-                nwavEntrada.nwavAvance(), nwavEntrada.nwavCancelacion());
-        List<Path> nwavCreados = nwavResultados.stream().filter(nwavR -> nwavR.nwavPdf() != null)
-                .map(com.nwav.editorpdf.service.NwavConversionAPdfService.NwavConvertido::nwavPdf).toList();
-        List<String> nwavFallos = nwavResultados.stream().filter(nwavR -> nwavR.nwavError() != null)
-                .map(nwavR -> nwavR.nwavOrigen().getFileName() + ": " + nwavR.nwavError().getMessage()).toList();
-        if (nwavCreados.isEmpty()) {
-            throw new com.nwav.editorpdf.exception.NwavEditorException("No se pudo convertir ningún documento. "
-                    + String.join(" · ", nwavFallos));
-        }
-        String nwavResumen = nwavCreados.size() + " de " + nwavResultados.size() + " documentos convertidos"
-                + (nwavFallos.isEmpty() ? "" : ". Fallaron: " + String.join(" · ", nwavFallos));
-        return new NwavResultadoProceso(nwavCreados, nwavResumen, nwavResumen);
     }
 
     private void nwavAgregarDesdePdf(List<NwavDefinicionHerramienta> nwavLista) {
@@ -695,12 +611,6 @@ public class NwavCatalogoHerramientas {
                         NwavCampoOpcion.nwavEntero("inicio", "Empezar a contar en", 1, 0, 100_000),
                         NwavCampoOpcion.nwavTexto("paginas", "Páginas (vacío = todas)", ""))
                 .nwavConPalabrasClave("numerar paginacion pie encabezado lote varios"));
-
-        nwavLista.add(new NwavDefinicionHerramienta("comparar", "Comparar PDF",
-                "Muestra dos versiones lado a lado con las diferencias resaltadas.", NwavCategoriaHerramienta.NWAV_EDITAR,
-                Feather.COLUMNS)
-                .nwavVistaPropia("nwav-comparar-view")
-                .nwavConPalabrasClave("diferencias versiones cambios diff"));
     }
 
     private static com.nwav.editorpdf.model.NwavColorRgb nwavColor(String nwavHex) {

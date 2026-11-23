@@ -17,6 +17,5 @@ Los PDF nunca se guardan ahi: solo sus rutas.
 Herramientas opcionales
   - OCR (reconocer texto en escaneos): funciona sin instalar nada en Windows.
     Si diera error, instala el "Microsoft Visual C++ Redistributable" (x64).
-  - Office a PDF: instala LibreOffice (gratuito, libreoffice.org). Se detecta solo.
 
 Para desinstalar: borra la carpeta y, si quieres, %LOCALAPPDATA%\NWAV Editor PDF.

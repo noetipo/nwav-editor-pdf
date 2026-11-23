@@ -15,7 +15,11 @@
 
     <top>
       <VBox>
-        <HBox styleClass="nwav-barra-visor" spacing="6.0" alignment="CENTER_LEFT">
+        <FlowPane fx:id="nwavBarraVisor" styleClass="nwav-barra-visor" hgap="6.0" vgap="6.0" alignment="CENTER_LEFT">
+            <Button fx:id="nwavBtnVolver" onAction="#nwavOnVolver" styleClass="nwav-boton-volver">
+                <graphic><FontIcon iconLiteral="fth-arrow-left" mouseTransparent="true"/></graphic>
+                <tooltip><Tooltip text="Atrás, a todas las herramientas"/></tooltip>
+            </Button>
             <Button text="Abrir" onAction="#nwavOnAbrir" styleClass="accent">
                 <graphic><FontIcon iconLiteral="fth-folder"/></graphic>
                 <tooltip><Tooltip text="Abrir un PDF (Ctrl/⌘ + O)"/></tooltip>
@@ -144,9 +148,8 @@
                 <tooltip><Tooltip text="Ajustar a la página"/></tooltip>
             </ToggleButton>
 
-            <Region HBox.hgrow="ALWAYS"/>
             <Label fx:id="nwavLblArchivo" styleClass="nwav-nombre-archivo" textOverrun="CENTER_ELLIPSIS" minWidth="0"/>
-        </HBox>
+        </FlowPane>
 
         <HBox fx:id="nwavBarraBusqueda" styleClass="nwav-barra-busqueda" spacing="6.0" alignment="CENTER_LEFT">
             <FontIcon iconLiteral="fth-search" styleClass="nwav-icono-tenue"/>

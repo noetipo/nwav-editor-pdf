@@ -13,14 +13,12 @@
         <HBox styleClass="nwav-pagina-cabecera">
             <VBox spacing="4.0" HBox.hgrow="ALWAYS">
                 <Label text="Herramientas PDF" styleClass="nwav-pagina-titulo"/>
-                <Label text="Todo se procesa en tu equipo: tus archivos nunca salen de él."
-                       styleClass="nwav-pagina-subtitulo"/>
             </VBox>
         </HBox>
         <HBox styleClass="nwav-barra-herramientas">
-            <FontIcon iconLiteral="fth-search" styleClass="nwav-icono-tenue"/>
             <TextField fx:id="nwavTxtBuscar" promptText="Buscar herramienta (p. ej. comprimir, OCR, unir…)"
                        styleClass="nwav-buscador" HBox.hgrow="ALWAYS" maxWidth="520.0"/>
+            <FontIcon iconLiteral="fth-search" styleClass="nwav-icono-tenue"/>
         </HBox>
         <Label fx:id="nwavLblSinResultados" text="Ninguna herramienta coincide con la búsqueda."
                styleClass="nwav-texto-tenue"/>

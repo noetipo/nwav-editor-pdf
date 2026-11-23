@@ -13,11 +13,10 @@ No hace falta instalar Java: va incluido. Si no abre, usa **«NWAV Editor PDF (d
 
 ### Herramientas
 Editor completo; organizar (unir, dividir, rotar, recortar…); comprimir, OCR y reparar; convertir a PDF
-(imágenes, escaneos, Office, HTML); convertir desde PDF (imagen, Word, Excel, PowerPoint, Markdown, PDF/A);
-formularios, marca de agua, numeración y comparar; proteger, firma digital, redacción real y quitar metadatos.
+(imágenes y escaneos); convertir desde PDF (imagen, Word, Excel, PowerPoint, Markdown, PDF/A);
+formularios, marca de agua y numeración; proteger, firma digital, redacción real y quitar metadatos.
 
 ### Opcional
-- **Office a PDF:** instala [LibreOffice](https://www.libreoffice.org) (gratuito).
 - **OCR:** funciona sin instalar nada. Si diera error, instala el «Microsoft Visual C++ Redistributable» (x64).
 
 Tus datos (recientes, historial, preferencias) se guardan en `%LOCALAPPDATA%\NWAV Editor PDF`.

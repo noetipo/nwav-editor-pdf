@@ -95,13 +95,6 @@
                 </HBox>
                 <Label fx:id="nwavLblEstadoOcr" wrapText="true" styleClass="nwav-texto-tenue" GridPane.columnIndex="1"
                        GridPane.rowIndex="2"/>
-                <Label text="LibreOffice (soffice)" styleClass="nwav-campo-label" GridPane.rowIndex="3"/>
-                <HBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
-                    <TextField fx:id="nwavTxtRutaLibreOffice" promptText="Automático" HBox.hgrow="ALWAYS"/>
-                    <Button text="Elegir…" onAction="#nwavOnElegirRutaLibreOffice" styleClass="button-outlined"/>
-                </HBox>
-                <Label fx:id="nwavLblEstadoOffice" wrapText="true" styleClass="nwav-texto-tenue" GridPane.columnIndex="1"
-                       GridPane.rowIndex="4"/>
             </GridPane>
         </VBox>
 
