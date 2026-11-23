@@ -29,9 +29,9 @@ Copy-Item "target\nwav-editor-pdf-$Version.jar" $Entrada
 $Destino = Join-Path $Raiz 'target\instalador'
 if (Test-Path $Destino) { Remove-Item -Recurse -Force $Destino }
 $Comunes = @(
-  '--name', 'NWAV Editor PDF',
+  '--name', 'Editor PDF',
   '--app-version', $VersionApp,
-  '--vendor', 'NWAV',
+  '--vendor', 'Editor PDF',
   '--description', 'Editor de PDF local y sin conexion',
   '--input', $Entrada,
   '--main-jar', "nwav-editor-pdf-$Version.jar",
@@ -46,13 +46,13 @@ $TieneWix = (Get-Command candle.exe -ErrorAction SilentlyContinue) -or (Get-Comm
 if ($TieneWix) {
   Write-Host '==> Creando el instalador .exe'
   & $JPackage --type exe @Comunes `
-    --win-per-user-install --win-dir-chooser --win-menu --win-menu-group 'NWAV' --win-shortcut `
+    --win-per-user-install --win-dir-chooser --win-menu --win-menu-group 'Editor PDF' --win-shortcut `
     --win-shortcut-prompt --win-upgrade-uuid '6b1f6f0e-2f7b-4e5b-9a43-1d2c8c0f7a51' `
     --file-associations 'empaquetado\windows\asociacion-pdf.properties'
 } else {
   Write-Host '==> WiX no esta instalado: se crea la carpeta de la aplicacion (app-image)'
   & $JPackage --type app-image @Comunes
-  Compress-Archive -Path (Join-Path $Destino 'NWAV Editor PDF') -DestinationPath (Join-Path $Destino "NWAV-Editor-PDF-$VersionApp-app.zip")
+  Compress-Archive -Path (Join-Path $Destino 'Editor PDF') -DestinationPath (Join-Path $Destino "Editor-PDF-$VersionApp-app.zip")
 }
 if ($LASTEXITCODE -ne 0) { throw 'jpackage fallo.' }
 Write-Host "Listo: $Destino"
