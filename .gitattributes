@@ -5,3 +5,4 @@ empaquetado/windows/*.txt text eol=crlf
 empaquetado/windows/*.properties text eol=crlf
 *.ico binary
 *.png binary
+entrega/EditorPDF.exe filter=lfs diff=lfs merge=lfs -text
