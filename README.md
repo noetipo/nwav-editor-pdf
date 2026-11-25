@@ -11,8 +11,7 @@ Pensado sobre todo para Windows.
 - **Convertir a PDF:** imágenes y escaneos.
 - **Convertir desde PDF:** imagen, extraer imágenes, Word, Excel, PowerPoint, Markdown/texto y PDF/A.
 - **Editar:** crear formularios, marca de agua (también en mosaico) y numerar.
-- **Seguridad:** proteger o quitar contraseña, firma digital (.p12) y verificación, redacción real y
-  quitar metadatos.
+- **Seguridad:** proteger o quitar contraseña.
 
 Los PDF nunca se guardan en la base de datos, y el original no se sobrescribe sin confirmación.
 

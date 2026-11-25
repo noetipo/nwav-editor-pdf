@@ -27,9 +27,15 @@ if ($LASTEXITCODE -ne 0) { throw 'No se pudieron copiar las dependencias.' }
 Copy-Item "target\nwav-editor-pdf-$Version.jar" $Entrada
 
 $Destino = Join-Path $Raiz 'target\instalador'
-if (Test-Path $Destino) { Remove-Item -Recurse -Force $Destino }
+if (Test-Path $Destino) {
+  Get-ChildItem $Destino -Force | ForEach-Object {
+    try { Remove-Item -Recurse -Force $_.FullName } catch { Write-Host "No se pudo borrar $($_.Name) (archivo en uso). Se deja y se genera al lado." }
+  }
+} else {
+  New-Item -ItemType Directory -Force -Path $Destino | Out-Null
+}
 $Comunes = @(
-  '--name', 'Editor PDF',
+  '--name', 'EditorPDF',
   '--app-version', $VersionApp,
   '--vendor', 'Editor PDF',
   '--description', 'Editor de PDF local y sin conexion',
@@ -39,6 +45,7 @@ $Comunes = @(
   '--icon', 'empaquetado\nwav-icono.ico',
   '--java-options', '-Xmx2g',
   '--java-options', '-Dfile.encoding=UTF-8',
+  '--jlink-options', '--strip-debug --no-man-pages --no-header-files',
   '--dest', $Destino
 )
 
@@ -46,13 +53,13 @@ $TieneWix = (Get-Command candle.exe -ErrorAction SilentlyContinue) -or (Get-Comm
 if ($TieneWix) {
   Write-Host '==> Creando el instalador .exe'
   & $JPackage --type exe @Comunes `
-    --win-per-user-install --win-dir-chooser --win-menu --win-menu-group 'Editor PDF' --win-shortcut `
+    --win-dir-chooser --win-menu --win-menu-group 'Editor PDF' --win-shortcut `
     --win-shortcut-prompt --win-upgrade-uuid '6b1f6f0e-2f7b-4e5b-9a43-1d2c8c0f7a51' `
     --file-associations 'empaquetado\windows\asociacion-pdf.properties'
 } else {
   Write-Host '==> WiX no esta instalado: se crea la carpeta de la aplicacion (app-image)'
   & $JPackage --type app-image @Comunes
-  Compress-Archive -Path (Join-Path $Destino 'Editor PDF') -DestinationPath (Join-Path $Destino "Editor-PDF-$VersionApp-app.zip")
+  Compress-Archive -Path (Join-Path $Destino 'EditorPDF') -DestinationPath (Join-Path $Destino "Editor-PDF-$VersionApp-app.zip")
 }
 if ($LASTEXITCODE -ne 0) { throw 'jpackage fallo.' }
 Write-Host "Listo: $Destino"

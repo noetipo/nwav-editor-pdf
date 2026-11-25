@@ -9,9 +9,13 @@ import com.nwav.editorpdf.service.NwavConfiguracionService;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.springframework.boot.WebApplicationType;
@@ -28,24 +32,39 @@ public class NwavJavaFxApplication extends Application {
     private Throwable nwavErrorArranque;
 
     @Override
-    public void init() {
+    public void start(Stage nwavVentana) {
+        nwavVentana.setTitle(NwavMainController.NWAV_TITULO_APP);
+        Label nwavMensaje = new Label("Abriendo Editor PDF…");
+        nwavMensaje.setStyle("-fx-font-size: 18px;");
+        StackPane nwavEspera = new StackPane(nwavMensaje);
+        nwavEspera.setPadding(new Insets(28));
+        nwavEspera.setAlignment(Pos.CENTER);
+        nwavVentana.setScene(new Scene(nwavEspera, 480, 180));
+        nwavCentrar(nwavVentana, 480, 180);
+        nwavVentana.show();
+
+        String[] nwavArgumentos = getParameters().getRaw().toArray(String[]::new);
+        Thread nwavArranque = new Thread(() -> nwavArrancar(nwavVentana, nwavArgumentos), "nwav-arranque");
+        nwavArranque.setDaemon(true);
+        nwavArranque.start();
+    }
+
+    private void nwavArrancar(Stage nwavVentana, String[] nwavArgumentos) {
         if (Thread.currentThread().getContextClassLoader() == null) {
             Thread.currentThread().setContextClassLoader(NwavJavaFxApplication.class.getClassLoader());
         }
         try {
-            this.nwavContexto = new SpringApplicationBuilder(NwavEditorPdfApplication.class)
+            nwavContexto = new SpringApplicationBuilder(NwavEditorPdfApplication.class)
                     .web(WebApplicationType.NONE)
-                    .run(getParameters().getRaw().toArray(String[]::new));
+                    .run(nwavArgumentos);
+            Platform.runLater(() -> nwavMostrar(nwavVentana));
         } catch (RuntimeException nwavError) {
             nwavErrorArranque = nwavError;
+            Platform.runLater(() -> nwavMostrar(nwavVentana));
         }
     }
 
-    @Override
-    public void start(Stage nwavVentana) throws Exception {
-        if (Thread.currentThread().getContextClassLoader() == null) {
-            Thread.currentThread().setContextClassLoader(NwavJavaFxApplication.class.getClassLoader());
-        }
+    private void nwavMostrar(Stage nwavVentana) {
         if (nwavErrorArranque != null) {
             Alert nwavAlerta = new Alert(Alert.AlertType.ERROR);
             nwavAlerta.setTitle(NwavMainController.NWAV_TITULO_APP);
@@ -55,7 +74,19 @@ public class NwavJavaFxApplication extends Application {
             Platform.exit();
             return;
         }
+        try {
+            nwavCargarInterfaz(nwavVentana);
+        } catch (Exception nwavError) {
+            Alert nwavAlerta = new Alert(Alert.AlertType.ERROR);
+            nwavAlerta.setTitle(NwavMainController.NWAV_TITULO_APP);
+            nwavAlerta.setHeaderText("No se pudo iniciar la aplicación");
+            nwavAlerta.setContentText(NwavTraductorErrores.nwavMensaje(nwavError));
+            nwavAlerta.showAndWait();
+            Platform.exit();
+        }
+    }
 
+    private void nwavCargarInterfaz(Stage nwavVentana) throws Exception {
         boolean nwavOscuro = nwavContexto.getBean(NwavConfiguracionService.class).nwavTemaOscuro();
         Application.setUserAgentStylesheet(nwavOscuro
                 ? new PrimerDark().getUserAgentStylesheet()
@@ -87,6 +118,7 @@ public class NwavJavaFxApplication extends Application {
         });
         nwavEncajarEnPantalla(nwavVentana);
         nwavVentana.show();
+        nwavVentana.toFront();
         Platform.runLater(() -> nwavEncajarEnPantalla(nwavVentana));
 
         getParameters().getUnnamed().stream()
@@ -95,6 +127,14 @@ public class NwavJavaFxApplication extends Application {
                 .filter(Files::isRegularFile)
                 .findFirst()
                 .ifPresent(nwavMain::nwavAbrirArchivo);
+    }
+
+    private static void nwavCentrar(Stage nwavVentana, double nwavAncho, double nwavAlto) {
+        Rectangle2D nwavPantalla = Screen.getPrimary().getVisualBounds();
+        nwavVentana.setWidth(nwavAncho);
+        nwavVentana.setHeight(nwavAlto);
+        nwavVentana.setX(nwavPantalla.getMinX() + (nwavPantalla.getWidth() - nwavAncho) / 2.0);
+        nwavVentana.setY(nwavPantalla.getMinY() + (nwavPantalla.getHeight() - nwavAlto) / 2.0);
     }
 
     static void nwavEncajarEnPantalla(Stage nwavVentana) {
